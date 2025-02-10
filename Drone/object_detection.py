@@ -13,8 +13,8 @@ CLASSES = [
 ANIMALS = {"bird", "cat", "cow", "dog", "horse", "sheep"}
 
 # Caricamento del modello MobileNet SSD
-prototxt = "MobileNetSSD_deploy.prototxt"
-model = "MobileNetSSD_deploy.caffemodel"
+prototxt = "./models/MobileNetSSD_deploy.prototxt.txt"
+model = "./models/MobileNetSSD_deploy.caffemodel"
 net = cv2.dnn.readNetFromCaffe(prototxt, model)
 
 
@@ -38,8 +38,7 @@ def detect_animals(frame):
             label = CLASSES[idx] if idx < len(CLASSES) else "Unknown"
             if label in ANIMALS:
                 if not animal_detected:
-                    print(f"Animale rilevato: {
-                          label} (confidenza: {confidence:.2f})")
+                    print(f"Animale rilevato: {label} (confidenza: {confidence:.2f})")
                     animal_detected = True
                 # Disegna il rettangolo sul frame
                 box = detections[0, 0, i, 3:7] * np.array([
