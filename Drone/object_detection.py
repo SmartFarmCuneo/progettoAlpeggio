@@ -13,8 +13,9 @@ CLASSES = [
 ANIMALS = {"bird", "cat", "cow", "dog", "horse", "sheep"}
 
 # Caricamento del modello MobileNet SSD
-prototxt = "./models/MobileNetSSD_deploy.prototxt"
+prototxt = "./models/MobileNetSSD_deploy.prototxt.txt"
 model = "./models/MobileNetSSD_deploy.caffemodel"
+
 net = cv2.dnn.readNetFromCaffe(prototxt, model)
 
 
