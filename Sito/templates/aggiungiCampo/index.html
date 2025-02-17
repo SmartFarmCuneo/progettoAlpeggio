@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+
+<head>
+  <script src="../../assets/js/color-modes.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+  <meta name="generator" content="Hugo 0.122.0">
+  <title>Aggiunta campo</title>
+  <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/checkout/">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+  <link href="../../assets/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <div class="container">
+    <main>
+      <div class="py-5 text-center">
+        <img class="d-block mx-auto mb-4" src="../../image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72" height="57">
+        <h2>Aggiunta campo</h2>
+        <p class="lead">Pagina per inizializzazione del nuovo campo</p>
+      </div>
+      <div class="col-md-7 col-lg-8 mx-auto">
+        <h4 class="mb-3">Dati campo</h4>
+        <form class="needs-validation" novalidate>
+          <div class="row g-3">
+            <div class="col-6">
+              <label for="firstName" class="form-label">Nome identificativo</label>
+              <input type="text" class="form-control" id="firstName" placeholder="" required>
+              <div class="invalid-feedback">Valid first name is required.</div>
+            </div>
+            <div class="col-6">
+              <label for="geoButton" class="form-label">Geolocalizza il terreno</label>
+              <button id="geoButton" style="width: 100%; height: 50%; display: flex; justify-content: center; align-items: center;" type="button">
+                <svg aria-hidden="true" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="ms-2">Avvia ricerca</span>
+              </button>
+            </div>
+            <div class="col-12">
+              <label for="username" class="form-label">Username</label>
+              <div class="input-group has-validation">
+                <span class="input-group-text">@</span>
+                <input type="text" class="form-control" id="username" placeholder="Username" required>
+                <div class="invalid-feedback">Il tuo username è richiesto.</div>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="email" class="form-label">Email <span class="text-body-secondary">(Optional)</span></label>
+              <input type="email" class="form-control" id="email" placeholder="you@example.com">
+              <div class="invalid-feedback">Inserire la mail.</div>
+            </div>
+            <div class="col-12">
+              <label for="livestockCount" class="form-label">Inserire numero di bestiame previsto sul territorio</label>
+              <input type="number" class="form-control" id="livestockCount" min="0" max="100000" step="1" value="0" required>
+              <div class="invalid-feedback">Inserire un numero valido.</div>
+            </div>            
+            <div class="col-md-5">
+              <label for="country" class="form-label">Stato</label>
+              <select class="form-select" id="country" required>
+                <option value="">Scegli....</option>
+                <option>Italia</option>
+              </select>
+              <div class="invalid-feedback">Scegliere un valido stato</div>
+            </div>
+            <div class="col-md-4">
+              <label for="state" class="form-label">Provincia</label>
+              <select class="form-select" id="state" required>
+                <option value="">Scegli...</option>
+                <option>Cuneo</option>
+              </select>
+              <div class="invalid-feedback">Scegliere una valida provincia</div>
+            </div>
+            <div class="col-md-3">
+              <label for="zip" class="form-label">CAP</label>
+              <input type="text" class="form-control" id="zip" required>
+              <div class="invalid-feedback">Codice CAP richiesto</div>
+            </div>
+          </div>
+          <hr class="my-4">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="save-info">
+            <label class="form-check-label" for="save-info">Ricorda queste informazioni prossimamente</label>
+          </div>
+          <hr class="my-4">
+          <button class="w-100 btn btn-primary btn-lg" type="submit">Continua e salva</button>
+        </form>
+      </div>
+    </main>
+    <footer class="my-5 pt-5 text-body-secondary text-center text-small">
+      <p class="mb-1">&copy; 2017–2024 Company Name</p>
+      <ul class="list-inline">
+        <li class="list-inline-item"><a href="#">Privacy</a></li>
+        <li class="list-inline-item"><a href="#">Terms</a></li>
+        <li class="list-inline-item"><a href="#">Support</a></li>
+      </ul>
+    </footer>
+  </div>
+  
+  <script src="../../assets/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // Seleziona tutti i form con la classe 'needs-validation'
+      var forms = document.querySelectorAll('.needs-validation');
+
+      // Aggiunge un listener di submit per ciascun form
+      Array.from(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+
+<head>
+    <script src="../../assets/js/color-modes.js"></script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.122.0">
+    <title>Storico</title>
+    <title></title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/grid/">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="../../assets/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+
+    <style>
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            /* Bordo esterno visibile */
+            border-radius: 10px;
+        }
+
+        /* Selezione campi */
+        .form-label {
+            font-weight: bold;
+        }
+
+        /* Tabella */
+        .table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+            border: 3px solid #343a40;
+            /* Bordo esterno tabella */
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Bordo celle */
+        .table th,
+        .table td {
+            border: 2px solid #6c757d;
+            /* Bordo visibile per ogni cella */
+            padding: 10px;
+            text-align: center;
+        }
+
+        /* Header tabella */
+        .table thead {
+            background-color: #343a40;
+            color: white;
+            border-bottom: 3px solid #6c757d;
+            /* Bordo sotto l'header */
+        }
+
+        /* Prima riga della tabella */
+        .table tbody tr:first-child {
+            background-color: #d1ecf1;
+            /* Azzurro chiaro */
+            font-weight: bold;
+            border-bottom: 2px solid #6c757d;
+        }
+
+        /* Righe alternate */
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f8f9fa;
+        }
+
+        /* Hover sulle righe */
+        .table-hover tbody tr:hover {
+            background-color: #ddd;
+            cursor: pointer;
+        }
+
+        /* Tracciato record (ultima riga evidenziata) */
+        .table tbody tr:last-child {
+            background-color: #ffcccb !important;
+            /* Rosso chiaro per evidenziare */
+            font-weight: bold;
+            border-top: 2px solid #6c757d;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <main>
+            <div class="py-5 text-center">
+                <img class="d-block mx-auto mb-4"
+                    src="../../image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72"
+                    height="57">
+                <h2>Storico ricerche</h2>
+                <p class="lead">Pagina per lo storico delle ricerche</p>
+            </div>
+
+            <div class="col-md-7 col-lg-8 mx-auto">
+                <h4 class="mb-3">Seleziona un campo</h4>
+                <div class="mb-3">
+                    <label for="fieldSelect" class="form-label">Seleziona Campo</label>
+                    <select class="form-select" id="fieldSelect" required>
+                        <option value="">Scegli un campo...</option>
+                        <option value="campo1">Campo 1</option>
+                        <option value="campo2">Campo 2</option>
+                    </select>
+                </div>
+
+                <!-- Modulo nascosto all'inizio -->
+                <div id="formSection" class="d-none">
+                    <h4 class="mt-4">Tabella dei Dati</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Id campo</th>
+                                    <th>Data ricerca</th>
+                                    <th>Luogo</th>
+                                    <th>Mappa</th>
+                                    <th>Immagini</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Dato 1</td>
+                                    <td>Dato 2</td>
+                                    <td>Dato 3</td>
+                                    <td>Dato 4</td>
+                                    <td>Dato 5</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="my-5 pt-5 text-body-secondary text-center text-small">
+            <p class="mb-1">&copy; 2017–2024 Company Name</p>
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="#">Privacy</a></li>
+                <li class="list-inline-item"><a href="#">Terms</a></li>
+                <li class="list-inline-item"><a href="#">Support</a></li>
+            </ul>
+        </footer>
+    </div>
+
+    <script src="../../assets/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fieldSelect = document.getElementById('fieldSelect');
+            const formSection = document.getElementById('formSection');
+
+            fieldSelect.addEventListener('change', function () {
+                if (this.value) {
+                    formSection.classList.remove('d-none'); // Mostra il form se viene selezionato un campo
+                } else {
+                    formSection.classList.add('d-none'); // Nascondi il form se non c'è nulla selezionato
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

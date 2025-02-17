@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Seleziona punti su OpenStreetMap</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+  <style>
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Disegna un perimetro e calcola l'area</h1>
+  <div id="map"></div>
+  <p id="coordinates">Coordinate cliccate: Nessuna</p>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  
+</body>
+</html>
+<script>
+    // Inizializza la mappa centrata su Roma
+    var map = L.map('map').setView([41.9028, 12.4964], 13);
+
+    // Aggiungi il layer di OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Aggiungi controllo per disegno di poligoni
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    var drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: drawnItems
+      },
+      draw: {
+        polygon: true,  // Abilita il disegno di poligoni
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false
+      }
+    });
+    map.addControl(drawControl);
+
+    // Evento al click sulla mappa
+    map.on('click', function(e) {
+      document.getElementById('coordinates').innerText = `Coordinate cliccate: ${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+    });
+
+    // Evento al completamento di un poligono
+    map.on(L.Draw.Event.CREATED, function(e) {
+      var type = e.layerType;
+      var layer = e.layer;
+
+      if (type === 'polygon') {
+        drawnItems.addLayer(layer);
+        var latlngs = layer.getLatLngs()[0];  // Ottieni i punti del poligono
+
+        // Calcola l'area in metri quadrati
+        var area = L.GeometryUtil.geodesicArea(latlngs);
+        alert(`Area del poligono: ${(area / 1000000).toFixed(2)} km²`);
+      }
+    });
+  </script>
