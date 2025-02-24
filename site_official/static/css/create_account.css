@@ -1,0 +1,115 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.bg-body-tertiary {
+    width: 90%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: white;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border: 2px solid #58bc82;
+    border-radius: 10px;
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s ease, transform 1s ease;
+}
+
+/* FORM */
+.form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.input-span {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Stili per gli input */
+.form input[type="email"],
+.form input[type="password"] {
+    border-radius: 0.5rem;
+    padding: 1rem 0.75rem;
+    width: 100%;
+    border: none;
+    background-color: rgba(156, 156, 156, 0.38);
+    outline: 2px solid #707070;
+    transition: outline 0.3s ease;
+}
+
+.form input[type="email"]:focus,
+.form input[type="password"]:focus {
+    outline: 2px solid #58bc82;
+}
+
+.label {
+    align-self: flex-start;
+    color: #58bc82;
+    font-weight: 600;
+}
+
+/* Bottone submit */
+.submit {
+    padding: 1rem;
+    width: 100%;
+    border-radius: 3rem;
+    background-color: #707070;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 300ms;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.submit:hover {
+    background-color: #58bc82;
+    color: #707070;
+}
+
+/* Link */
+.span {
+    text-decoration: none;
+    color: #707070;
+}
+
+.span a {
+    color: #58bc82;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 600px) {
+    .bg-body-tertiary {
+        max-width: 90%;
+        padding: 1.5rem;
+    }
+
+    .form input[type="email"],
+    .form input[type="password"],
+    .submit {
+        padding: 0.75rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+}
