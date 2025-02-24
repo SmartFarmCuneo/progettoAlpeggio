@@ -2,8 +2,8 @@ from djitellopy import Tello
 import time
 import cv2
 from threading import Thread
-from object_detection import detect_animals  # Assuming object_detection.py is present
-from movimento import DroneController
+from object_detection import detect_animals
+from movimento import DroneController, calcola_perimetro_da_coordinate
 
 class VideoDrone(Thread):
     def __init__(self, tello):
@@ -37,45 +37,40 @@ class VideoDrone(Thread):
     def stop(self):
         self.stop_flag = True
 
-class Main:
-    def __init__(self):
-        self.drone_controller = DroneController()
-        self.video_drone = None  # Verrà inizializzato nel metodo start()
+def main():
+    drone_controller = DroneController()
+    #[[0, 0], [0, 200], [200, 200], [200, 0]]
+    perimetro_area = calcola_perimetro_da_coordinate()
+    print("Avvio del sistema drone...")
 
-    def start(self):
-        perimetro_area = [[0, 0], [0, 100], [100, 100], [100, 0]]
-        print("Avvio del sistema drone...")
+    # Inizializza il drone Tello
+    tello = Tello()
+    time.sleep(0.5)
 
-        # Inizializza il drone Tello
-        tello = Tello()
-        time.sleep(1)
+    try:
+        tello.connect()
+        print("Batteria:", tello.get_battery())
+        tello.streamon()  # Avvia lo streaming video
 
-        try:
-            tello.connect()
-            print("Batteria:", tello.get_battery())
-            tello.streamon()  # Avvia lo streaming video
-            print("Streaming video avviato...")
+        # Crea e avvia il thread per lo streaming video
+        video_drone = VideoDrone(tello)
+        video_thread = Thread(target=video_drone.start)
+        video_thread.start()
 
-            # Crea e avvia il thread per lo streaming video
-            self.video_drone = VideoDrone(tello)
-            video_thread = Thread(target=self.video_drone.start)
-            video_thread.start()
+        # Loop di controllo 
+        # lo spacing è la distanza coperta per movimento es. 100 fa passi di 1m
+        # lo spacing può essere tra 20cm e 5m
+        drone_controller.vola_all_interno_area(perimetro_area, spacing=40)
 
-            # Loop di controllo (qui è possibile implementare la logica di controllo del drone)
-            self.drone_controller.vola_all_interno_area(perimetro_area, spacing=10)
+        # Attende la terminazione del thread video
+        video_thread.join()
 
-            # Attende la terminazione del thread video
-            video_thread.join()
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
-        finally:
-            if self.video_drone:
-                self.video_drone.stop()
-            tello.streamoff()
-            cv2.destroyAllWindows()
-            print("Chiusura in corso...")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        video_drone.stop()
+        tello.streamoff()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main = Main()
-    main.start()
+    main()
