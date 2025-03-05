@@ -9,92 +9,101 @@ import hashlib
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "chiave_super_segreta"
 
-# Configurazione della connessione manuale a MariaDB
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
         password='',
         database='alpeggio',
-        cursorclass=pymysql.cursors.DictCursor  # Restituisce i risultati come dizionario
+        cursorclass=pymysql.cursors.DictCursor
     )
 ###############################################################################
 
 ########################### Login-Create account #########################
+
+def hash_password(psw):
+    return hashlib.sha256(psw.encode()).hexdigest()
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = ""
-    if request.method == 'POST':
-        username = request.form['email']  # Usa il campo 'email' come login
-        password = request.form['password']
-        print(username)
-        print(password)
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        psw = hash_password(password)
         
-        if validate(username, password):
-            resp = make_response(redirect(url_for('prova')))
-            return generate_and_set_token(resp, username)
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            try:
+                cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
+                p_user = cursor.fetchone()
+            finally:
+                conn.close()
+        
+        if p_user and p_user["password_hash"] == psw:
+            print("ciao")
+            response = make_response(redirect(url_for("prova")))
+            return generate_and_set_token(response, username)
         else:
-            error = "Username o password non corretti"
+            error = "Nome utente o password errati."
     
-    return render_template('login.html', error=error)
-
-# Funzione per validare username e password
-def validate(username, password):
-    connection = get_db_connection()
-    try:
-        with connection.cursor() as cursor:
-            sql = 'SELECT * FROM users WHERE email = %s AND password_hash = %s'
-            cursor.execute(sql, (username, password))
-            user = cursor.fetchone()  # Prende il primo risultato
-            return user is not None  # Restituisce True se l'utente esiste
-    finally:
-        connection.close()
-
-def hash(psw):
-    return hashlib.sha256(psw.encode()).hexdigest()
+    return render_template("login.html", error=error)
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     error = ""
     if request.method == 'POST':
+        nome = request.form['nome']
+        cognome = request.form['cognome']
+        email = request.form['email']
+        cod_fiscale = request.form['cod_fiscale']
+        telefono = request.form['telefono']
+        anno = request.form['birthYear']
+        mese = request.form['birthMonth']
+        giorno = request.form['birthDay']
+        data_nascita = f"{anno}-{mese}-{giorno}"
         username = request.form['username']
         password = request.form['password']
+
+        psw = hash_password(password)
+
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                    cursor.execute("SELECT * FROM users WHERE email = %s", (username, password))
-                    user = cursor.fetchone()  # Prende il primo risultato
-                    if user:
-                        error = "Username già presente"
-                    else:
-                        cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (username, password))
-                        connection.commit()
-                        return redirect(url_for('login'))
+                cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+                user = cursor.fetchone()
+                if user:
+                    error = "Username già presente"
+                else:
+                    cursor.execute(
+                        "INSERT INTO users (username, password_hash, email, telefono, nome, cognome, cod_fiscale, DataDiNascita) "
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                        (username, psw, email, telefono, nome, cognome, cod_fiscale, data_nascita)
+                    )
+                    connection.commit()
+                    return redirect(url_for('aggiungiCampo'))
         except Exception as e:
-            error = "errore del database"
+            error = "Errore del database"
         finally:
             connection.close()
+    
     return render_template('createAccount.html', error=error)
+
 ##################################################################################
 
-
 ################################ Cookie-Token ####################################
-# Funzione per generare il token JWT
 def generate_token(username):
     payload = {
         "user": username,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     }
-    token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
-    return token
+    return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
-# Funzione per impostare il token nei cookie
 def generate_and_set_token(response, username):
     token = generate_token(username)
     response.set_cookie("token", token, max_age=3600, httponly=True)
     return response
 
-# Decoratore per richiedere il token JWT
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -103,27 +112,81 @@ def token_required(f):
             return redirect(url_for("login"))
         try:
             decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-            current_user = decoded["user"]
+            kwargs["current_user"] = decoded["user"]
         except jwt.ExpiredSignatureError:
             return redirect(url_for("login"))
         except jwt.InvalidTokenError:
             return redirect(url_for("login"))
-        return f(current_user, *args, **kwargs)
+        return f(*args, **kwargs)
     return decorated
 ################################################################################
 
+
 ################# FUNZIONI BARRA SINISTRA ####################
 @app.route('/storici', methods=['GET', 'POST'])
-def storici():
-    return render_template('storici.html')
+@token_required
+def storici(current_user):
+    conn = get_db_connection()
+    if request.method == 'POST':
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM users s JOIN data d on s.id = d.id_u WHERE s.username = ?", (current_user,))
+            storici = cursor.fetchall()
+    return render_template('storici.html', username=current_user)
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
-def aggiungiCampo():
+@token_required
+def aggiungiCampo(current_user):
+    primaVolta = True
+
+    if request.method == 'POST':
+        coordinate = getCoordinate()
+        provincia = request.form['provincia']
+        comune = request.form['comune']
+        cap = request.form['cap']
+        num_bestiame = request.form['num_bestiame']
+        print(coordinate)
+
+        try:
+            connection = get_db_connection()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
+                id_u = cursor.fetchone()
+                cursor.execute(
+                    "INSERT INTO users (`id_user`, `provincia`, `comune`, `CAP`, `num_bestiame`, `cordinate`) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)",
+                    (id_u, provincia, comune, cap, num_bestiame, coordinate)
+                )
+                connection.commit()
+                return redirect(url_for('login'))
+        except Exception as e:
+            error = "Errore del database"
+        finally:
+            connection.close()
+    """if primaVolta == False: 
+        primaVolta = False
+        return render_template('login.html')"""
     return render_template('aggiungi_campo.html')
+
+@app.route('/salva-coordinate', methods=['POST'])
+def getCoordinate():
+    coordinate = request.form.get('coordinate')
+    print(f'Coordinate ricevute: {coordinate}')
+    return render_template("aggiungi_campo.html")
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 def gestioneCampo():
+    conn = get_db_connection()
     return render_template('gestione_campo.html')
+
+@app.route('/mappa', methods=['GET', 'POST'])
+def mappa():
+    conn = get_db_connection()
+    return render_template('mappaOff.html')
+
+@app.route('/mappaManuale', methods=['GET', 'POST'])
+def mappaManuale():
+    conn = get_db_connection()
+    return render_template('mappaManuale.html')
 ################################################################
 
 @app.route('/', methods=['GET', 'POST'])

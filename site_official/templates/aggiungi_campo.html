@@ -19,7 +19,9 @@
   <div class="container">
     <main>
       <div class="py-5 text-center">
-        <img class="d-block mx-auto mb-4" src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72" height="57">
+        <img class="d-block mx-auto mb-4"
+          src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72"
+          height="57">
         <h2>Aggiunta campo</h2>
         <p class="lead">Pagina per inizializzazione del nuovo campo</p>
       </div>
@@ -28,57 +30,45 @@
         <form class="form" action="/aggiungiCampo" method="POST">
           <div class="row g-3">
             <div class="col-6">
-              <label for="firstName" class="form-label">Nome identificativo</label>
-              <input type="text" class="form-control" id="firstName" placeholder="" required>
-              <div class="invalid-feedback">Valid first name is required.</div>
-            </div>
-            <div class="col-6">
               <label for="geoButton" class="form-label">Geolocalizza il terreno</label>
-              <button id="geoButton" style="width: 100%; height: 50%; display: flex; justify-content: center; align-items: center;" type="button">
-                <svg aria-hidden="true" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18" stroke-linecap="round" stroke-linejoin="round"/>
+              <a href="{{ url_for('mappa') }}" id="geoButton"
+                style="width: 100%; height: 50%; display: flex; justify-content: center; align-items: center;"
+                type="button">
+                <svg aria-hidden="true" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"
+                    stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
                 <span class="ms-2">Avvia ricerca</span>
-              </button>
-            </div>
-            <div class="col-12">
-              <label for="username" class="form-label">Username</label>
-              <div class="input-group has-validation">
-                <span class="input-group-text">@</span>
-                <input type="text" class="form-control" id="username" placeholder="Username" required>
-                <div class="invalid-feedback">Il tuo username è richiesto.</div>
-              </div>
-            </div>
-            <div class="col-12">
-              <label for="email" class="form-label">Email <span class="text-body-secondary">(Optional)</span></label>
-              <input type="email" class="form-control" id="email" placeholder="you@example.com">
-              <div class="invalid-feedback">Inserire la mail.</div>
+              </a>
             </div>
             <div class="col-12">
               <label for="livestockCount" class="form-label">Inserire numero di bestiame previsto sul territorio</label>
-              <input type="number" class="form-control" id="livestockCount" min="0" max="100000" step="1" value="0" required>
+              <input type="number" class="form-control" id="livestockCount" min="0" max="100000" step="1" value="0" name="num_bestiame"
+                required>
               <div class="invalid-feedback">Inserire un numero valido.</div>
-            </div>            
+            </div>
             <div class="col-md-5">
-              <label for="country" class="form-label">Stato</label>
-              <select class="form-select" id="country" required>
+              <label for="country" class="form-label">Provincia</label>
+              <select class="form-select" id="country" name="provincia" required>
                 <option value="">Scegli....</option>
                 <option>Italia</option>
               </select>
               <div class="invalid-feedback">Scegliere un valido stato</div>
             </div>
             <div class="col-md-4">
-              <label for="state" class="form-label">Provincia</label>
-              <select class="form-select" id="state" required>
+              <label for="state" class="form-label">Comune</label>
+              <select class="form-select" id="state" name="comune" required>
                 <option value="">Scegli...</option>
-                <option>Cuneo</option>
+                <option>Dronero</option>
               </select>
               <div class="invalid-feedback">Scegliere una valida provincia</div>
-            </div>
+            </div>         
             <div class="col-md-3">
               <label for="zip" class="form-label">CAP</label>
-              <input type="text" class="form-control" id="zip" required>
+              <input type="text" class="form-control" id="zip" name="cap" required>
               <div class="invalid-feedback">Codice CAP richiesto</div>
             </div>
           </div>
@@ -101,7 +91,7 @@
       </ul>
     </footer>
   </div>
-  
+
   <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     (function () {
@@ -123,5 +113,4 @@
     })();
   </script>
 </body>
-
 </html>

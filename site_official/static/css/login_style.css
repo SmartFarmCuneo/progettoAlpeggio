@@ -67,7 +67,7 @@ h1 {
 }
 
 /* Stili per gli input */
-.form input[type="email"],
+.form input[type="text"],
 .form input[type="password"] {
   border-radius: 0.5rem;
   padding: 1rem 0.75rem;
@@ -78,7 +78,7 @@ h1 {
   transition: outline 0.3s ease;
 }
 
-.form input[type="email"]:focus,
+.form input[type="text"]:focus,
 .form input[type="password"]:focus {
   outline: 2px solid #58bc82;
 }
@@ -125,7 +125,7 @@ h1 {
     padding: 1.5rem;
   }
   
-  .form input[type="email"],
+  .form input[type="text"],
   .form input[type="password"],
   .submit {
     padding: 0.75rem;
