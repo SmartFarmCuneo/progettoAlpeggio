@@ -2,12 +2,14 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics.pairwise import cosine_similarity
+from inference import get_model
+import supervision as sv
 
 # ------------------------------
 # Parametri e caricamento modelli
 # ------------------------------
 
-# Definizione delle classi del modello MobileNet SSD
+# Definizione delle classi per MobileNet SSD
 CLASSES = [
     "background", "aeroplane", "bicycle", "bird", "boat",
     "bottle", "bus", "car", "cat", "chair", "cow",
@@ -15,11 +17,12 @@ CLASSES = [
     "pottedplant", "sheep", "sofa", "train", "tvmonitor"
 ]
 
-# Soglia di confidenza per il rilevamento
-DETECTION_CONFIDENCE = 0.7
-
-# La classe che vogliamo analizzare (in questo caso "cow")
+# Soglia di confidenza per MobileNet SSD e target da rilevare
+DETECTION_CONFIDENCE = 0.8
 TARGET_CLASS = "cow"
+
+# Soglia per la similarità degli embedding (valori vicini a 1 indicano alta similarità)
+SIMILARITY_THRESHOLD = 0.9
 
 # Caricamento del modello MobileNet SSD
 prototxt_path = "./models/MobileNetSSD_deploy.prototxt.txt"
@@ -27,110 +30,109 @@ model_path = "./models/MobileNetSSD_deploy.caffemodel"
 net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 
 # Caricamento del modello di embedding (ResNet50 pre-addestrata)
-# Usiamo include_top=False e pooling='avg' per ottenere un vettore di feature
-# Crea il modello senza pesi predefiniti
 embedding_model = tf.keras.applications.ResNet50(weights=None, include_top=False, pooling='avg')
-
-# Carica i pesi da un file locale
 embedding_model.load_weights('./models/resnet50_weights.h5')
 
-# Lista globale per memorizzare gli embedding delle mucche già conteggiate
+# Caricamento del modello fallback "cowspots/3"
+cowspots_model = get_model(model_id="cowspots/3")
+
+# Inizializza annotatori per Supervision (non utilizzati nella logica modificata del fallback)
+bounding_box_annotator = sv.BoxAnnotator()
+label_annotator = sv.LabelAnnotator()
+
+# Lista globale per memorizzare gli embedding delle mucche già registrate
 registered_embeddings = []
-
-# Soglia per la similarità (valori vicini a 1 indicano alta similarità)
-SIMILARITY_THRESHOLD = 0.9
-
 
 def extract_embedding(crop):
     """
-    Data una porzione di immagine (crop) contenente una mucca,
-    la funzione ridimensiona, pre-processa e utilizza ResNet50 per
-    estrarre un embedding (feature vector).
+    Estrae l'embedding dal ritaglio (crop) della mucca usando ResNet50.
     """
-    # Converti da BGR a RGB
     crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
-    # Ridimensiona a 224x224 come richiesto da ResNet50
     crop_resized = cv2.resize(crop_rgb, (224, 224))
-    # Converte l'immagine in array e aggiunge una dimensione per il batch
     img_array = np.expand_dims(crop_resized, axis=0)
-    # Preprocessa l'immagine (normalizzazione richiesta da ResNet50)
     img_array = tf.keras.applications.resnet50.preprocess_input(img_array)
-    # Estrae l'embedding
     embedding = embedding_model.predict(img_array)
-    # Appiattisci il vettore
-    embedding = embedding.flatten()
-    return embedding
+    return embedding.flatten()
 
 def is_new_cow(crop):
     """
-    Data l'immagine ritagliata della mucca, la funzione estrae l'embedding
-    e lo confronta con quelli già registrati. Se la similarità coseno con
-    uno degli embedding registrati supera la soglia, si considera la stessa mucca.
-    Altrimenti, la mucca viene considerata nuova e il suo embedding viene registrato.
+    Confronta l'embedding del crop con quelli già registrati per determinare se si tratta di una nuova mucca.
+    Se è nuova, l'embedding viene aggiunto alla lista.
     """
     global registered_embeddings
     new_embedding = extract_embedding(crop)
     
-    # Se non ci sono embedding registrati, questa è la prima mucca
     if not registered_embeddings:
         registered_embeddings.append(new_embedding)
         return True
 
-    # Confronta il nuovo embedding con ciascuno di quelli registrati
     for emb in registered_embeddings:
         sim = cosine_similarity(new_embedding.reshape(1, -1), emb.reshape(1, -1))[0][0]
         if sim >= SIMILARITY_THRESHOLD:
-            # Trovata mucca già registrata
             return False
 
-    # Se non troviamo una corrispondenza, registra il nuovo embedding
     registered_embeddings.append(new_embedding)
     return True
 
 def detect_animals(frame):
     """
-    Rileva le mucche nel frame usando MobileNet SSD, estrae il crop
-    dell'area rilevata, controlla se si tratta di una nuova mucca tramite
-    l'embedding e annota il frame di conseguenza.
+    Rileva le mucche nel frame utilizzando MobileNet SSD come rilevamento primario.
+    Se viene rilevata almeno una mucca, la logica di registrazione (embeddings) viene applicata.
+    Se MobileNet SSD non rileva alcuna mucca, viene usato il modello fallback "cowspots/3".
+    In entrambi i casi, le mucche rilevate vengono annotate e, se nuove, registrate.
     """
-    # Prepara il frame per il rilevamento
+    found_cow = False
+    # Rilevamento tramite MobileNet SSD
     blob = cv2.dnn.blobFromImage(frame, 0.007843, (300, 300), 127.5)
     net.setInput(blob)
     detections = net.forward()
 
-    # Ciclo su tutti i rilevamenti
     for i in np.arange(0, detections.shape[2]):
         confidence = detections[0, 0, i, 2]
         if confidence > DETECTION_CONFIDENCE:
             idx = int(detections[0, 0, i, 1])
             label = CLASSES[idx] if idx < len(CLASSES) else "Unknown"
             if label == TARGET_CLASS:
-                # Calcola le coordinate del bounding box
-                box = detections[0, 0, i, 3:7] * np.array([ 
-                    frame.shape[1], frame.shape[0], 
-                    frame.shape[1], frame.shape[0]
-                ])
+                found_cow = True
+                box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0],
+                                                            frame.shape[1], frame.shape[0]])
                 (startX, startY, endX, endY) = box.astype("int")
-                
-                # Estrai il crop dell'immagine; controlla che il crop sia valido
                 crop = frame[startY:endY, startX:endX]
                 if crop.size == 0:
                     continue
 
-                # Determina se la mucca è nuova o già registrata
                 if is_new_cow(crop):
                     text = f"Nuova Mucca! Totale: {len(registered_embeddings)}"
-                    
-                    color = (0, 255, 0)  # verde per nuovo
+                    color = (0, 255, 0)  # verde per nuova
                 else:
                     text = "Mucca contata"
-                    color = (0, 0, 255)  # rosso per già visto
+                    color = (0, 0, 255)  # rosso per già vista
 
-                # Disegna il bounding box e l'etichetta sul frame
                 cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
                 cv2.putText(frame, text, (startX, startY - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-                
-                print(f"totale mucche: {len(registered_embeddings)}")
+                print(f"Totale mucche: {len(registered_embeddings)}")
 
+    # Fallback: se MobileNet SSD non rileva alcuna mucca, usa cowspots/3
+    if not found_cow:
+        results = cowspots_model.infer(frame)[0]
+        detections_sv = sv.Detections.from_inference(results)
+        # Itera su ogni bounding box rilevato dal modello cowspots/3
+        for bbox in detections_sv.xyxy:
+            (startX, startY, endX, endY) = map(int, bbox)
+            crop = frame[startY:endY, startX:endX]
+            if crop.size == 0:
+                continue
+            # Verifica se la mucca è nuova e, in caso, la registra
+            if is_new_cow(crop):
+                text = f"Nuova Mucca! Totale: {len(registered_embeddings)}"
+                color = (0, 255, 0)
+            else:
+                text = "Mucca contata"
+                color = (0, 0, 255)
+            cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+            cv2.putText(frame, text, (startX, startY - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            print(f"Totale mucche: {len(registered_embeddings)}")
+            
     return frame
