@@ -40,7 +40,7 @@ class VideoDrone(Thread):
 def main():
     drone_controller = DroneController()
     #[[0, 0], [0, 200], [200, 200], [200, 0]]
-    perimetro_area = calcola_perimetro_da_coordinate()
+    #perimetro_area = calcola_perimetro_da_coordinate()
     print("Avvio del sistema drone...")
 
     # Inizializza il drone Tello
@@ -60,7 +60,7 @@ def main():
         # Loop di controllo 
         # lo spacing è la distanza coperta per movimento es. 100 fa passi di 1m
         # lo spacing può essere tra 20cm e 5m
-        drone_controller.vola_all_interno_area(perimetro_area, spacing=40)
+        #drone_controller.vola_all_interno_area(perimetro_area, spacing=40)
 
         # Attende la terminazione del thread video
         video_thread.join()
