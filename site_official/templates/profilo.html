@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Il Mio Profilo - Sistema Gestionale</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Colori bootstrap scuri con tonalità blu */
+    :root {
+      --bs-dark: #212529;
+      --bs-dark-rgb: 33, 37, 41;
+      --bs-primary: #0d6efd;
+      --bs-primary-rgb: 13, 110, 253;
+      --bs-secondary: #6c757d;
+      --bs-secondary-rgb: 108, 117, 125;
+      --bs-dark-blue: #0d3b66;
+      --bs-navy: #1a3a5f;
+      --bs-light-dark: #343a40;
+      --bs-input-bg: #2c3034;
+      --bs-body-color: #adb5bd;
+      --bs-card-bg: #212529;
+      --bs-menu-hover: #2b3035;
+      --bs-menu-active: #0d6efd;
+      --bs-menu-active-bg: #2c3034;
+      --bs-border-color: #495057;
+    }
+
+    body {
+      background-color: var(--bs-dark);
+      color: var(--bs-body-color);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background-color: var(--bs-navy);
+      color: white;
+      padding: 15px 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .user-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--bs-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .main-content {
+      display: flex;
+      margin-top: 30px;
+      gap: 30px;
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: var(--bs-light-dark);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .menu-item {
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      color: var(--bs-body-color);
+    }
+
+    .menu-item:hover {
+      background-color: var(--bs-menu-hover);
+    }
+
+    .menu-item.active {
+      background-color: var(--bs-menu-active-bg);
+      color: var(--bs-menu-active);
+      font-weight: 500;
+    }
+
+    .profile-content {
+      flex: 1;
+      background-color: var(--bs-light-dark);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 25px;
+      color: white;
+    }
+
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .edit-mode-toggle {
+      padding: 10px 20px;
+      background-color: var(--bs-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .edit-mode-toggle:hover {
+      background-color: #0b5ed7;
+    }
+
+    .edit-mode-toggle.save {
+      background-color: #198754;
+    }
+
+    .edit-mode-toggle.save:hover {
+      background-color: #157347;
+    }
+
+    .edit-mode-toggle.cancel {
+      background-color: #dc3545;
+      margin-right: 10px;
+    }
+
+    .edit-mode-toggle.cancel:hover {
+      background-color: #bb2d3b;
+    }
+
+    .profile-section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--bs-border-color);
+      color: white;
+    }
+
+    .form-row {
+      display: flex;
+      margin-bottom: 15px;
+      gap: 20px;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--bs-body-color);
+    }
+
+    .form-control {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--bs-border-color);
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+      background-color: var(--bs-input-bg);
+      color: white;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--bs-primary);
+      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+
+    .form-control[readonly] {
+      background-color: rgba(33, 37, 41, 0.75);
+      cursor: not-allowed;
+    }
+
+    .btn-controls {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .alert-success {
+      background-color: rgba(25, 135, 84, 0.2);
+      color: #75b798;
+      border: 1px solid #198754;
+    }
+
+    select.form-control option {
+      background-color: var(--bs-dark);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="logo">Profilo</div>
+      <div class="user-nav">
+        <div class="user-info">
+          <div class="user-avatar">{{user['username'][0] | upper}}</div>
+          <span>{{user['username']}}</span>
+        </div>
+        <span>Logout in pagina home</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="main-content">
+      <div class="sidebar">
+        <div class="menu-item active">Il Mio Profilo</div>
+        <div class="menu-item">Up-grade dell'account</div>
+        <div class="menu-item">Supporto</div>
+      </div>
+
+      <div class="profile-content">
+        <div id="success-alert" class="alert alert-success" style="display: none;">
+          Profilo aggiornato con successo!
+        </div>
+
+        <form id="profile-form" action="/profilo" method="POST">
+        <div class="profile-header">
+          <h1>Il Mio Profilo</h1>
+          <div>
+            <button type="button" id="cancel-btn" class="edit-mode-toggle cancel" style="display: none;">Annulla</button>
+            <button type="button" id="edit-btn" class="edit-mode-toggle" name="action-salvataggio" value="Salva">Modifica</button>
+          </div>
+        </div>
+
+        
+          <div class="profile-section">
+            <h2 class="section-title">Informazioni Personali</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="nome">Nome</label>
+                <input type="text" id="nome" name="nome" class="form-control" value="{{user['nome']}}" name="nome" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cognome">Cognome</label>
+                <input type="text" id="cognome" name="cognome" class="form-control" value="{{user['cognome']}}" readonly>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{user['email']}}" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="telefono">Telefono</label>
+                <input type="tel" id="telefono" name="telefono" class="form-control" value="{{user['telefono']}}" readonly>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="codice-fiscale">Codice Fiscale</label>
+                <input type="text" id="codice-fiscale" name="cod_fiscale" class="form-control" value="{{user['cod_fiscale']}}" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="data-nascita">Data di Nascita</label>
+                <input type="date" id="data-nascita" name="dataDiNascita" class="form-control" value="{{user['dataDiNascita']}}" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h2 class="section-title">Impostazioni Account</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="username">Nome Utente</label>
+                <input type="text" id="username" name="username" class="form-control" value="{{user['username']}}" readonly>
+              </div>
+              <!--
+              <div class="form-group">
+                <label class="form-label" for="lingua">Lingua</label>
+                <select id="lingua" name="lingua" class="form-control" disabled>
+                  <option value="it" selected>Italiano</option>
+                  <option value="en">Inglese</option>
+                  <option value="fr">Francese</option>
+                  <option value="de">Tedesco</option>
+                </select>
+              </div>-->
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="notifiche">Notifiche Email</label>
+                <select id="notifiche" name="notifiche" class="form-control" disabled>
+                  <option value="all" selected>Tutte le notifiche</option>
+                  <option value="important">Solo notifiche importanti</option>
+                  <option value="none">Nessuna notifica</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" value="********" readonly>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Hidden submit button -->
+          <input type="hidden" name="action-salvataggio" id="action-salvataggio" value="">
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Funzionalità JavaScript per la modifica del profilo
+    document.addEventListener('DOMContentLoaded', function () {
+      const editBtn = document.getElementById('edit-btn');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const successAlert = document.getElementById('success-alert');
+      const profileForm = document.getElementById('profile-form');
+      const actionInput = document.getElementById('action-salvataggio');
+      const formInputs = document.querySelectorAll('#profile-form input:not([type="hidden"]), #profile-form select');
+      const originalValues = {};
+
+      // Salva i valori originali
+      formInputs.forEach(input => {
+        originalValues[input.id] = input.value;
+      });
+
+      // Attiva modalità modifica
+      editBtn.addEventListener('click', function () {
+        if (editBtn.textContent === 'Modifica') {
+          // Passa alla modalità modifica
+          formInputs.forEach(input => {
+            if (input.id !== 'password') { // Mantieni password in sola lettura
+              input.readOnly = false;
+              if (input.tagName === 'SELECT') {
+                input.disabled = false;
+              }
+            }
+          });
+
+          editBtn.textContent = 'Salva';
+          editBtn.value = 'Salva';
+          editBtn.classList.add('save');
+          cancelBtn.style.display = 'inline-block';
+          successAlert.style.display = 'none';
+        } else {
+          // Salva le modifiche
+          actionInput.value = 'save'; // Imposta il valore per l'azione di salvataggio
+          profileForm.submit(); // Invia il form
+        }
+      });
+
+      // Annulla modifiche
+      cancelBtn.addEventListener('click', function () {
+        formInputs.forEach(input => {
+          input.value = originalValues[input.id]; // Ripristina valori originali
+          input.readOnly = true;
+          if (input.tagName === 'SELECT') {
+            input.disabled = true;
+          }
+        });
+
+        editBtn.textContent = 'Modifica';
+        editBtn.classList.remove('save');
+        cancelBtn.style.display = 'none';
+        successAlert.style.display = 'none';
+      });
+
+      // Se c'è un parametro nell'URL che indica un salvataggio avvenuto, mostra il messaggio di successo
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('saved') && urlParams.get('saved') === 'true') {
+        successAlert.style.display = 'block';
+        setTimeout(() => {
+          successAlert.style.display = 'none';
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+
+</html>
+
+<!--
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Il Mio Profilo - Sistema Gestionale</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Colori bootstrap scuri con tonalità blu */
+    :root {
+      --bs-dark: #212529;
+      --bs-dark-rgb: 33, 37, 41;
+      --bs-primary: #0d6efd;
+      --bs-primary-rgb: 13, 110, 253;
+      --bs-secondary: #6c757d;
+      --bs-secondary-rgb: 108, 117, 125;
+      --bs-dark-blue: #0d3b66;
+      --bs-navy: #1a3a5f;
+      --bs-light-dark: #343a40;
+      --bs-input-bg: #2c3034;
+      --bs-body-color: #adb5bd;
+      --bs-card-bg: #212529;
+      --bs-menu-hover: #2b3035;
+      --bs-menu-active: #0d6efd;
+      --bs-menu-active-bg: #2c3034;
+      --bs-border-color: #495057;
+    }
+
+    body {
+      background-color: var(--bs-dark);
+      color: var(--bs-body-color);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background-color: var(--bs-navy);
+      color: white;
+      padding: 15px 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .user-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--bs-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .main-content {
+      display: flex;
+      margin-top: 30px;
+      gap: 30px;
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: var(--bs-light-dark);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .menu-item {
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      color: var(--bs-body-color);
+    }
+
+    .menu-item:hover {
+      background-color: var(--bs-menu-hover);
+    }
+
+    .menu-item.active {
+      background-color: var(--bs-menu-active-bg);
+      color: var(--bs-menu-active);
+      font-weight: 500;
+    }
+
+    .profile-content {
+      flex: 1;
+      background-color: var(--bs-light-dark);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 25px;
+      color: white;
+    }
+
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .edit-mode-toggle {
+      padding: 10px 20px;
+      background-color: var(--bs-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .edit-mode-toggle:hover {
+      background-color: #0b5ed7;
+    }
+
+    .edit-mode-toggle.save {
+      background-color: #198754;
+    }
+
+    .edit-mode-toggle.save:hover {
+      background-color: #157347;
+    }
+
+    .edit-mode-toggle.cancel {
+      background-color: #dc3545;
+      margin-right: 10px;
+    }
+
+    .edit-mode-toggle.cancel:hover {
+      background-color: #bb2d3b;
+    }
+
+    .profile-section {
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--bs-border-color);
+      color: white;
+    }
+
+    .form-row {
+      display: flex;
+      margin-bottom: 15px;
+      gap: 20px;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--bs-body-color);
+    }
+
+    .form-control {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--bs-border-color);
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+      background-color: var(--bs-input-bg);
+      color: white;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--bs-primary);
+      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+
+    .form-control[readonly] {
+      background-color: rgba(33, 37, 41, 0.75);
+      cursor: not-allowed;
+    }
+
+    .btn-controls {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 30px;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .alert-success {
+      background-color: rgba(25, 135, 84, 0.2);
+      color: #75b798;
+      border: 1px solid #198754;
+    }
+
+    select.form-control option {
+      background-color: var(--bs-dark);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="logo">Profilo</div>
+      <div class="user-nav">
+        <div class="user-info">
+          <div class="user-avatar">{{user['username'][0] | upper}}</div>
+          <span>{{user['username']}}</span>
+        </div>
+        <span>Logout in pagina home</span>
+      </div>
+    </div>
+  </header>
+
+  <form action="/profilo" method="POST">
+    <div class="container">
+      <div class="main-content">
+        <div class="sidebar">
+          <div class="menu-item active">Il Mio Profilo</div>
+          <div class="menu-item">Up-grade dell'account</div>
+          <div class="menu-item">Supporto</div>
+        </div>
+
+        <div class="profile-content">
+          <div id="success-alert" class="alert alert-success" style="display: none;">
+            Profilo aggiornato con successo!
+          </div>
+
+          <div class="profile-header">
+            <h1>Il Mio Profilo</h1>
+            <div>
+              <button id="cancel-btn" class="edit-mode-toggle cancel" style="display: none;">Annulla</button>
+              <button id="edit-btn" class="edit-mode-toggle" name="action-salvataggio">Modifica</button>
+            </div>
+          </div>
+
+          <form id="profile-form">
+            <div class="profile-section">
+              <h2 class="section-title">Informazioni Personali</h2>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="nome">Nome</label>
+                  <input type="text" id="nome" class="form-control" value="{{user['nome']}}" name="nome" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cognome">Cognome</label>
+                  <input type="text" id="cognome" class="form-control" value="{{user['cognome']}}" readonly>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="email">Email</label>
+                  <input type="email" id="email" class="form-control" value="{{user['email']}}" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="telefono">Telefono</label>
+                  <input type="tel" id="telefono" class="form-control" value="{{user['telefono']}}" readonly>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="codice-fiscale">Codice Fiscale</label>
+                  <input type="text" id="codice-fiscale" class="form-control" value="{{user['cod_fiscale']}}" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="data-nascita">Data di Nascita</label>
+                  <input type="date" id="data-nascita" class="form-control" value="{{user['dataDiNascita']}}" readonly>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="profile-section">
+              <h2 class="section-title">Impostazioni Account</h2>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="username">Nome Utente</label>
+                  <input type="text" id="username" class="form-control" value="{{user['username']}}" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="lingua">Lingua</label>
+                  <select id="lingua" class="form-control" disabled>
+                    <option value="it" selected>Italiano</option>
+                    <option value="en">Inglese</option>
+                    <option value="fr">Francese</option>
+                    <option value="de">Tedesco</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="notifiche">Notifiche Email</label>
+                  <select id="notifiche" class="form-control" disabled>
+                    <option value="all" selected>Tutte le notifiche</option>
+                    <option value="important">Solo notifiche importanti</option>
+                    <option value="none">Nessuna notifica</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="password">Password</label>
+                  <input type="password" id="password" class="form-control" value="********" readonly>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    // Funzionalità JavaScript per la modifica del profilo
+    document.addEventListener('DOMContentLoaded', function () {
+      const editBtn = document.getElementById('edit-btn');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const successAlert = document.getElementById('success-alert');
+      const formInputs = document.querySelectorAll('#profile-form input, #profile-form select');
+      const originalValues = {};
+
+      // Salva i valori originali
+      formInputs.forEach(input => {
+        originalValues[input.id] = input.value;
+      });
+
+      // Attiva modalità modifica
+      editBtn.addEventListener('click', function () {
+        if (editBtn.textContent === 'Modifica') {
+          // Passa alla modalità modifica
+          formInputs.forEach(input => {
+            input.readOnly = false;
+            if (input.tagName === 'SELECT') {
+              input.disabled = false;
+            }
+          });
+
+          editBtn.textContent = 'Salva';
+          editBtn.classList.add('save');
+          editBtn.value = 'Salva';
+          cancelBtn.style.display = 'inline-block';
+          successAlert.style.display = 'none';
+        } else {
+          // Salva le modifiche
+          formInputs.forEach(input => {
+            input.readOnly = true;
+            if (input.tagName === 'SELECT') {
+              input.disabled = true;
+            }
+            originalValues[input.id] = input.value; // Aggiorna i valori originali
+          });
+
+          editBtn.textContent = 'Modifica';
+          editBtn.classList.remove('save');
+          cancelBtn.style.display = 'none';
+
+          // Mostra messaggio di successo
+          successAlert.style.display = 'block';
+          setTimeout(() => {
+            successAlert.style.display = 'none';
+          }, 3000);
+        }
+      });
+
+      // Annulla modifiche
+      cancelBtn.addEventListener('click', function () {
+        formInputs.forEach(input => {
+          input.value = originalValues[input.id]; // Ripristina valori originali
+          input.readOnly = true;
+          if (input.tagName === 'SELECT') {
+            input.disabled = true;
+          }
+        });
+
+        editBtn.textContent = 'Modifica';
+        editBtn.classList.remove('save');
+        cancelBtn.style.display = 'none';
+        successAlert.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+
+</html>-->

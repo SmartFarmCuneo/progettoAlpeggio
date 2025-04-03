@@ -1,0 +1,3 @@
+fare controlli sull'aggiungi campo
+mettere a posto la pagina gestione
+fare controllo che quando seleziona le coordinate non si incrocino

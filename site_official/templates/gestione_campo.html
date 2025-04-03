@@ -13,101 +13,189 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
   <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../static/css/gestione_campo.css">
+  <link rel="stylesheet" href="../static/css/aggiungi_campo.css">
+  <style>
+    .button {
+            position: relative;
+            border-radius: 6px;
+            width: 150px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border: 1px solid #cc0000;
+            background-color: #e50000;
+            overflow: hidden;
+            margin-left: 35%;
+        }
+
+        .button,
+        .button__icon,
+        .button__text {
+            transition: all 0.3s;
+        }
+
+        .button .button__text {
+            transform: translateX(35px);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .button .button__icon {
+            position: absolute;
+            transform: translateX(109px);
+            height: 100%;
+            width: 39px;
+            background-color: #cc0000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button .svg {
+            width: 20px;
+        }
+
+        .button:hover {
+            background: #cc0000;
+        }
+
+        .button:hover .button__text {
+            color: transparent;
+        }
+
+        .button:hover .button__icon {
+            width: 148px;
+            transform: translateX(0);
+        }
+
+        .button:active .button__icon {
+            background-color: #b20000;
+        }
+
+        .button:active {
+            border: 1px solid #b20000;
+        }
+  </style>
 </head>
 
 <body>
-    <div class="container">
-        <main>
-          <div class="py-5 text-center">
-            <img class="d-block mx-auto mb-4" src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72" height="57">
-            <h2>Aggiornamento campo</h2>
-            <p class="lead">Pagina per aggiornare i tuoi campi</p>
-          </div>
-          <form class="form" action="/gestioneCampo" method="POST">
-          <div class="col-md-7 col-lg-8 mx-auto">
-            <h4 class="mb-3">Seleziona un campo</h4>
-            <div class="mb-3">
-              <label for="fieldSelect" class="form-label">Seleziona Campo</label>
-              <select class="form-select" id="fieldSelect" required>
+  <div class="container">
+    <main>
+      <div class="py-5 text-center">
+        <img class="d-block mx-auto mb-4"
+          src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72"
+          height="57">
+        <h2>Aggiornamento campo</h2>
+        <p class="lead">Pagina per aggiornare i tuoi campi</p>
+      </div>
+
+      <!-- Primo form per la ricerca -->
+      <form class="form" id="searchForm">
+        <div class="col-md-7 col-lg-8 mx-auto">
+          <h4 class="mb-3">Seleziona un campo</h4>
+          <div class="mb-3">
+            <label for="fieldSelect" class="form-label">Seleziona Campo</label>
+            <div class="d-flex">
+              <select class="form-select me-2" id="fieldSelect" name="sceltaCampoGestione" required>
                 <option value="">Scegli un campo...</option>
-                <option value="campo1">Campo 1</option>
-                <option value="campo2">Campo 2</option>
               </select>
-            </div>
-      
-            <!-- Modulo nascosto all'inizio -->
-            <div id="formSection" class="d-none">
-              <h4 class="mb-3">Dati campo</h4>
-              <form class="needs-validation" novalidate>
-                <div class="row g-3">
-                  <div class="col-6">
-                    <label for="firstName" class="form-label">Nome identificativo</label>
-                    <input type="text" class="form-control" id="firstName" placeholder="" required>
-                    <div class="invalid-feedback">Valid first name is required.</div>
-                  </div>
-                  <div class="col-6">
-                    <label for="geoButton" class="form-label">Geolocalizza il terreno</label>
-                    <button id="geoButton" style="width: 100%; height: 50%; display: flex; justify-content: center; align-items: center;" type="button">
-                      <svg aria-hidden="true" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                      <span class="ms-2">Avvia ricerca</span>
-                    </button>
-                  </div>
-                  <div class="col-12">
-                    <label for="username" class="form-label">Username</label>
-                    <div class="input-group has-validation">
-                      <span class="input-group-text">@</span>
-                      <input type="text" class="form-control" id="username" placeholder="Username" required>
-                      <div class="invalid-feedback">Il tuo username è richiesto.</div>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <label for="email" class="form-label">Email <span class="text-body-secondary">(Optional)</span></label>
-                    <input type="email" class="form-control" id="email" placeholder="you@example.com">
-                    <div class="invalid-feedback">Inserire la mail.</div>
-                  </div>
-                  <div class="col-12">
-                    <label for="livestockCount" class="form-label">Inserire numero di bestiame previsto sul territorio</label>
-                    <input type="number" class="form-control" id="livestockCount" min="0" max="100000" step="1" value="0" required>
-                    <div class="invalid-feedback">Inserire un numero valido.</div>
-                  </div>
-                  <div class="col-md-5">
-                    <label for="country" class="form-label">Stato</label>
-                    <select class="form-select" id="country" required>
-                      <option value="">Scegli....</option>
-                      <option>Italia</option>
-                    </select>
-                    <div class="invalid-feedback">Scegliere un valido stato</div>
-                  </div>
-                  <div class="col-md-4">
-                    <label for="state" class="form-label">Provincia</label>
-                    <select class="form-select" id="state" required>
-                      <option value="">Scegli...</option>
-                      <option>Cuneo</option>
-                    </select>
-                    <div class="invalid-feedback">Scegliere una valida provincia</div>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="zip" class="form-label">CAP</label>
-                    <input type="text" class="form-control" id="zip" required>
-                    <div class="invalid-feedback">Codice CAP richiesto</div>
-                  </div>
-                </div>
-                <hr class="my-4">
-                <div class="form-check">
-                  <input type="checkbox" class="form-check-input" id="save-info">
-                  <label class="form-check-label" for="save-info">Ricorda queste informazioni prossimamente</label>
-                </div>
-                <hr class="my-4">
-                <button class="w-100 btn btn-primary btn-lg" type="submit">Continua e salva</button>
-              </form>
+              <button type="button" id="searchButton" class="btn btn-primary">Ricerca</button>
             </div>
           </div>
-        </form>
-        </main>
-      
+        </div>
+      </form>
+
+      <!-- Secondo form per i dati del campo -->
+      <form class="form" action="/gestioneCampo" method="POST" id="detailForm" style="display: none;">
+        <div class="col-md-7 col-lg-8 mx-auto">
+          <h4 class="mb-3">Dati campo</h4>
+          <input type="hidden" id="campoSelezionato" name="campoSelezionato" value="">
+          
+          <div class="row g-3">
+            <div class="col-6">
+              <label for="deleteButton" class="form-label">Elimina il terreno</label>
+
+              <button id="deleteButton" class="button" type="button" id="deleteButton" name="action-delete">
+                <span class="button__text">Delete</span>
+                <span class="button__icon"><svg class="svg" height="512" viewBox="0 0 512 512" width="512"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <title></title>
+                        <path d="M112,112l20,320c.95,18.49,14.4,32,32,32H348c17.67,0,30.87-13.51,32-32l20-320"
+                            style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px">
+                        </path>
+                        <line style="stroke:#fff;stroke-linecap:round;stroke-miterlimit:10;stroke-width:32px"
+                            x1="80" x2="432" y1="112" y2="112"></line>
+                        <path d="M192,112V72h0a23.93,23.93,0,0,1,24-24h80a23.93,23.93,0,0,1,24,24h0v40"
+                            style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px">
+                        </path>
+                        <line
+                            style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"
+                            x1="256" x2="256" y1="176" y2="400"></line>
+                        <line
+                            style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"
+                            x1="184" x2="192" y1="176" y2="400"></line>
+                        <line
+                            style="fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"
+                            x1="328" x2="320" y1="176" y2="400"></line>
+                    </svg>
+                </span>
+            </button>
+
+            </div>
+            <div class="col-6">
+              <label for="geoButton" class="form-label">Geolocalizza il terreno</label>
+              <a href="{{ url_for('mappa') }}" id="geoButton"
+                style="width: 100%; height: 50%; display: flex; justify-content: center; align-items: center;"
+                type="button">
+                <svg aria-hidden="true" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"
+                    stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="ms-2">Avvia ricerca</span>
+              </a>
+            </div>
+            <div class="col-12">
+              <label for="livestockCount" class="form-label">Inserire numero di bestiame previsto sul territorio</label>
+              <input type="number" class="form-control" id="livestockCount" name="livestockCount" min="0" max="100000" step="1" value="0" required>
+              <div class="invalid-feedback">Inserire un numero valido.</div>
+            </div>
+            <div class="col-md-5">
+              <label for="country" class="form-label">Stato</label>
+              <select class="form-select" id="country" name="country" required>
+                <option value="">Scegli....</option>
+                <option>Italia</option>
+              </select>
+              <div class="invalid-feedback">Scegliere un valido stato</div>
+            </div>
+            <div class="col-md-4">
+              <label for="state" class="form-label">Provincia</label>
+              <select class="form-select" id="state" name="state" required>
+                <option value="">Scegli...</option>
+                <option>Cuneo</option>
+              </select>
+              <div class="invalid-feedback">Scegliere una valida provincia</div>
+            </div>
+            <div class="col-md-3">
+              <label for="zip" class="form-label">CAP</label>
+              <input type="text" class="form-control" id="zip" name="zip" required>
+              <div class="invalid-feedback">Codice CAP richiesto</div>
+            </div>
+          </div>
+          <hr class="my-4">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="save-info" name="save-info">
+            <label class="form-check-label" for="save-info">Ricorda queste informazioni prossimamente</label>
+          </div>
+          <hr class="my-4">
+          <button class="w-100 btn btn-primary btn-lg" type="submit" name="action-save" value="salva">Continua e salva</button>
+        </div>
+      </form>
+    </main>
+
     <footer class="my-5 pt-5 text-body-secondary text-center text-small">
       <p class="mb-1">&copy; 2017–2024 Company Name</p>
       <ul class="list-inline">
@@ -117,16 +205,62 @@
       </ul>
     </footer>
   </div>
-  
+
   <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    (function () {
-      'use strict';
+    document.addEventListener('DOMContentLoaded', function () {
+      // Elementi del DOM
+      const fieldSelect = document.getElementById('fieldSelect');
+      const searchButton = document.getElementById('searchButton');
+      const detailForm = document.getElementById('detailForm');
+      const campoSelezionato = document.getElementById('campoSelezionato');
 
-      // Seleziona tutti i form con la classe 'needs-validation'
-      var forms = document.querySelectorAll('.needs-validation');
+      // Funzione per mostrare il form dei dettagli
+      function showDetailForm() {
+        if (fieldSelect.value) {
+          // Imposta il valore del campo selezionato nel form dei dettagli
+          campoSelezionato.value = fieldSelect.value;
+          // Mostra il form dei dettagli
+          detailForm.style.display = 'block';
+          // Qui potresti anche aggiungere una chiamata AJAX per caricare i dettagli del campo selezionato
+        } else {
+          alert('Seleziona un campo prima di proseguire.');
+        }
+      }
 
-      // Aggiunge un listener di submit per ciascun form
+      // Listener per il pulsante di ricerca
+      searchButton.addEventListener('click', showDetailForm);
+
+      // Funzione per caricare i campi tramite l'API
+      function caricaCampi() {
+        fetch('/api/numCampi')
+          .then(response => response.json())  // Supponiamo che la risposta sia un numero intero
+          .then(numCampi => {
+            console.log(numCampi);  // Mostra il numero ricevuto
+            if (numCampi > 0) {
+              // Svuota la select prima di aggiungere nuove opzioni
+              fieldSelect.innerHTML = '<option value="">Scegli un campo...</option>';
+
+              // Aggiungi le opzioni ai campi ricevuti
+              for (let i = 0; i < numCampi; i++) {
+                const option = document.createElement('option');
+                option.value = "campo" + (i + 1);  // Aggiungi un campo con un numero
+                option.textContent = "Campo " + (i + 1);
+                fieldSelect.appendChild(option);
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Errore nel caricamento dei campi:', error);
+            fieldSelect.innerHTML = '<option value="">Errore nel caricamento dei campi</option>';
+          });
+      }
+
+      // Carica i campi all'avvio della pagina
+      caricaCampi();
+      
+      // Validation functionality
+      const forms = document.querySelectorAll('.needs-validation');
       Array.from(forms).forEach(function (form) {
         form.addEventListener('submit', function (event) {
           if (!form.checkValidity()) {
@@ -136,21 +270,8 @@
           form.classList.add('was-validated');
         }, false);
       });
-    })();
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const fieldSelect = document.getElementById('fieldSelect');
-      const formSection = document.getElementById('formSection');
-  
-      fieldSelect.addEventListener('change', function () {
-        if (this.value) {
-          formSection.classList.remove('d-none'); // Mostra il form se viene selezionato un campo
-        } else {
-          formSection.classList.add('d-none'); // Nascondi il form se non c'è nulla selezionato
-        }
-      });
     });
   </script>
 </body>
+
 </html>
