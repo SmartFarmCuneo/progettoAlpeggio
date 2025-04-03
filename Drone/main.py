@@ -5,6 +5,10 @@ from threading import Thread
 from object_detection import detect_animals
 from movimento import DroneController, calcola_perimetro_da_coordinate
 
+def connetti_wifi(tello, ssid, password):
+    print(f"Connettendo a {ssid}...")
+    tello.connect_wifi(ssid, password)
+    print("Connesso al Wi-Fi con successo!")
 
 class VideoDrone(Thread):
     def __init__(self, tello):
@@ -50,6 +54,8 @@ def main():
     time.sleep(0.5)
 
     try:
+        # Connetti il drone alla rete Wi-Fi
+        connetti_wifi(tello, "iPhone", "244466666")
         tello.connect()
         print("Batteria:", tello.get_battery())
         tello.streamon()  # Avvia lo streaming video

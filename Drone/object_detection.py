@@ -34,7 +34,8 @@ embedding_model = tf.keras.applications.ResNet50(weights=None, include_top=False
 embedding_model.load_weights('./models/resnet50_weights.h5')
 
 # Caricamento del modello fallback "cowspots/3"
-cowspots_model = get_model(model_id="cowspots/3")
+# rf_zVOZSK5PCSUmyGNnkkbptqlf4XN2  <-- For use exclusively with inferencejs, the client-side library.
+cowspots_model = get_model(model_id="cowspots/3", api_key="QhPX2OgmIjlrhcDdpwDC")
 
 # Inizializza annotatori per Supervision (non utilizzati nella logica modificata del fallback)
 bounding_box_annotator = sv.BoxAnnotator()
