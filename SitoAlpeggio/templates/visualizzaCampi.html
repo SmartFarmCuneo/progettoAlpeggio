@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="auto">
+  <head>
+    <script src="../static/assets/js/color-modes.js"></script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta
+      name="author"
+      content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
+    />
+    <meta name="generator" content="Hugo 0.122.0" />
+    <title>Agritech - Visualizza Campi</title>
+
+    <link
+      rel="canonical"
+      href="https://getbootstrap.com/docs/5.3/examples/jumbotron/"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"
+    />
+    <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="../static/css/style.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+      <div class="navbar-top container">
+        <a href="#" class="logo">Agritech</a>
+        <div class="user-nav">
+          <div class="user-info">
+            <img
+              src="/static/image/profilo.png"
+              alt="Profilo"
+              class="user-avatar-img"
+            />
+            <a href="/templates/profilo.html" class="profile-link"
+              >{{user['username']}}</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-menu container">
+        <ul class="nav-links">
+          <li class="nav-link"><a href="#home">Home</a></li>
+          <li class="nav-link"><a href="#about">Chi Siamo</a></li>
+          <li class="nav-link"><a href="#services">Servizi</a></li>
+          <li class="nav-link"><a href="#products">Prodotti</a></li>
+          <li class="nav-link"><a href="#blog">Blog</a></li>
+          <li class="nav-link"><a href="#contact">Contatti</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <form method="post" action="/visualizzaCampi">
+      <main>
+        <div class="container py-4">
+          <header
+            class="d-flex justify-content-between align-items-center py-3 mb-3 border-bottom"
+            style="border-radius: 12px;background-color: #2d3748;padding: 1rem 1.5rem;"
+            >
+            <h3>Visualizza i campi registrati</h3>
+          </header>
+          <div class="campi"></div>
+          <footer class="pt-3 mt-4 text-body-secondary border-top">
+            &copy; 2024
+          </footer>
+        </div>
+      </main>
+    </form>
+  </body>
+  <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Carica dinamicamente Leaflet se non è già definito
+      if (typeof L === "undefined") {
+        // Crea link per CSS di Leaflet
+        const leafletCSS = document.createElement("link");
+        leafletCSS.rel = "stylesheet";
+        leafletCSS.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(leafletCSS);
+
+        // Carica script di Leaflet
+        const leafletScript = document.createElement("script");
+        leafletScript.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        leafletScript.onload = initializeApp; // Inizializza l'app dopo il caricamento di Leaflet
+        document.head.appendChild(leafletScript);
+      } else {
+        // Se Leaflet è già caricato, inizia subito
+        initializeApp();
+      }
+
+      function initializeApp() {
+        const containerCampi = document.querySelector(".campi");
+
+        // Funzione per caricare i campi tramite l'API
+        function caricaCampi() {
+          fetch("/api/numCampi")
+            .then((response) => response.json())
+            .then((infoCampi) => {
+              //console.log(infoCampi);
+              if (infoCampi > 0) {
+                containerCampi.innerHTML = "";
+                caricaInfoCampi();
+              } else {
+                // Messaggio se non ci sono campi
+                containerCampi.innerHTML =
+                  '<div class="p-3 text-center">Nessun campo disponibile.</div>';
+              }
+            })
+            .catch((error) => {
+              console.error("Errore nel caricamento dei campi:", error);
+              containerCampi.innerHTML =
+                '<div class="p-3 text-center">Errore nel caricamento dei campi.</div>';
+            });
+        }
+
+        function caricaInfoCampi() {
+          fetch("/api/infoCampi")
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("ciao");
+              console.log(data);
+
+              const campi = data.split("|").filter((el) => el.trim() !== ""); // Split delle info campi
+              campi.forEach((campo, index) => {
+                const [coordinate, comune, numBestiame] = campo.split("/");
+                let coordinateComplete = coordinate.split("(").join("");
+                coordinateComplete = coordinateComplete.split(")").join("");
+                const coordinateFinale = coordinateComplete.split(",");
+                console.log(coordinateFinale);
+
+                // Creazione dell'elenco numerato delle coordinate
+                let coordinateList = '<ol class="coordinate-list">';
+                for (let i = 0; i < coordinateFinale.length; i += 2) {
+                  if (coordinateFinale[i] && coordinateFinale[i + 1]) {
+                    coordinateList += `<li>Lat: ${coordinateFinale[
+                      i
+                    ].trim()}, Lng: ${coordinateFinale[i + 1].trim()}</li>`;
+                  }
+                }
+                coordinateList += "</ol>";
+
+                const mapId = `map-${index}`;
+
+                const campoHTML = `
+                        <div class="p-5 mb-4 bg-body-tertiary rounded-3">
+                            <div class="row align-items-center">
+                                <!-- Colonna sinistra: Testo -->
+                                <div class="col-md-6">
+                                    <h2>Campo ${index + 1} - ${comune}</h2>
+                                    <p>Numero bestiame: ${numBestiame}</p>
+                                    <div class="mt-2">
+                                        <h5>Coordinate:</h5>
+                                        ${coordinateList}
+                                    </div>
+                                    <button class="btn btn-outline-secondary mt-3" type="button">Dettagli</button>
+                                </div>
+                                <!-- Colonna destra: Riquadro -->
+                                <div class="col-md-6">
+                                    <div id="${mapId}" class="h-100 p-5 bg-body-tertiary border rounded-3" style="min-height: 250px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                containerCampi.innerHTML += campoHTML;
+
+                // Dopo aver aggiunto il campo al DOM, inizializza la mappa
+                setTimeout(() => {
+                  initializeMap(mapId, coordinateFinale);
+                }, 100);
+              });
+            })
+            .catch((error) => {
+              console.error(
+                "Errore nel caricamento delle info dei campi:",
+                error
+              );
+              containerCampi.innerHTML =
+                '<div class="p-3 text-center">Errore nel caricamento delle informazioni.</div>';
+            });
+        }
+
+        // Funzione per inizializzare la mappa Leaflet e disegnare il poligono
+        function initializeMap(mapId, coordinates) {
+          const mapElement = document.getElementById(mapId);
+
+          const latlngs = [];
+          for (let i = 0; i < coordinates.length; i += 2) {
+            if (coordinates[i] && coordinates[i + 1]) {
+              // Supponendo che le coordinate siano in formato lat,lng
+              latlngs.push(
+                L.latLng(
+                  parseFloat(coordinates[i].trim()),
+                  parseFloat(coordinates[i + 1].trim())
+                )
+              );
+            }
+          }
+
+          if (latlngs.length < 3) {
+            console.error(
+              `Non ci sono abbastanza coordinate valide per il campo ${mapId}`
+            );
+            mapElement.innerHTML =
+              '<div class="text-center">Coordinate insufficienti per disegnare il campo</div>';
+            return;
+          }
+
+          // Inizializza la mappa
+          const map = L.map(mapId).setView(
+            [latlngs[0].lat, latlngs[0].lng],
+            13
+          );
+
+          // Aggiungi il layer della mappa
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          }).addTo(map);
+
+          // Crea il layer per gli elementi disegnati
+          const drawnItems = new L.FeatureGroup().addTo(map);
+
+          // Crea e aggiungi il poligono
+          const polygon = L.polygon(latlngs, { color: "blue" }).addTo(
+            drawnItems
+          );
+
+          // Adatta la vista della mappa ai limiti del poligono
+          map.fitBounds(polygon.getBounds());
+        }
+
+        caricaCampi();
+      }
+    });
+  </script>
+</html>

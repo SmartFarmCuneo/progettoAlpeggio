@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="auto">
+  <head>
+    <script src="../static/assets/js/color-modes.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta
+      name="author"
+      content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
+    />
+    <meta name="generator" content="Hugo 0.122.0" />
+    <title>Agritech - Aggiunta campo</title>
+    <link
+      rel="canonical"
+      href="https://getbootstrap.com/docs/5.3/examples/checkout/"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"
+    />
+    <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../static/css/style.css" />
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+      <div class="navbar-top container">
+        <a href="#" class="logo">Agritech</a>
+        <div class="user-nav">
+          <div class="user-info">
+            <img
+              src="/static/image/profilo.png"
+              alt="Profilo"
+              class="user-avatar-img"
+            />
+            <a href="/templates/profilo.html" class="profile-link"
+              >{{user['username']}}</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-menu container">
+        <ul class="nav-links">
+          <li class="nav-link"><a href="#home">Home</a></li>
+          <li class="nav-link"><a href="#about">Chi Siamo</a></li>
+          <li class="nav-link"><a href="#services">Servizi</a></li>
+          <li class="nav-link"><a href="#products">Prodotti</a></li>
+          <li class="nav-link"><a href="#blog">Blog</a></li>
+          <li class="nav-link"><a href="#contact">Contatti</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container">
+      <main>
+        <div class="py-5 text-center">
+          <img
+            class="d-block mx-auto mb-4"
+            src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
+            alt=""
+            width="72"
+            height="57"
+          />
+          <h2>Aggiunta campo</h2>
+          <p class="lead">Pagina per inizializzazione del nuovo campo</p>
+        </div>
+        <div class="col-md-7 col-lg-8 mx-auto">
+          <h4 class="mb-3">Dati campo</h4>
+          <form class="form" action="/aggiungiCampo" method="POST">
+            <div class="row g-3">
+              <div class="col-6">
+                <label for="geoButton" class="form-label"
+                  >Geolocalizza il terreno</label
+                >
+                <a
+                  href="{{ url_for('mappa') }}"
+                  id="geoButton"
+                  style="
+                    width: 100%;
+                    height: 50%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                  "
+                  type="button"
+                >
+                  <svg
+                    aria-hidden="true"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <span class="ms-2">Avvia ricerca</span>
+                </a>
+              </div>
+              <div class="col-12">
+                <label for="livestockCount" class="form-label"
+                  >Inserire numero di bestiame previsto sul territorio</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="livestockCount"
+                  min="0"
+                  max="100000"
+                  step="1"
+                  value="0"
+                  name="num_bestiame"
+                  required
+                />
+                <div class="invalid-feedback">Inserire un numero valido.</div>
+              </div>
+              <div class="col-md-5">
+                <label for="country" class="form-label">Provincia</label>
+                <select
+                  class="form-select"
+                  name="provincia"
+                  id="select_provincia"
+                  required
+                >
+                  <option value="">Scegli...</option>
+                </select>
+                <div class="invalid-feedback">Scegliere un valido stato</div>
+              </div>
+              <div class="col-md-4">
+                <label for="state" class="form-label">Comune</label>
+                <select
+                  class="form-select"
+                  id="select_comune"
+                  name="comune"
+                  required
+                >
+                  <option value="">Scegli...</option>
+                </select>
+                <div class="invalid-feedback">
+                  Scegliere una valida provincia
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label for="zip" class="form-label">CAP</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="zip"
+                  name="cap"
+                  required
+                />
+                <div class="invalid-feedback">Codice CAP richiesto</div>
+              </div>
+            </div>
+            <hr class="my-4" />
+            <div class="form-check">
+              <input type="checkb ox" class="form-check-input" id="save-info" />
+              <label class="form-check-label" for="save-info"
+                >Ricorda queste informazioni prossimamente</label
+              >
+            </div>
+            <hr class="my-4" />
+            <button class="w-100 btn btn-primary btn-lg" type="submit">
+              Continua e salva
+            </button>
+          </form>
+        </div>
+      </main>
+      <footer class="my-5 pt-5 text-body-secondary text-center text-small">
+        <p class="mb-1">&copy; 2017–2024 Company Name</p>
+        <ul class="list-inline">
+          <li class="list-inline-item"><a href="#">Privacy</a></li>
+          <li class="list-inline-item"><a href="#">Terms</a></li>
+          <li class="list-inline-item"><a href="#">Support</a></li>
+        </ul>
+      </footer>
+    </div>
+
+    <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const selectProvincia = document.getElementById("select_provincia");
+        const selectComune = document.getElementById("select_comune");
+
+        // URL dell'API per ottenere le province
+        const apiUrl1 = "/api/get_provincia";
+
+        // Fetch per ottenere le province
+        fetch(apiUrl1)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Errore HTTP! Stato: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Controlla se ci sono province nel JSON
+            if (data.province && Array.isArray(data.province)) {
+              // Pulisce eventuali opzioni esistenti (escluso il primo "Scegli...")
+              selectProvincia.innerHTML = '<option value="">Scegli...</option>';
+
+              // Popola la select con le province ricevute
+              data.province.forEach((provincia) => {
+                let option = document.createElement("option");
+                option.value = provincia.sigla_provincia; // Usa la sigla della provincia come valore
+                option.textContent = provincia.denominazione_provincia; // Usa il nome della provincia
+                selectProvincia.appendChild(option);
+              });
+            } else {
+              console.error("Formato JSON non valido:", data);
+            }
+          })
+          .catch((error) => {
+            console.error("Errore nel recupero delle province:", error);
+          });
+
+        // Aggiungi un ascoltatore di eventi per quando l'utente seleziona una provincia
+        selectProvincia.addEventListener("change", function () {
+          const provinciaSelezionata = selectProvincia.value;
+
+          // Se non è stata selezionata una provincia, esci dalla funzione
+          if (!provinciaSelezionata) {
+            selectComune.innerHTML = '<option value="">Scegli...</option>';
+            return;
+          }
+
+          // URL dell'API per ottenere i comuni della provincia selezionata
+          const apiUrl2 = `/api/get_comune?provincia=${provinciaSelezionata}`;
+
+          // Fetch per ottenere i comuni della provincia selezionata
+          fetch(apiUrl2)
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`Errore HTTP! Stato: ${response.status}`);
+              }
+              return response.json();
+            })
+            .then((data) => {
+              // Controlla se ci sono comuni nel JSON
+              if (data.comuni && Array.isArray(data.comuni)) {
+                // Pulisce eventuali opzioni esistenti (escluso il primo "Scegli...")
+                selectComune.innerHTML = '<option value="">Scegli...</option>';
+
+                // Popola la select con i comuni ricevuti
+                data.comuni.forEach((comune) => {
+                  let option = document.createElement("option");
+                  option.value = comune.codice_istat; // Imposta il valore come il codice ISTAT del comune
+                  option.textContent = comune.denominazione_ita; // Mostra il nome del comune
+                  selectComune.appendChild(option);
+                });
+              } else {
+                console.error("Formato JSON non valido:", data);
+                selectComune.innerHTML =
+                  '<option value="">Nessun comune disponibile</option>';
+              }
+            })
+            .catch((error) => {
+              console.error("Errore nel recupero dei comuni:", error);
+              selectComune.innerHTML =
+                '<option value="">Errore nel recupero dei comuni</option>';
+            });
+        });
+      });
+    </script>
+
+    <script>
+      (function () {
+        "use strict";
+
+        // Seleziona tutti i form con la classe 'needs-validation'
+        var forms = document.querySelectorAll(".needs-validation");
+
+        // Aggiunge un listener di submit per ciascun form
+        Array.from(forms).forEach(function (form) {
+          form.addEventListener(
+            "submit",
+            function (event) {
+              if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+              form.classList.add("was-validated");
+            },
+            false
+          );
+        });
+      })();
+    </script>
+  </body>
+</html>
