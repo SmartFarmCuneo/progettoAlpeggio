@@ -48,7 +48,7 @@
 
         <div id="registrati-section" class="col-md-10 col-lg-8 mx-auto">
           <h4 class="mb-3">Dati personali</h4>
-          <form class="form" action="/create_account" method="POST">
+          <form class="form" action="/registrati" method="POST">
             <div class="row g-3">
               <div class="col-6">
                 <label for="firstName" class="form-label">Nome</label>
@@ -107,17 +107,18 @@
                 />
               </div>
               <!-- Data di nascita -->
+              <h4 class="mb-3">Data di nascita</h4>
               <div class="col-md-4">
-                <label for="birthYear" class="form-label">Anno</label>
+                <label for="birthDay" class="form-label">Giorno</label>
                 <select
                   class="form-select"
-                  id="birthYear"
-                  name="birthYear"
+                  id="birthDay"
+                  name="birthDay"
                   required
                 >
                   <option value="">Scegli...</option>
                   <script>
-                    for (let i = 1920; i <= new Date().getFullYear(); i++) {
+                    for (let i = 1; i <= 31; i++) {
                       document.write(`<option>${i}</option>`);
                     }
                   </script>
@@ -138,23 +139,24 @@
                     }
                   </script>
                 </select>
-              </div>
+              </div>              
               <div class="col-md-4">
-                <label for="birthDay" class="form-label">Giorno</label>
+                <label for="birthYear" class="form-label">Anno</label>
                 <select
                   class="form-select"
-                  id="birthDay"
-                  name="birthDay"
+                  id="birthYear"
+                  name="birthYear"
                   required
                 >
                   <option value="">Scegli...</option>
                   <script>
-                    for (let i = 1; i <= 31; i++) {
+                    for (let i = 1920; i <= new Date().getFullYear(); i++) {
                       document.write(`<option>${i}</option>`);
                     }
                   </script>
                 </select>
               </div>
+
             </div>
             <hr class="my-4" />
             <div class="col-12">
@@ -183,7 +185,7 @@
             </button>
             <hr class="my-4" />
             <span class="span d-block text-center"
-              >Hai già un account? <a href="./login.html">Login</a></span
+              >Hai già un account? <a href="/login">Login</a></span
             >
           </form>
         </div>

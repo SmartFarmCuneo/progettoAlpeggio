@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home - Agritech</title>
-    <link rel="stylesheet" href="/static/css/style.css">  
-</head>
-<body>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
     <!-- NAVBAR -->
     <nav class="navbar" role="navigation">
       <div class="navbar-top container">
         <a href="#" class="logo">Agritech</a>
         <div class="auth-buttons">
-          <a href="#" class="auth-btn sign-in">Sign In</a>
-          <a href="/create_account" class="auth-btn sign-up">Sign Up</a>
+          <a href="/login" class="auth-btn sign-in">Sign In</a>
+          <a href="/registrati" class="auth-btn sign-up">Sign Up</a>
         </div>
       </div>
 
@@ -29,20 +29,28 @@
       </div>
     </nav>
 
+    <footer class="my-5 pt-5 text-center text-small">
+      <p class="mb-1">&copy; 2017–2024 Company Name</p>
+      <ul class="list-inline">
+        <li class="list-inline-item"><a href="#">Privacy</a></li>
+        <li class="list-inline-item"><a href="#">Terms</a></li>
+        <li class="list-inline-item"><a href="#">Support</a></li>
+      </ul>
+    </footer>
 
     <script>
-        // Add smooth scrolling effect
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                }
+      // Add smooth scrolling effect
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
             });
+          }
         });
+      });
     </script>
-</body>
+  </body>
 </html>

@@ -23,6 +23,28 @@ def get_db_connection():
     )
 ###############################################################################
 
+def get_user_data(username):
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        return cursor.fetchone()
+    conn.close()
+
+########################### Context Processor #########################
+@app.context_processor
+def inject_user():
+    token = request.cookies.get("token")
+    if not token:
+        return {"user": None}
+    try:
+        decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        current_user = decoded["user"]
+        user = get_user_data(current_user)
+        return {"user": user}
+    except Exception:
+        return {"user": None}
+########################################################################
+
 ########################### Login-Create account #########################
 
 def hash_password(psw):
@@ -34,6 +56,7 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        remember_me = request.form.get("rememberMe") is not None
         psw = hash_password(password)
         
         conn = get_db_connection()
@@ -45,15 +68,18 @@ def login():
                 conn.close()
         
         if p_user and p_user["password_hash"] == psw:
-            response = make_response(redirect(url_for("prova")))
-            return generate_and_set_token(response, username)
+            response = make_response(redirect(url_for("home")))
+            if remember_me:
+                return generate_and_set_token(response, username, durata=24*7)
+            else:
+                return generate_and_set_token(response, username)
         else:
             error = "Nome utente o password errati."
     
     return render_template("login.html", error=error)
 
-@app.route('/create_account', methods=['GET', 'POST'])
-def create_account():
+@app.route('/registrati', methods=['GET', 'POST'])
+def registrati():
     error = ""
     if request.method == 'POST':
         nome = request.form['nome']
@@ -98,11 +124,11 @@ def create_account():
 def generate_token(username):
     payload = {
         "user": username,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        "exp": datetime.datetime.now() + datetime.timedelta(hours=1)
     }
     return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
-def generate_and_set_token(response, username):
+def generate_and_set_token(response, username, durata = 1):
     token = generate_token(username)
     response.set_cookie("token", token, max_age=3600, httponly=True)
     return response
@@ -135,23 +161,19 @@ def storici(current_user):
     if request.method == 'POST':
         if request.form.get('action-ricercaSt') == 'Ricerca':
             campo_selezionato = request.form["selezionato"]
-            
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT * FROM data d WHERE id_t = %s AND id_u = %s",
                     (session[f"{campo_selezionato}"], session["id"])
                 )
                 risultato = cursor.fetchall()
-                print(risultato)
-
-    return render_template('storici.html', username=current_user, info=risultato, campo = campo_selezionato)
+    return render_template('storici.html', info=risultato, campo=campo_selezionato)
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
 @token_required
 def aggiungiCampo(current_user):
     error = ""
-    session['aggiungiCampo'] = False #usato per il reindirizzamento dopo aver messo le coordinate
-    
+    session['aggiungiCampo'] = False
     coordinate = session.get('coordinate', None)
     if coordinate is None:
         error = "Le coordinate non sono disponibili."
@@ -167,12 +189,12 @@ def aggiungiCampo(current_user):
             connection = get_db_connection()
             with connection.cursor() as cursor:
                 cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
-                user = cursor.fetchone()
+                user_db = cursor.fetchone()
                 
-                if user is None:
+                if user_db is None:
                     error = "Utente non trovato."
                     return render_template('aggiungi_campo.html', error=error)
-                user_id = user["id_u"]
+                user_id = user_db["id_u"]
                 
                 cursor.execute(
                     "INSERT INTO fields (id_user, provincia, comune, CAP, num_bestiame, coordinate) "
@@ -180,7 +202,7 @@ def aggiungiCampo(current_user):
                     (user_id, provincia, comune, cap, num_bestiame, coordinate)
                 )
                 connection.commit()
-                return redirect(url_for('prova'))
+                return redirect(url_for('home'))
         except Exception as e:
             error = f"Errore del database: {str(e)}"
             print("Errore durante l'inserimento:", e)
@@ -193,7 +215,6 @@ def aggiungiCampo(current_user):
 def getCoordinate():
     coordinate = request.form.get('coordinate')
     print(f'Coordinate ricevute: {coordinate}')
-    # Salvataggio delle coordinate nella sessione
     session['coordinate'] = coordinate
     if session['gestioneCampo'] == True:
         session['gestioneCampo'] = False
@@ -203,40 +224,26 @@ def getCoordinate():
         return render_template("aggiungi_campo.html")
 
 @app.route('/mappa', methods=['GET', 'POST'])
-def mappa():
+@token_required
+def mappa(current_user):
     return render_template('mappaOff.html')
 
 @app.route('/mappaManuale', methods=['GET', 'POST'])
-def mappaManuale():
-    conn = get_db_connection()
+@token_required
+def mappaManuale(current_user):
     return render_template('mappaManuale.html')
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
 def gestioneCampo(current_user):
-    session["gestioneCampo"] = True #usato per il reindirizzamento dopo aver messo le coordinate
+    session["gestioneCampo"] = True
     if request.method == 'POST':            
-        # Controllo sul tasto di salvataggios
         if 'action-save' in request.form:
-            coordinate = session['coordinate', None]
+            coordinate = session.get('coordinate')
             campo_selezionato = request.form.get('campoSelezionato')
-            """ivestock_count = request.form.get('livestockCount')
-            country = request.form.get('country')"""
             state = request.form.get('state')
             zip_code = request.form.get('zip')
-            
-            """print(f"Dati ricevuti dal form nascosto:")
-            print(f"Campo selezionato: {campo_selezionato}")
-            print(f"Numero bestiame: {livestock_count}")
-            print(f"Stato: {country}")"""
-            print(coordinate)
-            print(f"Campo selezionato: {campo_selezionato}")
-            print(session[f"{campo_selezionato}"])
-            print(f"Provincia: {state}")
-            print(f"CAP: {zip_code}")
-            
-            # Qui puoi salvare i dati nel database
-            # ...
+            print(coordinate, campo_selezionato, state, zip_code)
     return render_template('gestione_campo.html')
 
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
@@ -244,9 +251,6 @@ def gestioneCampo(current_user):
 def visualizzaCampi(current_user):
     return render_template('visualizzaCampi.html')
 
-"""@app.route('/guidaComandata', methods=['GET', 'POST'])
-def guidaComandata():
-    return render_template('guida_comandata.html')"""
 ################################################################
 
 ################### PROFILO #################################
@@ -254,18 +258,42 @@ def guidaComandata():
 @token_required
 def profilo(current_user):
     conn = get_db_connection()
-    
+    user = None
     with conn.cursor() as cursor:
+        # Recupera i dati dell'utente
         cursor.execute("SELECT * FROM users WHERE username = %s", (current_user,))
         user = cursor.fetchone()
-            
+
     if request.method == 'POST':
-        print("ciao")
         if request.form.get('action-salvataggio') == "Salva":
-            print("ei")
+            # Prendi tutti i campi dal form
             nome = request.form['nome']
-            print(nome)
+            cognome = request.form['cognome']
+            email = request.form['email']
+            telefono = request.form['telefono']
+            cod_fiscale = request.form['cod_fiscale']
+            dataDiNascita = request.form['DataDiNascita']  # deve corrispondere al nome del campo nel DB
+
+            # Aggiorna il database
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET nome=%s,
+                        cognome=%s,
+                        email=%s,
+                        telefono=%s,
+                        cod_fiscale=%s,
+                        DataDiNascita=%s
+                    WHERE username=%s
+                """, (nome, cognome, email, telefono, cod_fiscale, dataDiNascita, current_user))
+                conn.commit()
+
+            # Redirect con messaggio di successo
+            return redirect(url_for('profilo') + '?saved=true')
+
+    # Render del template con i dati aggiornati
     return render_template('profilo.html', user=user)
+
 
 #############################################################
 
@@ -273,11 +301,8 @@ def profilo(current_user):
 def get_campi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # Ottieni tutti i campi dell'utente
     cursor.execute("SELECT COUNT(*) FROM fields f, users u WHERE f.id_user = u.id_u AND u.username = %s", (current_user,))
     num_campi = cursor.fetchone()['COUNT(*)']
-    
     conn.close()
     return num_campi
 
@@ -295,7 +320,6 @@ def get_info_campi(current_user):
         info = ""
         for i in range(0, len(risultato)):
             info += str(risultato[i]["coordinate"]) + "/" + str(risultato[i]["comune"]) + "/" + str(risultato[i]["num_bestiame"]) + "|"
-        print(info)
         return info
     
 @app.route("/api/infoCampi")
@@ -308,7 +332,6 @@ def api_info_campi(current_user):
 def get_provincia():
     with open("./static/json/gi_province.json", "r", encoding="utf-8") as file:
         data = json.load(file)
-
     province = data.get("province", [])
     return jsonify({"province": province})
 
@@ -324,43 +347,36 @@ def get_comune():
 ########################################################################################
 
 #############################Avvio del drone#######################################
-
 def avvioDrone(campo):
-    prova1_path = os.path.join(os.getcwd(), 'prova1.py')  # Percorso assoluto
+    home1_path = os.path.join(os.getcwd(), 'home1.py')
     try:
-        # Passa il parametro 'campo' come argomento alla riga di comando
-        result = subprocess.run(['python', prova1_path, str(campo)], capture_output=True, text=True, check=True)
+        result = subprocess.run(['python', home1_path, str(campo)], capture_output=True, text=True, check=True)
         output = result.stdout.strip() if result.stdout else "(Nessun output ricevuto)"
         print("Output ricevuto:", output)
         if output == "sono connesso":
             print("Messaggio ricevuto correttamente!")
     except subprocess.CalledProcessError as e:
-        print("Errore durante l'esecuzione di prova1.py:", e)
+        print("Errore durante l'esecuzione di home1.py:", e)
         print("Stdout:", e.stdout)
         print("Stderr:", e.stderr)
-
 ###################################################################################
 
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     cursor.execute("SELECT f.id_t FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user", (current_user,))
     risultato = cursor.fetchall()
     id_array = [row['id_t'] for row in risultato] 
-
     cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
     user_id = cursor.fetchone()['id_u'] 
     session['id'] = user_id
-
-    #assocciazione del id del campo al numero crescente partendo da 1
     if get_campi(current_user) > 0:
         for i, e in enumerate(id_array):
             session[f"campo{i+1}"] = e
 
 @app.route('/', methods=['GET', 'POST'])
 @token_required
-def prova(current_user): 
+def home(current_user): 
     associazioneSessionCampi(current_user)
     if request.method == 'POST':
         resp = None
@@ -372,29 +388,30 @@ def prova(current_user):
             resp = make_response(redirect(url_for('gestioneCampo')))
         if request.form.get('action-visCampi') == "Visualizza i tuoi campi":
             resp = make_response(redirect(url_for('visualizzaCampi')))
-        #if request.form.get('action-guidaComandata') == "Guida Comandata":
-            #resp = make_response(redirect(url_for('guidaComandata')))
         if request.form.get('action-profilo') == "Profilo":
             resp = make_response(redirect(url_for('profilo')))
         if request.form.get('action1') == "log-out":
             resp = make_response(redirect(url_for('index')))
             resp.delete_cookie('token')
         
-        #Avvio del drone con acquisizione del campo selezionato
         campo_value = request.form.get('action_ricerca_drone')
         if campo_value and campo_value.startswith("Campo "):
-            numero_campo = campo_value.split(" ")[1]  # Estrae il numero del campo
+            numero_campo = campo_value.split(" ")[1]
             id_campo = session[f'campo{numero_campo}']
-            # Avvia il drone passando il numero del campo
             avvioDrone(id_campo)
-            # Reindirizza alla stessa funzione prova
-            resp = make_response(redirect(url_for('prova')))
-            
+            resp = make_response(redirect(url_for('home')))
         return resp
     
-    # Se c'è un campo corrente nella sessione, puoi utilizzarlo per mostrare informazioni specifiche
     campo_corrente = session.get('campo_corrente', None)
-    return render_template('prova.html', username=current_user, campo_corrente=campo_corrente)
+    return render_template('home.html', campo_corrente=campo_corrente)
+
+@app.route('/logout')
+def logout():
+    resp = make_response(redirect(url_for('login')))
+    resp.delete_cookie("token")
+    session.clear()
+    return resp
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='localhost')

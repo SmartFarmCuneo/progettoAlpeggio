@@ -19,7 +19,9 @@
               class="user-avatar-img"
             />
             <span>{{user['username']}}</span>
-            <button class="logout-btn">Logout</button>
+            <form action="/logout" method="POST">
+              <button class="logout-btn">Logout</button>
+            </form>
           </div>
         </div>
       </div>
@@ -59,7 +61,7 @@
                   id="edit-btn"
                   class="edit-mode-toggle"
                   name="action-salvataggio"
-                  value="Salva"
+                  value="Modifica"
                 >
                   Modifica
                 </button>
@@ -140,9 +142,9 @@
                   <input
                     type="date"
                     id="data-nascita"
-                    name="dataDiNascita"
+                    name="DataDiNascita"
                     class="form-control"
-                    value="{{user['dataDiNascita']}}"
+                    value="{{user['DataDiNascita']}}"
                     readonly
                   />
                 </div>
@@ -163,16 +165,6 @@
                     readonly
                   />
                 </div>
-                <!--
-              <div class="form-group">
-                <label class="form-label" for="lingua">Lingua</label>
-                <select id="lingua" name="lingua" class="form-control" disabled>
-                  <option value="it" selected>Italiano</option>
-                  <option value="en">Inglese</option>
-                  <option value="fr">Francese</option>
-                  <option value="de">Tedesco</option>
-                </select>
-              </div>-->
               </div>
 
               <div class="form-row">
@@ -237,7 +229,7 @@
 
         // Attiva modalità modifica
         editBtn.addEventListener("click", function () {
-          if (editBtn.textContent === "Modifica") {
+          if (editBtn.value === "Modifica") {
             // Passa alla modalità modifica
             formInputs.forEach((input) => {
               if (input.id !== "password") {
@@ -256,7 +248,7 @@
             successAlert.style.display = "none";
           } else {
             // Salva le modifiche
-            actionInput.value = "save"; // Imposta il valore per l'azione di salvataggio
+            actionInput.value = "Salva"; // Imposta il valore per l'azione di salvataggio
             profileForm.submit(); // Invia il form
           }
         });
