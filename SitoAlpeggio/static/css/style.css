@@ -8,6 +8,11 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, "Arial", sans-serif;
 }
 
+html {
+  scroll-padding-top: 80px; /* altezza della navbar */
+}
+
+
 /* =============================================
    CSS VARIABLES
    ============================================= */
