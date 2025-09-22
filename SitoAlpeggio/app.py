@@ -13,6 +13,7 @@ import json
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "chiave_super_segreta"
 
+
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
@@ -23,6 +24,7 @@ def get_db_connection():
     )
 ###############################################################################
 
+
 def get_user_data(username):
     conn = get_db_connection()
     with conn.cursor() as cursor:
@@ -31,13 +33,16 @@ def get_user_data(username):
     conn.close()
 
 ########################### Context Processor #########################
+
+
 @app.context_processor
 def inject_user():
     token = request.cookies.get("token")
     if not token:
         return {"user": None}
     try:
-        decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        decoded = jwt.decode(
+            token, app.config["SECRET_KEY"], algorithms=["HS256"])
         current_user = decoded["user"]
         user = get_user_data(current_user)
         return {"user": user}
@@ -47,8 +52,10 @@ def inject_user():
 
 ########################### Login-Create account #########################
 
+
 def hash_password(psw):
     return hashlib.sha256(psw.encode()).hexdigest()
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -58,15 +65,16 @@ def login():
         password = request.form["password"]
         remember_me = request.form.get("rememberMe") is not None
         psw = hash_password(password)
-        
+
         conn = get_db_connection()
         with conn.cursor() as cursor:
             try:
-                cursor.execute("SELECT password_hash FROM users WHERE username = %s", (username,))
+                cursor.execute(
+                    "SELECT password_hash FROM users WHERE username = %s", (username,))
                 p_user = cursor.fetchone()
             finally:
                 conn.close()
-        
+
         if p_user and p_user["password_hash"] == psw:
             response = make_response(redirect(url_for("home")))
             if remember_me:
@@ -75,8 +83,9 @@ def login():
                 return generate_and_set_token(response, username)
         else:
             error = "Nome utente o password errati."
-    
+
     return render_template("login.html", error=error)
+
 
 @app.route('/registrati', methods=['GET', 'POST'])
 def registrati():
@@ -99,7 +108,8 @@ def registrati():
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+                cursor.execute(
+                    "SELECT * FROM users WHERE username = %s", (username,))
                 user = cursor.fetchone()
                 if user:
                     error = "Username già presente"
@@ -107,7 +117,8 @@ def registrati():
                     cursor.execute(
                         "INSERT INTO users (username, password_hash, email, telefono, nome, cognome, cod_fiscale, DataDiNascita) "
                         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                        (username, psw, email, telefono, nome, cognome, cod_fiscale, data_nascita)
+                        (username, psw, email, telefono, nome,
+                         cognome, cod_fiscale, data_nascita)
                     )
                     connection.commit()
                     return redirect(url_for('aggiungiCampo'))
@@ -115,12 +126,14 @@ def registrati():
             error = "Errore del database"
         finally:
             connection.close()
-    
+
     return render_template('registrati.html', error=error)
 
 ##################################################################################
 
 ################################ Cookie-Token ####################################
+
+
 def generate_token(username):
     payload = {
         "user": username,
@@ -128,10 +141,12 @@ def generate_token(username):
     }
     return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
-def generate_and_set_token(response, username, durata = 1):
+
+def generate_and_set_token(response, username, durata=1):
     token = generate_token(username)
     response.set_cookie("token", token, max_age=3600, httponly=True)
     return response
+
 
 def token_required(f):
     @wraps(f)
@@ -140,7 +155,8 @@ def token_required(f):
         if not token:
             return redirect(url_for("login"))
         try:
-            decoded = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+            decoded = jwt.decode(
+                token, app.config["SECRET_KEY"], algorithms=["HS256"])
             kwargs["current_user"] = decoded["user"]
         except jwt.ExpiredSignatureError:
             return redirect(url_for("login"))
@@ -155,7 +171,7 @@ def token_required(f):
 @app.route('/storici', methods=['GET', 'POST'])
 @token_required
 def storici(current_user):
-    risultato=""
+    risultato = ""
     campo_selezionato = ""
     conn = get_db_connection()
     if request.method == 'POST':
@@ -168,6 +184,7 @@ def storici(current_user):
                 )
                 risultato = cursor.fetchall()
     return render_template('storici.html', info=risultato, campo=campo_selezionato)
+
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
 @token_required
@@ -188,14 +205,15 @@ def aggiungiCampo(current_user):
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
+                cursor.execute(
+                    "SELECT id_u FROM users WHERE username = %s", (current_user,))
                 user_db = cursor.fetchone()
-                
+
                 if user_db is None:
                     error = "Utente non trovato."
                     return render_template('aggiungi_campo.html', error=error)
                 user_id = user_db["id_u"]
-                
+
                 cursor.execute(
                     "INSERT INTO fields (id_user, provincia, comune, CAP, num_bestiame, coordinate) "
                     "VALUES (%s, %s, %s, %s, %s, %s)",
@@ -208,8 +226,9 @@ def aggiungiCampo(current_user):
             print("Errore durante l'inserimento:", e)
         finally:
             connection.close()
-    
+
     return render_template('aggiungi_campo.html', error=error)
+
 
 @app.route('/salva-coordinate', methods=['POST'])
 def getCoordinate():
@@ -223,21 +242,24 @@ def getCoordinate():
         session['aggiungiCampo'] = False
         return render_template("aggiungi_campo.html")
 
+
 @app.route('/mappa', methods=['GET', 'POST'])
 @token_required
 def mappa(current_user):
     return render_template('mappaOff.html')
+
 
 @app.route('/mappaManuale', methods=['GET', 'POST'])
 @token_required
 def mappaManuale(current_user):
     return render_template('mappaManuale.html')
 
+
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
 def gestioneCampo(current_user):
     session["gestioneCampo"] = True
-    if request.method == 'POST':            
+    if request.method == 'POST':
         if 'action-save' in request.form:
             coordinate = session.get('coordinate')
             campo_selezionato = request.form.get('campoSelezionato')
@@ -245,6 +267,7 @@ def gestioneCampo(current_user):
             zip_code = request.form.get('zip')
             print(coordinate, campo_selezionato, state, zip_code)
     return render_template('gestione_campo.html')
+
 
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
 @token_required
@@ -254,6 +277,8 @@ def visualizzaCampi(current_user):
 ################################################################
 
 ################### PROFILO #################################
+
+
 @app.route('/profilo', methods=['POST', 'GET'])
 @token_required
 def profilo(current_user):
@@ -261,7 +286,8 @@ def profilo(current_user):
     user = None
     with conn.cursor() as cursor:
         # Recupera i dati dell'utente
-        cursor.execute("SELECT * FROM users WHERE username = %s", (current_user,))
+        cursor.execute(
+            "SELECT * FROM users WHERE username = %s", (current_user,))
         user = cursor.fetchone()
 
     if request.method == 'POST':
@@ -272,7 +298,8 @@ def profilo(current_user):
             email = request.form['email']
             telefono = request.form['telefono']
             cod_fiscale = request.form['cod_fiscale']
-            dataDiNascita = request.form['DataDiNascita']  # deve corrispondere al nome del campo nel DB
+            # deve corrispondere al nome del campo nel DB
+            dataDiNascita = request.form['DataDiNascita']
 
             # Aggiorna il database
             with conn.cursor() as cursor:
@@ -297,14 +324,16 @@ def profilo(current_user):
 
 #############################################################
 
-####################GESTIONE DINAMICA DEI CAMPI E API###############################
+#################### GESTIONE DINAMICA DEI CAMPI E API###############################
 def get_campi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM fields f, users u WHERE f.id_user = u.id_u AND u.username = %s", (current_user,))
+    cursor.execute(
+        "SELECT COUNT(*) FROM fields f, users u WHERE f.id_user = u.id_u AND u.username = %s", (current_user,))
     num_campi = cursor.fetchone()['COUNT(*)']
     conn.close()
     return num_campi
+
 
 @app.route("/api/numCampi")
 @token_required
@@ -312,21 +341,26 @@ def api_num_campi(current_user):
     campi = get_campi(current_user)
     return jsonify(campi)
 
+
 def get_info_campi(current_user):
     conn = get_db_connection()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT coordinate, comune, num_bestiame FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user ", (current_user,))
+        cursor.execute(
+            "SELECT coordinate, comune, num_bestiame FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user ", (current_user,))
         risultato = cursor.fetchall()
         info = ""
         for i in range(0, len(risultato)):
-            info += str(risultato[i]["coordinate"]) + "/" + str(risultato[i]["comune"]) + "/" + str(risultato[i]["num_bestiame"]) + "|"
+            info += str(risultato[i]["coordinate"]) + "/" + str(risultato[i]
+                                                                ["comune"]) + "/" + str(risultato[i]["num_bestiame"]) + "|"
         return info
-    
+
+
 @app.route("/api/infoCampi")
 @token_required
 def api_info_campi(current_user):
     info = get_info_campi(current_user)
     return jsonify(info)
+
 
 @app.route("/api/get_provincia")
 def get_provincia():
@@ -335,6 +369,7 @@ def get_provincia():
     province = data.get("province", [])
     return jsonify({"province": province})
 
+
 @app.route("/api/get_comune", methods=["GET"])
 def get_comune():
     with open("./static/json/gi_comuni_cap.json", "r", encoding="utf-8") as file:
@@ -342,15 +377,19 @@ def get_comune():
     comuni = data.get("dati", [])
     if 'provincia' in request.args:
         provincia = str(request.args['provincia'])
-        comuniP = [comune for comune in comuni if comune['sigla_provincia'] == provincia]
+        comuniP = [
+            comune for comune in comuni if comune['sigla_provincia'] == provincia]
     return jsonify({"comuni": comuniP})
 ########################################################################################
 
-#############################Avvio del drone#######################################
+############################# Avvio del drone#######################################
+
+
 def avvioDrone(campo):
     home1_path = os.path.join(os.getcwd(), 'home1.py')
     try:
-        result = subprocess.run(['python', home1_path, str(campo)], capture_output=True, text=True, check=True)
+        result = subprocess.run(['python', home1_path, str(
+            campo)], capture_output=True, text=True, check=True)
         output = result.stdout.strip() if result.stdout else "(Nessun output ricevuto)"
         print("Output ricevuto:", output)
         if output == "sono connesso":
@@ -361,22 +400,38 @@ def avvioDrone(campo):
         print("Stderr:", e.stderr)
 ###################################################################################
 
+
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT f.id_t FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user", (current_user,))
+    cursor.execute(
+        "SELECT f.id_t FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user", (current_user,))
     risultato = cursor.fetchall()
-    id_array = [row['id_t'] for row in risultato] 
-    cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
-    user_id = cursor.fetchone()['id_u'] 
+    id_array = [row['id_t'] for row in risultato]
+    cursor.execute("SELECT id_u FROM users WHERE username = %s",
+                   (current_user,))
+    user_id = cursor.fetchone()['id_u']
     session['id'] = user_id
     if get_campi(current_user) > 0:
         for i, e in enumerate(id_array):
             session[f"campo{i+1}"] = e
 
-@app.route('/', methods=['GET', 'POST'])
+
+@app.route('/', methods=['GET'])
+def index():
+    token = request.cookies.get("token")
+    if token:
+        try:
+            jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+            return redirect(url_for('home'))
+        except Exception:
+            pass  # se il token non è valido, resta sulla pagina index
+    return render_template("index.html")  # pagina pubblica iniziale
+
+
+@app.route('/home', methods=['GET', 'POST'])
 @token_required
-def home(current_user): 
+def home(current_user):
     associazioneSessionCampi(current_user)
     if request.method == 'POST':
         resp = None
@@ -393,7 +448,7 @@ def home(current_user):
         if request.form.get('action1') == "log-out":
             resp = make_response(redirect(url_for('index')))
             resp.delete_cookie('token')
-        
+
         campo_value = request.form.get('action_ricerca_drone')
         if campo_value and campo_value.startswith("Campo "):
             numero_campo = campo_value.split(" ")[1]
@@ -401,13 +456,14 @@ def home(current_user):
             avvioDrone(id_campo)
             resp = make_response(redirect(url_for('home')))
         return resp
-    
+
     campo_corrente = session.get('campo_corrente', None)
     return render_template('home.html', campo_corrente=campo_corrente)
 
+
 @app.route('/logout', methods=['POST'])
 def logout():
-    response = make_response(redirect(url_for('login')))
+    response = make_response(redirect(url_for('index')))
     response.delete_cookie('token')
     return response
 
