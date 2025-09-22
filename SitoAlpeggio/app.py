@@ -405,12 +405,11 @@ def home(current_user):
     campo_corrente = session.get('campo_corrente', None)
     return render_template('home.html', campo_corrente=campo_corrente)
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 def logout():
-    resp = make_response(redirect(url_for('login')))
-    resp.delete_cookie("token")
-    session.clear()
-    return resp
+    response = make_response(redirect(url_for('login')))
+    response.delete_cookie('token')
+    return response
 
 
 if __name__ == '__main__':

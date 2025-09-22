@@ -26,7 +26,7 @@
     <!-- NAVBAR -->
     <nav class="navbar" role="navigation">
       <div class="navbar-top container">
-        <a href="#" class="logo">Agritech</a>
+        <a href="/" class="logo">🌱 Agritech</a>
         <div class="user-nav">
           <div class="user-info">
             <img
@@ -34,22 +34,9 @@
               alt="Profilo"
               class="user-avatar-img"
             />
-            <a href="/profilo" class="profile-link"
-              >{{user['username']}}</a
-            >
+            <a href="/profilo" class="profile-link">{{user['username']}}</a>
           </div>
         </div>
-      </div>
-
-      <div class="navbar-menu container">
-        <ul class="nav-links">
-          <li class="nav-link"><a href="#home">Home</a></li>
-          <li class="nav-link"><a href="#about">Chi Siamo</a></li>
-          <li class="nav-link"><a href="#services">Servizi</a></li>
-          <li class="nav-link"><a href="#products">Prodotti</a></li>
-          <li class="nav-link"><a href="#blog">Blog</a></li>
-          <li class="nav-link"><a href="#contact">Contatti</a></li>
-        </ul>
       </div>
     </nav>
 
@@ -57,7 +44,11 @@
     <main class="container">
       <header
         class="d-flex justify-content-between align-items-center py-3 mb-3 border-bottom"
-        style="border-radius: 12px;background-color: #2d3748;padding: 1rem 1.5rem;"
+        style="
+          border-radius: 12px;
+          background-color: #2d3748;
+          padding: 1rem 1.5rem;
+        "
       >
         <h3>Perimetro del terreno - seleziona l'area interessata</h3>
         <button class="btn btn-primary" type="button">
@@ -183,5 +174,17 @@
           }
         });
     </script>
+    <!-- FOOTER -->
+    <footer id="contact">
+      <div class="container">
+        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+        <ul class="footer-links">
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Termini di Servizio</a></li>
+          <li><a href="#">Supporto</a></li>
+          <li><a href="#">Contatti</a></li>
+        </ul>
+      </div>
+    </footer>
   </body>
 </html>
