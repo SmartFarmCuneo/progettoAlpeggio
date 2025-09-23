@@ -1,107 +1,395 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech - Home</title>
-    <link rel="stylesheet" href="../static/css/style.css" />
-  </head>
 
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-top container">
-        <a href="/home" class="logo">🌱 Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <a href="/profilo" class="profile-link">{{user['username']}}</a>
-            <form method="POST" action="/logout">
-              <button type="submit" class="logout-btn">Logout</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </nav>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agritech - Home</title>
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <style>
+/* Container principale per il layout a due colonne */
+.campi-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  padding: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 400px;
+}
 
-    <div class="container main-content">
-      <div class="sidebar">
-        <div class="menu-item active"><a href="/">Home</a></div>
-        <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
-        <div class="menu-item">
-          <a href="/aggiungiCampo">Aggiungi Campo</a>
-        </div>
-        <div class="menu-item">
-          <a href="/gestioneCampo">Gestione Campo</a>
-        </div>
-        <div class="menu-item">
-          <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
-        </div>
-      </div>
+/* Colonna sinistra - Lista pulsanti */
+.campi-lista {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px solid #22c55e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
-      <div class="profile-content">
-        <h1>I Tuoi Campi</h1>
-        <div id="campi" class="campi-container">
-          <p>Caricamento in corso...</p>
+.campi-lista h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #22c55e;
+}
+
+/* Pulsanti campo */
+.campo-button {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 0.875rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+  text-align: left;
+}
+
+.campo-button:last-child {
+  margin-bottom: 0;
+}
+
+.campo-button:hover {
+  background: #16a34a;
+  transform: translateX(4px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+.campo-button:active {
+  background: #15803d;
+  transform: translateX(2px);
+}
+
+.campo-button.selected {
+  background: #15803d;
+  border-left: 4px solid #10b981;
+  padding-left: 1rem;
+}
+
+/* Colonna destra - Dettagli campo */
+.campo-dettagli {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 2px solid #22c55e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 300px;
+}
+
+.campo-dettagli.vuoto {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.campo-dettagli.selezionato {
+  color: #1f2937;
+}
+
+.campo-nome {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #22c55e;
+  margin-bottom: 1rem;
+}
+
+.campo-descrizione {
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.azione-buttons {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.azione-button {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+.azione-button:hover {
+  background: #16a34a;
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+.azione-button:active {
+  background: #15803d;
+}
+
+/* Messaggio quando non ci sono campi */
+.nessun-campo {
+  grid-column: 1 / -1;
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .campi-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .campi-lista {
+    padding: 1.25rem;
+  }
+  
+  .campo-dettagli {
+    padding: 1.5rem;
+    min-height: 200px;
+  }
+  
+  .campo-nome {
+    font-size: 1.5rem;
+  }
+  
+  .azione-buttons {
+    flex-direction: column;
+  }
+  
+  .azione-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .campo-button {
+    font-size: 0.8rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  .campo-nome {
+    font-size: 1.25rem;
+  }
+  
+  .campo-descrizione {
+    font-size: 0.9rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .campi-lista,
+  .campo-dettagli {
+    background: #1f2937;
+    border-color: #22c55e;
+    color: #f9fafb;
+  }
+  
+  .campi-lista h3,
+  .campo-dettagli.selezionato {
+    color: #f9fafb;
+  }
+  
+  .campo-nome {
+    color: #22c55e;
+  }
+  
+  .campo-descrizione,
+  .campo-dettagli.vuoto {
+    color: #d1d5db;
+  }
+  
+  .nessun-campo {
+    background: #374151;
+    color: #d1d5db;
+    border-color: #22c55e;
+  }
+}
+  </style>
+
+
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/home" class="logo">🌱 Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <a href="/profilo" class="profile-link">{{user['username']}}</a>
+          <form method="POST" action="/logout">
+            <button type="submit" class="logout-btn">Logout</button>
+          </form>
         </div>
       </div>
     </div>
+  </nav>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const containerCampi = document.getElementById("campi");
-
-        function caricaCampi() {
-          fetch("/api/numCampi")
-            .then((response) => response.json())
-            .then((numCampi) => {
-              if (numCampi > 0) {
-                containerCampi.innerHTML = "";
-                for (let i = 0; i < numCampi; i++) {
-                  const card = document.createElement("div");
-                  card.className = "campo-card";
-                  card.innerHTML = `
-                    <h3>Campo ${i + 1}</h3>
-                    <form method="POST" action="/">
-                      <button type="submit" name="action_ricerca_drone" value="Campo ${
-                        i + 1
-                      }">Avvia Ricerca Drone</button>
-                    </form>
-                  `;
-                  containerCampi.appendChild(card);
-                }
-              } else {
-                containerCampi.innerHTML =
-                  '<div class="p-3 text-center">Nessun campo disponibile.</div>';
-              }
-            })
-            .catch((error) => {
-              console.error("Errore nel caricamento dei campi:", error);
-              containerCampi.innerHTML =
-                '<div class="p-3 text-center">Errore nel caricamento dei campi.</div>';
-            });
-        }
-
-        caricaCampi();
-      });
-    </script>
-
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="#">Supporto</a></li>
-          <li><a href="#">Contatti</a></li>
-        </ul>
+  <div class="container main-content">
+    <div class="sidebar">
+      <div class="menu-item active"><a href="/">Home</a></div>
+      <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+      <div class="menu-item">
+        <a href="/aggiungiCampo">Aggiungi Campo</a>
       </div>
-    </footer>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
-  </body>
+      <div class="menu-item">
+        <a href="/gestioneCampo">Gestione Campo</a>
+      </div>
+      <div class="menu-item">
+        <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
+      </div>
+    </div>
+
+    <div class="profile-content">
+      <h1>I Tuoi Campi</h1>
+      <div id="campi" class="campi-container">
+        <p>Caricamento in corso...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+  const containerCampi = document.getElementById("campi");
+  let campoSelezionato = null;
+
+  function caricaCampi() {
+    fetch("/api/numCampi")
+      .then((response) => response.json())
+      .then((numCampi) => {
+        if (numCampi > 0) {
+          containerCampi.innerHTML = `
+            <div class="campi-lista">
+              <h3>I Tuoi Campi</h3>
+              <div id="lista-pulsanti"></div>
+            </div>
+            <div class="campo-dettagli vuoto">
+              <div class="campo-descrizione">
+                Seleziona un campo dalla lista per visualizzare i dettagli e le azioni disponibili.
+              </div>
+            </div>
+          `;
+          
+          const listaPulsanti = document.getElementById("lista-pulsanti");
+          const dettagliArea = document.querySelector(".campo-dettagli");
+          
+          // Crea i pulsanti per ogni campo
+          for (let i = 0; i < numCampi; i++) {
+            const button = document.createElement("button");
+            button.className = "campo-button";
+            button.textContent = `Campo ${i + 1}`;
+            button.dataset.campo = `Campo ${i + 1}`;
+            
+            // Aggiungi event listener per la selezione
+            button.addEventListener("click", function() {
+              selezionaCampo(this, dettagliArea);
+            });
+            
+            listaPulsanti.appendChild(button);
+          }
+        } else {
+          containerCampi.innerHTML = `
+            <div class="nessun-campo">
+              Nessun campo disponibile. Aggiungi un nuovo campo per iniziare.
+            </div>
+          `;
+        }
+      })
+      .catch((error) => {
+        console.error("Errore nel caricamento dei campi:", error);
+        containerCampi.innerHTML = `
+          <div class="nessun-campo">
+            Errore nel caricamento dei campi. Riprova più tardi.
+          </div>
+        `;
+      });
+  }
+
+  function selezionaCampo(button, dettagliArea) {
+    // Rimuovi la selezione precedente
+    document.querySelectorAll(".campo-button").forEach(btn => {
+      btn.classList.remove("selected");
+    });
+    
+    // Seleziona il nuovo campo
+    button.classList.add("selected");
+    campoSelezionato = button.dataset.campo;
+    
+    // Aggiorna l'area dettagli
+    dettagliArea.className = "campo-dettagli selezionato";
+    dettagliArea.innerHTML = `
+      <div class="campo-nome">${campoSelezionato}</div>
+      <div class="campo-descrizione">
+        Campo selezionato. Scegli un'azione da eseguire su questo campo.
+      </div>
+      <div class="azione-buttons">
+        <form method="POST" action="/" style="display: inline-block;">
+          <button type="submit" name="action_ricerca_drone" value="${campoSelezionato}" class="azione-button">
+            Avvia Ricerca Drone
+          </button>
+        </form>
+        <button class="azione-button" onclick="visualizzaStatistiche('${campoSelezionato}')">
+          Visualizza Statistiche
+        </button>
+        <button class="azione-button" onclick="gestisciCampo('${campoSelezionato}')">
+          Gestisci Campo
+        </button>
+      </div>
+    `;
+  }
+
+  // Funzioni placeholder per le azioni aggiuntive
+  window.visualizzaStatistiche = function(campo) {
+    alert(`Visualizzazione statistiche per ${campo} - Funzione da implementare`);
+  };
+
+  window.gestisciCampo = function(campo) {
+    alert(`Gestione ${campo} - Funzione da implementare`);
+  };
+
+  // Avvia il caricamento
+  caricaCampi();
+});
+  </script>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="#">Supporto</a></li>
+        <li><a href="#">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+</body>
+
 </html>
