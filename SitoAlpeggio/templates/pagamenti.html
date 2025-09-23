@@ -5,221 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agritech - Abbonamenti</title>
     <link rel="stylesheet" href="../static/css/style.css" />
-    <style>
-      .subscription-plans {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        margin: 2rem 0;
-      }
-
-      .plan-card {
-        background: var(--bg-dark);
-        border: 2px solid var(--border);
-        border-radius: 15px;
-        padding: 2.5rem;
-        text-align: center;
-        transition: all 0.4s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeUp 1s ease forwards;
-      }
-
-      .plan-card:hover {
-        transform: translateY(-10px);
-        border-color: var(--primary);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-      }
-
-      .plan-card.recommended {
-        border-color: var(--primary);
-        position: relative;
-        transform: scale(1.05) translateY(20px);
-        background: linear-gradient(135deg, var(--bg-dark), var(--bg-light));
-      }
-
-      .plan-card.recommended:hover {
-        transform: scale(1.05) translateY(-10px);
-      }
-
-      .plan-card.recommended::before {
-        content: "CONSIGLIATO";
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary-hover)
-        );
-        color: var(--bg-dark);
-        padding: 0.5rem 1.5rem;
-        border-radius: 25px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
-      }
-
-      .plan-title {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 0.5rem;
-      }
-
-      .plan-price {
-        font-size: 3rem;
-        font-weight: 800;
-        color: var(--primary);
-        margin: 1.5rem 0;
-        display: block;
-      }
-
-      .plan-price .currency {
-        font-size: 1.2rem;
-        vertical-align: top;
-      }
-
-      .plan-period {
-        color: var(--text-body);
-        font-size: 1rem;
-        margin-bottom: 2rem;
-        font-weight: 500;
-      }
-
-      .plan-features {
-        list-style: none;
-        padding: 0;
-        margin: 2rem 0;
-        text-align: left;
-      }
-
-      .plan-features li {
-        padding: 0.8rem 0;
-        border-bottom: 1px solid var(--border);
-        position: relative;
-        padding-left: 2rem;
-        color: white;
-        font-weight: 500;
-        line-height: 1.6;
-      }
-
-      .plan-features li::before {
-        content: "✓";
-        position: absolute;
-        left: 0;
-        color: var(--primary);
-        font-weight: bold;
-        font-size: 1.1rem;
-      }
-
-      .plan-features li.unavailable {
-        color: var(--text-body);
-        text-decoration: line-through;
-      }
-
-      .plan-features li.unavailable::before {
-        content: "✗";
-        color: var(--danger);
-      }
-
-      .subscribe-btn {
-        background: var(--primary);
-        color: var(--bg-dark);
-        border: none;
-        padding: 1rem 2.5rem;
-        border-radius: 50px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.4s ease;
-        width: 100%;
-        margin-top: 2rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
-      }
-
-      .subscribe-btn:hover {
-        background: var(--primary-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
-      }
-
-      .subscribe-btn.secondary {
-        background: var(--border);
-        color: var(--text-body);
-        box-shadow: 0 4px 15px rgba(74, 85, 104, 0.3);
-      }
-
-      .subscribe-btn.secondary:hover {
-        background: #5a6268;
-        color: white;
-      }
-
-      .billing-info {
-        background: var(--bg-light);
-        border: 1px solid var(--border);
-        padding: 2rem;
-        border-radius: 15px;
-        margin: 3rem 0;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      }
-
-      .billing-info h3 {
-        color: white;
-        margin-bottom: 1rem;
-        font-weight: 600;
-        font-size: 1.3rem;
-      }
-
-      .billing-info p {
-        color: var(--text-body);
-        line-height: 1.6;
-        font-size: 1rem;
-      }
-
-      .profile-header p {
-        color: var(--text-body);
-        margin-top: 0.5rem;
-        font-size: 1.1rem;
-        line-height: 1.6;
-      }
-
-      @media (max-width: 768px) {
-        .subscription-plans {
-          grid-template-columns: 1fr;
-        }
-
-        .plan-card.recommended {
-          transform: none;
-        }
-
-        .plan-card.recommended:hover {
-          transform: translateY(-10px);
-        }
-
-        .plan-price {
-          font-size: 2.5rem;
-        }
-      }
-
-      /* Animation delays per le cards */
-      .plan-card:nth-child(1) {
-        animation-delay: 0.2s;
-      }
-
-      .plan-card:nth-child(2) {
-        animation-delay: 0.4s;
-      }
-
-      .plan-card:nth-child(3) {
-        animation-delay: 0.6s;
-      }
-    </style>
   </head>
 
   <body>
@@ -246,7 +31,9 @@
       <div class="main-content">
         <div class="sidebar">
           <div class="menu-item"><a href="/profilo">Il Mio Profilo</a></div>
-          <div class="menu-item active"><a href="/pagamenti">Up-grade dell'account</a></div>
+          <div class="menu-item active">
+            <a href="/pagamenti">Up-grade dell'account</a>
+          </div>
           <div class="menu-item"><a href="/supporto">Supporto</a></div>
         </div>
 
@@ -426,12 +213,13 @@
       <div class="container">
         <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
         <ul class="footer-links">
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Termini di Servizio</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
           <li><a href="#">Supporto</a></li>
           <li><a href="#">Contatti</a></li>
         </ul>
       </div>
     </footer>
+    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
   </body>
 </html>

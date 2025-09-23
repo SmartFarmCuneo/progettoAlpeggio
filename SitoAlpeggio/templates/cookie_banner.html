@@ -1,0 +1,97 @@
+<!-- cookie_banner.html -->
+<div id="cookie-banner" class="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie banner" style="display:none;">
+  <div class="cookie-content container">
+    <p>
+      Usiamo cookie tecnici necessari al funzionamento del sito e, previo consenso, cookie opzionali per analytics e pubblicità.
+    </p>
+    <div class="cookie-buttons">
+      <button id="cookie-accept-all" class="cookie-btn accept">Accetta tutti</button>
+      <button id="cookie-accept-necessary" class="cookie-btn necessary">Solo necessari</button>
+      <button id="cookie-refuse" class="cookie-btn refuse">Rifiuta tutti</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Mostra banner solo se backend non ha già cookie_consent oppure cookie_consent.necessary !== true
+  function shouldShowBanner(consent) {
+    return !(consent && consent.necessary === true);
+  }
+
+  async function fetchConsent(){
+    try {
+      const res = await fetch("/get-consent", {method: "GET", credentials: "same-origin"});
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function hideBanner() {
+    const el = document.getElementById("cookie-banner");
+    if (el) el.style.display = "none";
+  }
+  function showBanner() {
+    const el = document.getElementById("cookie-banner");
+    if (el) el.style.display = "block";
+  }
+
+  async function postConsent(payload){
+    // include X-Requested-With per ridurre tentativi CSRF semplici
+    await fetch("/set-consent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      credentials: "same-origin",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async function init(){
+    const consent = await fetchConsent();
+    if (shouldShowBanner(consent)) {
+      showBanner();
+    } else {
+      hideBanner();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    init();
+
+    document.getElementById("cookie-accept-all").addEventListener("click", async function(){
+      const payload = {necessary: true, analytics: true, ads: true};
+      await postConsent(payload);
+      hideBanner();
+      // inizializza analytics se serve...
+      if (payload.analytics) {
+        // carica script analytics solo se consentito
+        // es: loadMatomo(), loadGA()
+      }
+    });
+
+    document.getElementById("cookie-accept-necessary").addEventListener("click", async function(){
+      const payload = {necessary: true, analytics: false, ads: false};
+      await postConsent(payload);
+      hideBanner();
+    });
+
+    document.getElementById("cookie-refuse").addEventListener("click", async function(){
+      const payload = {necessary: false, analytics: false, ads: false};
+      await postConsent(payload);
+      hideBanner();
+    });
+
+    document.getElementById("cookie-manage").addEventListener("click", function(e){
+      e.preventDefault();
+      // puoi aprire una modal / pagina "Gestisci cookie" qui
+      // per semplicità apriamo il centro assistenza o la pagina privacy
+      window.location.href = "/privacy#cookie-settings";
+    });
+  });
+})();
+</script>

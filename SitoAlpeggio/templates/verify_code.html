@@ -22,7 +22,9 @@
       <main>
         <div class="py-3 text-center">
           <h2>Verifica codice</h2>
-          <p class="lead">Controlla la tua email e inserisci qui il codice ricevuto.</p>
+          <p class="lead">
+            Controlla la tua email e inserisci qui il codice ricevuto.
+          </p>
         </div>
         <div class="col-md-10 col-lg-8 mx-auto">
           <form class="form" action="/verify_code" method="POST">
@@ -46,16 +48,18 @@
       </main>
     </div>
 
+    <!-- FOOTER -->
     <footer id="contact">
       <div class="container">
         <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
         <ul class="footer-links">
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Termini di Servizio</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
           <li><a href="#">Supporto</a></li>
           <li><a href="#">Contatti</a></li>
         </ul>
       </div>
     </footer>
+    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
   </body>
 </html>

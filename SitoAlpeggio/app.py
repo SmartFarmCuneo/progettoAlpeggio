@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect, url_for, request, make_response, session, jsonify, render_template_string
+from flask import Flask, render_template, redirect, url_for, request, make_response
+from flask import session, jsonify, render_template_string, current_app
 from functools import wraps
 import pymysql
 import datetime
@@ -30,15 +31,87 @@ def get_db_connection():
 ###############################################################################
 
 
-############################## CONFIG MAIL #############################
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = "tuoaccount@gmail.com"      # <-- cambia qui
-app.config['MAIL_PASSWORD'] = "TUA_APP_PASSWORD"          # <-- cambia qui
-app.config['MAIL_DEFAULT_SENDER'] = ("Agritech", "tuoaccount@gmail.com")
+# -----------------------------------------------------
+# Context processor per passare il consenso a tutti i template
+# -----------------------------------------------------
+@app.context_processor
+def inject_cookie_consent():
+    consent_cookie = request.cookies.get("cookie_consent")
+    if consent_cookie:
+        try:
+            consent = json.loads(consent_cookie)
+        except Exception:
+            consent = None
+    else:
+        consent = None
+    return {"cookie_consent": consent}
 
-mail = Mail(app)
+# -----------------------------------------------------
+# Endpoint per settare il consenso (chiamato dal banner)
+# -----------------------------------------------------
+@app.route("/set-consent", methods=["POST"])
+def set_consent():
+    # semplice validazione della richiesta
+    if not request.is_json:
+        return jsonify({"error": "Richiesta non valida"}), 400
+    data = request.get_json()
+
+    # Expected structure: {"necessary": true, "analytics": false, "ads": false}
+    # Normalizza
+    consent = {
+        "necessary": bool(data.get("necessary", False)),
+        "analytics": bool(data.get("analytics", False)),
+        "ads": bool(data.get("ads", False)),
+        "timestamp": datetime.datetime.now().isoformat() + "Z"
+    }
+
+    resp = make_response(jsonify({"status": "ok", "consent": consent}))
+
+    # In sviluppo usa secure=False per lavorare su http locale.
+    # In produzione DEVI settare secure=True (cookie inviabili su HTTP non sicuro).
+    secure_flag = False if current_app.debug else True
+
+    resp.set_cookie(
+        "cookie_consent",
+        json.dumps(consent),
+        max_age=60 * 60 * 24 * 365,  # 1 anno
+        httponly=False,   # deve essere leggibile da JS per mostrare/nascondere banner
+        secure=secure_flag,
+        samesite="Lax"
+    )
+    return resp
+
+# -----------------------------------------------------
+# Endpoint per leggere lo stato del consenso (opzionale, utile per JS)
+# -----------------------------------------------------
+@app.route("/get-consent", methods=["GET"])
+def get_consent():
+    consent_cookie = request.cookies.get("cookie_consent")
+    if consent_cookie:
+        try:
+            consent = json.loads(consent_cookie)
+        except Exception:
+            consent = {"necessary": False, "analytics": False, "ads": False}
+    else:
+        consent = {"necessary": False, "analytics": False, "ads": False}
+    return jsonify(consent)
+
+# -----------------------------------------------------
+# Endpoint per revocare il consenso (utile nel footer “Gestisci cookie”)
+# -----------------------------------------------------
+@app.route("/revoke-consent", methods=["POST"])
+def revoke_consent():
+    resp = make_response(jsonify({"status": "revoked"}))
+    secure_flag = False if current_app.debug else True
+    resp.set_cookie(
+        "cookie_consent",
+        "",
+        max_age=0,
+        httponly=False,
+        secure=secure_flag,
+        samesite="Lax"
+    )
+    return resp
 
 
 def get_user_data(username):
@@ -49,6 +122,15 @@ def get_user_data(username):
     conn.close()
 
 ############################## FUNZIONE INVIO MAIL #############################
+############################## CONFIG MAIL #############################
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = "tuoaccount@gmail.com"      # <-- cambia qui
+app.config['MAIL_PASSWORD'] = "TUA_APP_PASSWORD"          # <-- cambia qui
+app.config['MAIL_DEFAULT_SENDER'] = ("Agritech", "tuoaccount@gmail.com")
+
+mail = Mail(app)
 
 
 def send_reset_email(user_email, code):
@@ -511,6 +593,22 @@ def profilo(current_user):
     # Render del template con i dati aggiornati
     return render_template('profilo.html', user=user)
 
+@app.route('/pagamenti', methods=['GET', 'POST'])
+@token_required
+def pagamenti(current_user):
+    return render_template('pagamenti.html')
+
+@app.route('/privacy', methods=['GET', 'POST'])
+@token_required
+def privacy(current_user):
+    return render_template('privacy.html')
+
+
+@app.route('/terms', methods=['GET', 'POST'])
+@token_required
+def terms(current_user):
+    return render_template('terms.html')
+
 
 #############################################################
 
@@ -660,3 +758,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True, host='localhost')
+    # per pubblicare app.debug=False

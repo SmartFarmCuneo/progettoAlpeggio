@@ -49,8 +49,8 @@
         <div class="container">
           <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
           <ul class="footer-links">
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">Termini di Servizio</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Termini di Servizio</a></li>
             <li><a href="#">Supporto</a></li>
             <li><a href="#">Contatti</a></li>
           </ul>
@@ -58,4 +58,5 @@
       </footer>
     </div>
   </body>
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 </html>
