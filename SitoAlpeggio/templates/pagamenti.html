@@ -49,7 +49,11 @@
         top: -15px;
         left: 50%;
         transform: translateX(-50%);
-        background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary-hover)
+        );
         color: var(--bg-dark);
         padding: 0.5rem 1.5rem;
         border-radius: 25px;
@@ -189,7 +193,7 @@
         .subscription-plans {
           grid-template-columns: 1fr;
         }
-        
+
         .plan-card.recommended {
           transform: none;
         }
@@ -241,32 +245,34 @@
     <div class="container">
       <div class="main-content">
         <div class="sidebar">
-          <div class="menu-item">Il Mio Profilo</div>
-          <div class="menu-item active">Up-grade dell'account</div>
-          <div class="menu-item">Supporto</div>
+          <div class="menu-item"><a href="/profilo">Il Mio Profilo</a></div>
+          <div class="menu-item active"><a href="/pagamenti">Up-grade dell'account</a></div>
+          <div class="menu-item"><a href="/supporto">Supporto</a></div>
         </div>
 
         <div class="profile-content">
           <div class="profile-header">
             <h1>Scegli il Tuo Piano</h1>
-            <p style="color: #6c757d; margin-top: 0.5rem;">Seleziona l'abbonamento più adatto alle tue esigenze agricole</p>
+            <p style="color: #6c757d; margin-top: 0.5rem">
+              Seleziona l'abbonamento più adatto alle tue esigenze agricole
+            </p>
           </div>
 
           <div class="billing-info">
             <h3>🔄 Fatturazione Mensile</h3>
-            <p>Tutti i piani si rinnovano automaticamente ogni mese. Puoi cancellare in qualsiasi momento senza costi aggiuntivi.</p>
+            <p>
+              Tutti i piani si rinnovano automaticamente ogni mese. Puoi
+              cancellare in qualsiasi momento senza costi aggiuntivi.
+            </p>
           </div>
 
           <div class="subscription-plans">
-
             <!-- Piano Free -->
             <div class="plan-card">
               <div class="plan-title">Free</div>
-              <div class="plan-price">
-                <span class="currency">€</span>0
-              </div>
+              <div class="plan-price"><span class="currency">€</span>0</div>
               <div class="plan-period">al mese</div>
-              
+
               <ul class="plan-features">
                 <li>Monitoraggio fino a 5 ettari</li>
                 <li>Dati meteorologici base</li>
@@ -277,8 +283,11 @@
                 <li class="unavailable">Supporto prioritario</li>
                 <li class="unavailable">API personalizzate</li>
               </ul>
-              
-              <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
+
+              <button
+                class="subscribe-btn secondary"
+                onclick="selectPlan('basic')"
+              >
                 Scegli Free
               </button>
             </div>
@@ -286,11 +295,9 @@
             <!-- Piano Basic -->
             <div class="plan-card">
               <div class="plan-title">Basic</div>
-              <div class="plan-price">
-                <span class="currency">€</span>19
-              </div>
+              <div class="plan-price"><span class="currency">€</span>19</div>
               <div class="plan-period">al mese</div>
-              
+
               <ul class="plan-features">
                 <li>Monitoraggio fino a 5 ettari</li>
                 <li>Dati meteorologici base</li>
@@ -301,8 +308,11 @@
                 <li class="unavailable">Supporto prioritario</li>
                 <li class="unavailable">API personalizzate</li>
               </ul>
-              
-              <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
+
+              <button
+                class="subscribe-btn secondary"
+                onclick="selectPlan('basic')"
+              >
                 Scegli Basic
               </button>
             </div>
@@ -310,11 +320,9 @@
             <!-- Piano Professional (Consigliato) -->
             <div class="plan-card recommended">
               <div class="plan-title">Professional</div>
-              <div class="plan-price">
-                <span class="currency">€</span>49
-              </div>
+              <div class="plan-price"><span class="currency">€</span>49</div>
               <div class="plan-period">al mese</div>
-              
+
               <ul class="plan-features">
                 <li>Monitoraggio fino a 25 ettari</li>
                 <li>Dati meteorologici avanzati</li>
@@ -325,8 +333,11 @@
                 <li>Allerte automatiche</li>
                 <li class="unavailable">API personalizzate</li>
               </ul>
-              
-              <button class="subscribe-btn" onclick="selectPlan('professional')">
+
+              <button
+                class="subscribe-btn"
+                onclick="selectPlan('professional')"
+              >
                 Scegli Professional
               </button>
             </div>
@@ -334,11 +345,9 @@
             <!-- Piano Enterprise -->
             <div class="plan-card">
               <div class="plan-title">Enterprise</div>
-              <div class="plan-price">
-                <span class="currency">€</span>99
-              </div>
+              <div class="plan-price"><span class="currency">€</span>99</div>
               <div class="plan-period">al mese</div>
-              
+
               <ul class="plan-features">
                 <li>Monitoraggio illimitato</li>
                 <li>Dati meteorologici premium</li>
@@ -349,7 +358,7 @@
                 <li>Allerte in tempo reale</li>
                 <li>API personalizzate</li>
               </ul>
-              
+
               <button class="subscribe-btn" onclick="selectPlan('enterprise')">
                 Scegli Enterprise
               </button>
@@ -358,7 +367,10 @@
 
           <div class="billing-info">
             <h3>💳 Metodi di Pagamento Accettati</h3>
-            <p>Carte di credito, PayPal, Bonifico bancario • Fatturazione elettronica disponibile</p>
+            <p>
+              Carte di credito, PayPal, Bonifico bancario • Fatturazione
+              elettronica disponibile
+            </p>
           </div>
         </div>
       </div>
@@ -368,39 +380,43 @@
       function selectPlan(planType) {
         // Mostra conferma
         const planNames = {
-          'basic': 'Basic (€19/mese)',
-          'professional': 'Professional (€49/mese)',
-          'enterprise': 'Enterprise (€99/mese)'
+          basic: "Basic (€19/mese)",
+          professional: "Professional (€49/mese)",
+          enterprise: "Enterprise (€99/mese)",
         };
-        
-        const confirmed = confirm(`Confermi la selezione del piano ${planNames[planType]}?`);
-        
+
+        const confirmed = confirm(
+          `Confermi la selezione del piano ${planNames[planType]}?`
+        );
+
         if (confirmed) {
           // Simula reindirizzamento al checkout
-          alert(`Reindirizzamento al checkout per il piano ${planNames[planType]}...`);
-          
+          alert(
+            `Reindirizzamento al checkout per il piano ${planNames[planType]}...`
+          );
+
           // Qui normalmente avresti:
           // window.location.href = `/checkout?plan=${planType}`;
         }
       }
 
       // Animazioni all'entrata
-      document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.plan-card');
-        const billingInfos = document.querySelectorAll('.billing-info');
-        
+      document.addEventListener("DOMContentLoaded", function () {
+        const cards = document.querySelectorAll(".plan-card");
+        const billingInfos = document.querySelectorAll(".billing-info");
+
         // Animazioni per le cards (già gestite via CSS con animation-delay)
-        
+
         // Animazioni per le billing info
         billingInfos.forEach((info, index) => {
-          info.style.opacity = '0';
-          info.style.transform = 'translateY(30px)';
-          
+          info.style.opacity = "0";
+          info.style.transform = "translateY(30px)";
+
           setTimeout(() => {
-            info.style.transition = 'all 0.8s ease';
-            info.style.opacity = '1';
-            info.style.transform = 'translateY(0)';
-          }, 800 + (index * 200));
+            info.style.transition = "all 0.8s ease";
+            info.style.opacity = "1";
+            info.style.transform = "translateY(0)";
+          }, 800 + index * 200);
         });
       });
     </script>
