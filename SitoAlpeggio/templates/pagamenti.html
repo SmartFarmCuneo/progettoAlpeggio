@@ -3,8 +3,219 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech - Profilo</title>
+    <title>Agritech - Abbonamenti</title>
     <link rel="stylesheet" href="../static/css/style.css" />
+    <style>
+      .subscription-plans {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+      }
+
+      .plan-card {
+        background: var(--bg-dark);
+        border: 2px solid var(--border);
+        border-radius: 15px;
+        padding: 2.5rem;
+        text-align: center;
+        transition: all 0.4s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeUp 1s ease forwards;
+      }
+
+      .plan-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      }
+
+      .plan-card.recommended {
+        border-color: var(--primary);
+        position: relative;
+        transform: scale(1.05) translateY(20px);
+        background: linear-gradient(135deg, var(--bg-dark), var(--bg-light));
+      }
+
+      .plan-card.recommended:hover {
+        transform: scale(1.05) translateY(-10px);
+      }
+
+      .plan-card.recommended::before {
+        content: "CONSIGLIATO";
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+        color: var(--bg-dark);
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+      }
+
+      .plan-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+      }
+
+      .plan-price {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin: 1.5rem 0;
+        display: block;
+      }
+
+      .plan-price .currency {
+        font-size: 1.2rem;
+        vertical-align: top;
+      }
+
+      .plan-period {
+        color: var(--text-body);
+        font-size: 1rem;
+        margin-bottom: 2rem;
+        font-weight: 500;
+      }
+
+      .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+        text-align: left;
+      }
+
+      .plan-features li {
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        padding-left: 2rem;
+        color: white;
+        font-weight: 500;
+        line-height: 1.6;
+      }
+
+      .plan-features li::before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: var(--primary);
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+
+      .plan-features li.unavailable {
+        color: var(--text-body);
+        text-decoration: line-through;
+      }
+
+      .plan-features li.unavailable::before {
+        content: "✗";
+        color: var(--danger);
+      }
+
+      .subscribe-btn {
+        background: var(--primary);
+        color: var(--bg-dark);
+        border: none;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        width: 100%;
+        margin-top: 2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+      }
+
+      .subscribe-btn:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+      }
+
+      .subscribe-btn.secondary {
+        background: var(--border);
+        color: var(--text-body);
+        box-shadow: 0 4px 15px rgba(74, 85, 104, 0.3);
+      }
+
+      .subscribe-btn.secondary:hover {
+        background: #5a6268;
+        color: white;
+      }
+
+      .billing-info {
+        background: var(--bg-light);
+        border: 1px solid var(--border);
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 3rem 0;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      }
+
+      .billing-info h3 {
+        color: white;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 1.3rem;
+      }
+
+      .billing-info p {
+        color: var(--text-body);
+        line-height: 1.6;
+        font-size: 1rem;
+      }
+
+      .profile-header p {
+        color: var(--text-body);
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 768px) {
+        .subscription-plans {
+          grid-template-columns: 1fr;
+        }
+        
+        .plan-card.recommended {
+          transform: none;
+        }
+
+        .plan-card.recommended:hover {
+          transform: translateY(-10px);
+        }
+
+        .plan-price {
+          font-size: 2.5rem;
+        }
+      }
+
+      /* Animation delays per le cards */
+      .plan-card:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+
+      .plan-card:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+
+      .plan-card:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+    </style>
   </head>
 
   <body>
@@ -30,255 +241,170 @@
     <div class="container">
       <div class="main-content">
         <div class="sidebar">
-          <div class="menu-item active">Il Mio Profilo</div>
-          <div class="menu-item">Up-grade dell'account</div>
+          <div class="menu-item">Il Mio Profilo</div>
+          <div class="menu-item active">Up-grade dell'account</div>
           <div class="menu-item">Supporto</div>
         </div>
 
         <div class="profile-content">
-          <div
-            id="success-alert"
-            class="alert alert-success"
-            style="display: none"
-          >
-            Profilo aggiornato con successo!
+          <div class="profile-header">
+            <h1>Scegli il Tuo Piano</h1>
+            <p style="color: #6c757d; margin-top: 0.5rem;">Seleziona l'abbonamento più adatto alle tue esigenze agricole</p>
           </div>
 
-          <form id="profile-form" action="/profilo" method="POST">
-            <div class="profile-header">
-              <h1>Il Mio Profilo</h1>
-              <div class="btn-right">
-                <button
-                  type="button"
-                  id="cancel-btn"
-                  class="edit-mode-toggle cancel"
-                  style="display: none"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="button"
-                  id="edit-btn"
-                  class="edit-mode-toggle"
-                  name="action-salvataggio"
-                  value="Modifica"
-                >
-                  Modifica
-                </button>
+          <div class="billing-info">
+            <h3>🔄 Fatturazione Mensile</h3>
+            <p>Tutti i piani si rinnovano automaticamente ogni mese. Puoi cancellare in qualsiasi momento senza costi aggiuntivi.</p>
+          </div>
+
+          <div class="subscription-plans">
+
+            <!-- Piano Free -->
+            <div class="plan-card">
+              <div class="plan-title">Free</div>
+              <div class="plan-price">
+                <span class="currency">€</span>0
               </div>
+              <div class="plan-period">al mese</div>
+              
+              <ul class="plan-features">
+                <li>Monitoraggio fino a 5 ettari</li>
+                <li>Dati meteorologici base</li>
+                <li>3 tipi di sensori</li>
+                <li>Supporto email</li>
+                <li>Report mensili</li>
+                <li class="unavailable">Analisi predittive AI</li>
+                <li class="unavailable">Supporto prioritario</li>
+                <li class="unavailable">API personalizzate</li>
+              </ul>
+              
+              <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
+                Scegli Free
+              </button>
             </div>
 
-            <div class="profile-section">
-              <h2 class="section-title">Informazioni Personali</h2>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="nome">Nome</label>
-                  <input
-                    type="text"
-                    id="nome"
-                    name="nome"
-                    class="form-control"
-                    value="{{user['nome']}}"
-                    name="nome"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="cognome">Cognome</label>
-                  <input
-                    type="text"
-                    id="cognome"
-                    name="cognome"
-                    class="form-control"
-                    value="{{user['cognome']}}"
-                    readonly
-                  />
-                </div>
+            <!-- Piano Basic -->
+            <div class="plan-card">
+              <div class="plan-title">Basic</div>
+              <div class="plan-price">
+                <span class="currency">€</span>19
               </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="email">Email</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    class="form-control"
-                    value="{{user['email']}}"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="telefono">Telefono</label>
-                  <input
-                    type="tel"
-                    id="telefono"
-                    name="telefono"
-                    class="form-control"
-                    value="{{user['telefono']}}"
-                    readonly
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="codice-fiscale"
-                    >Codice Fiscale</label
-                  >
-                  <input
-                    type="text"
-                    id="codice-fiscale"
-                    name="cod_fiscale"
-                    class="form-control"
-                    value="{{user['cod_fiscale']}}"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="data-nascita"
-                    >Data di Nascita</label
-                  >
-                  <input
-                    type="date"
-                    id="data-nascita"
-                    name="DataDiNascita"
-                    class="form-control"
-                    value="{{user['DataDiNascita']}}"
-                    readonly
-                  />
-                </div>
-              </div>
+              <div class="plan-period">al mese</div>
+              
+              <ul class="plan-features">
+                <li>Monitoraggio fino a 5 ettari</li>
+                <li>Dati meteorologici base</li>
+                <li>3 tipi di sensori</li>
+                <li>Supporto email</li>
+                <li>Report mensili</li>
+                <li class="unavailable">Analisi predittive AI</li>
+                <li class="unavailable">Supporto prioritario</li>
+                <li class="unavailable">API personalizzate</li>
+              </ul>
+              
+              <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
+                Scegli Basic
+              </button>
             </div>
 
-            <div class="profile-section">
-              <h2 class="section-title">Impostazioni Account</h2>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="username">Nome Utente</label>
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    class="form-control"
-                    value="{{user['username']}}"
-                    readonly
-                  />
-                </div>
+            <!-- Piano Professional (Consigliato) -->
+            <div class="plan-card recommended">
+              <div class="plan-title">Professional</div>
+              <div class="plan-price">
+                <span class="currency">€</span>49
               </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="notifiche"
-                    >Notifiche Email</label
-                  >
-                  <select
-                    id="notifiche"
-                    name="notifiche"
-                    class="form-control"
-                    disabled
-                  >
-                    <option value="all" selected>Tutte le notifiche</option>
-                    <option value="important">Solo notifiche importanti</option>
-                    <option value="none">Nessuna notifica</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="password">Password</label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    class="form-control"
-                    value="********"
-                    readonly
-                  />
-                </div>
-              </div>
+              <div class="plan-period">al mese</div>
+              
+              <ul class="plan-features">
+                <li>Monitoraggio fino a 25 ettari</li>
+                <li>Dati meteorologici avanzati</li>
+                <li>8 tipi di sensori</li>
+                <li>Supporto email e telefono</li>
+                <li>Report settimanali</li>
+                <li>Analisi predittive AI</li>
+                <li>Allerte automatiche</li>
+                <li class="unavailable">API personalizzate</li>
+              </ul>
+              
+              <button class="subscribe-btn" onclick="selectPlan('professional')">
+                Scegli Professional
+              </button>
             </div>
 
-            <!-- Hidden submit button -->
-            <input
-              type="hidden"
-              name="action-salvataggio"
-              id="action-salvataggio"
-              value=""
-            />
-          </form>
+            <!-- Piano Enterprise -->
+            <div class="plan-card">
+              <div class="plan-title">Enterprise</div>
+              <div class="plan-price">
+                <span class="currency">€</span>99
+              </div>
+              <div class="plan-period">al mese</div>
+              
+              <ul class="plan-features">
+                <li>Monitoraggio illimitato</li>
+                <li>Dati meteorologici premium</li>
+                <li>Tutti i tipi di sensori</li>
+                <li>Supporto prioritario 24/7</li>
+                <li>Report personalizzati</li>
+                <li>Analisi predittive AI avanzate</li>
+                <li>Allerte in tempo reale</li>
+                <li>API personalizzate</li>
+              </ul>
+              
+              <button class="subscribe-btn" onclick="selectPlan('enterprise')">
+                Scegli Enterprise
+              </button>
+            </div>
+          </div>
+
+          <div class="billing-info">
+            <h3>💳 Metodi di Pagamento Accettati</h3>
+            <p>Carte di credito, PayPal, Bonifico bancario • Fatturazione elettronica disponibile</p>
+          </div>
         </div>
       </div>
     </div>
 
     <script>
-      // Funzionalità JavaScript per la modifica del profilo
-      document.addEventListener("DOMContentLoaded", function () {
-        const editBtn = document.getElementById("edit-btn");
-        const cancelBtn = document.getElementById("cancel-btn");
-        const successAlert = document.getElementById("success-alert");
-        const profileForm = document.getElementById("profile-form");
-        const actionInput = document.getElementById("action-salvataggio");
-        const formInputs = document.querySelectorAll(
-          '#profile-form input:not([type="hidden"]), #profile-form select'
-        );
-        const originalValues = {};
-
-        // Salva i valori originali
-        formInputs.forEach((input) => {
-          originalValues[input.id] = input.value;
-        });
-
-        // Attiva modalità modifica
-        editBtn.addEventListener("click", function () {
-          if (editBtn.value === "Modifica") {
-            // Passa alla modalità modifica
-            formInputs.forEach((input) => {
-              if (input.id !== "password") {
-                // Mantieni password in sola lettura
-                input.readOnly = false;
-                if (input.tagName === "SELECT") {
-                  input.disabled = false;
-                }
-              }
-            });
-
-            editBtn.textContent = "Salva";
-            editBtn.value = "Salva";
-            editBtn.classList.add("save");
-            cancelBtn.style.display = "inline-block";
-            successAlert.style.display = "none";
-          } else {
-            // Salva le modifiche
-            actionInput.value = "Salva"; // Imposta il valore per l'azione di salvataggio
-            profileForm.submit(); // Invia il form
-          }
-        });
-
-        // Annulla modifiche
-        cancelBtn.addEventListener("click", function () {
-          formInputs.forEach((input) => {
-            input.value = originalValues[input.id]; // Ripristina valori originali
-            input.readOnly = true;
-            if (input.tagName === "SELECT") {
-              input.disabled = true;
-            }
-          });
-
-          editBtn.textContent = "Modifica";
-          editBtn.classList.remove("save");
-          cancelBtn.style.display = "none";
-          successAlert.style.display = "none";
-        });
-
-        // Se c'è un parametro nell'URL che indica un salvataggio avvenuto, mostra il messaggio di successo
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("saved") && urlParams.get("saved") === "true") {
-          successAlert.style.display = "block";
-          setTimeout(() => {
-            successAlert.style.display = "none";
-          }, 3000);
+      function selectPlan(planType) {
+        // Mostra conferma
+        const planNames = {
+          'basic': 'Basic (€19/mese)',
+          'professional': 'Professional (€49/mese)',
+          'enterprise': 'Enterprise (€99/mese)'
+        };
+        
+        const confirmed = confirm(`Confermi la selezione del piano ${planNames[planType]}?`);
+        
+        if (confirmed) {
+          // Simula reindirizzamento al checkout
+          alert(`Reindirizzamento al checkout per il piano ${planNames[planType]}...`);
+          
+          // Qui normalmente avresti:
+          // window.location.href = `/checkout?plan=${planType}`;
         }
+      }
+
+      // Animazioni all'entrata
+      document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.plan-card');
+        const billingInfos = document.querySelectorAll('.billing-info');
+        
+        // Animazioni per le cards (già gestite via CSS con animation-delay)
+        
+        // Animazioni per le billing info
+        billingInfos.forEach((info, index) => {
+          info.style.opacity = '0';
+          info.style.transform = 'translateY(30px)';
+          
+          setTimeout(() => {
+            info.style.transition = 'all 0.8s ease';
+            info.style.opacity = '1';
+            info.style.transform = 'translateY(0)';
+          }, 800 + (index * 200));
+        });
       });
     </script>
+
     <!-- FOOTER -->
     <footer id="contact">
       <div class="container">
