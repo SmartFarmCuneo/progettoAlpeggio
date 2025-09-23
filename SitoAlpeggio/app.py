@@ -8,6 +8,9 @@ import requests
 import subprocess
 import os
 import json
+import smtplib
+import random
+from email.mime.text import MIMEText
 
 ############################# Flask-DB connection ##############################
 app = Flask(__name__)
@@ -31,6 +34,38 @@ def get_user_data(username):
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         return cursor.fetchone()
     conn.close()
+
+########################### EMAIL (OTP) ########################################
+
+
+def send_reset_email(to_email, otp_code):
+    msg = MIMEText(f"""
+Ciao!
+
+Hai richiesto di reimpostare la password del tuo account Agritech.
+Ecco il tuo codice di verifica:
+
+{otp_code}
+
+Inseriscilo nella pagina di verifica per continuare.
+Se non hai richiesto tu il reset, ignora questa email.
+""")
+    msg["Subject"] = "Codice reset password - Agritech"
+    msg["From"] = "tuoaccount@gmail.com"   # <-- cambia con la tua email
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login("tuoaccount@gmail.com", "TUA_APP_PASSWORD")  # <-- cambia con la tua app password
+            server.sendmail(msg["From"], [msg["To"]], msg.as_string())
+        print("Email inviata correttamente")
+        return True
+    except Exception as e:
+        print("Errore invio mail:", e)
+        return False
+
+###############################################################################
 
 ########################### Context Processor #########################
 
@@ -164,6 +199,80 @@ def token_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated
+################################################################################
+
+########################### RESET PASSWORD #####################################
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    message = ""
+    if request.method == "POST":
+        email = request.form["email"]
+
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT username FROM users WHERE email=%s", (email,))
+            user = cursor.fetchone()
+
+        if user:
+            otp = str(random.randint(100000, 999999))  # codice a 6 cifre
+            session["reset_otp"] = otp
+            session["reset_user"] = user["username"]
+
+            if send_reset_email(email, otp):
+                return redirect(url_for("verify_code"))
+            else:
+                message = "Errore durante l'invio della mail."
+        else:
+            message = "Email non trovata."
+
+    return render_template("forgot_password.html", message=message)
+
+
+@app.route("/verify_code", methods=["GET", "POST"])
+def verify_code():
+    error = ""
+    if request.method == "POST":
+        code = request.form["otp"]
+        if code == session.get("reset_otp"):
+            return redirect(url_for("reset_password"))
+        else:
+            error = "Codice errato."
+
+    return render_template("verify_code.html", error=error)
+
+
+@app.route("/reset_password", methods=["GET", "POST"])
+def reset_password():
+    error = ""
+    username = session.get("reset_user")
+    if not username:
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        password = request.form["password"]
+        confirm = request.form["confirm"]
+
+        if password != confirm:
+            error = "Le password non coincidono."
+        else:
+            psw_hashed = hash_password(password)
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE users SET password_hash=%s WHERE username=%s",
+                    (psw_hashed, username),
+                )
+                conn.commit()
+
+            # pulizia sessione
+            session.pop("reset_otp", None)
+            session.pop("reset_user", None)
+
+            return redirect(url_for("login"))
+
+    return render_template("reset_password.html", error=error)
+
 ################################################################################
 
 
