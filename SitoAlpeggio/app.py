@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, make_response, session, jsonify
+from flask import Flask, render_template, redirect, url_for, request, make_response, session, jsonify, render_template_string
 from functools import wraps
 import pymysql
 import datetime
@@ -11,6 +11,8 @@ import json
 import smtplib
 import random
 from email.mime.text import MIMEText
+from flask_mail import Message, Mail
+
 
 ############################# Flask-DB connection ##############################
 app = Flask(__name__)
@@ -28,6 +30,17 @@ def get_db_connection():
 ###############################################################################
 
 
+############################## CONFIG MAIL #############################
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = "tuoaccount@gmail.com"      # <-- cambia qui
+app.config['MAIL_PASSWORD'] = "TUA_APP_PASSWORD"          # <-- cambia qui
+app.config['MAIL_DEFAULT_SENDER'] = ("Agritech", "tuoaccount@gmail.com")
+
+mail = Mail(app)
+
+
 def get_user_data(username):
     conn = get_db_connection()
     with conn.cursor() as cursor:
@@ -35,37 +48,103 @@ def get_user_data(username):
         return cursor.fetchone()
     conn.close()
 
-########################### EMAIL (OTP) ########################################
+############################## FUNZIONE INVIO MAIL #############################
 
 
-def send_reset_email(to_email, otp_code):
-    msg = MIMEText(f"""
-Ciao!
+def send_reset_email(user_email, code):
+    msg = Message("🌱 Agritech - Reset Password", recipients=[user_email])
 
-Hai richiesto di reimpostare la password del tuo account Agritech.
-Ecco il tuo codice di verifica:
-
-{otp_code}
-
-Inseriscilo nella pagina di verifica per continuare.
-Se non hai richiesto tu il reset, ignora questa email.
-""")
-    msg["Subject"] = "Codice reset password - Agritech"
-    msg["From"] = "tuoaccount@gmail.com"   # <-- cambia con la tua email
-    msg["To"] = to_email
+    msg.html = render_template_string("""
+    <!DOCTYPE html>
+    <html lang="it">
+    <head>
+      <meta charset="UTF-8" />
+      <style>
+        body {
+          font-family: "Segoe UI", Arial, sans-serif;
+          background-color: #1a202c;
+          color: #fff;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background: #2d3748;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .header {
+          background: linear-gradient(135deg, #2d3748, #1a202c);
+          padding: 20px;
+          text-align: center;
+        }
+        .header img {
+          max-width: 100px;
+          margin-bottom: 10px;
+        }
+        .content {
+          padding: 30px;
+          text-align: center;
+        }
+        h1 {
+          color: #48bb78;
+          font-size: 22px;
+          margin-bottom: 20px;
+        }
+        p {
+          color: #cbd5e0;
+          font-size: 16px;
+          line-height: 1.5;
+        }
+        .code {
+          display: inline-block;
+          background: #1a202c;
+          color: #48bb78;
+          font-size: 24px;
+          font-weight: bold;
+          padding: 15px 25px;
+          margin: 20px 0;
+          border-radius: 8px;
+          border: 2px solid #48bb78;
+        }
+        .footer {
+          background: #1a202c;
+          text-align: center;
+          padding: 15px;
+          font-size: 12px;
+          color: #cbd5e0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://i.ibb.co/3sWD5Vj/Farm-Logo.png" alt="Agritech Logo">
+        </div>
+        <div class="content">
+          <h1>Richiesta reset password</h1>
+          <p>Ciao, abbiamo ricevuto la tua richiesta di reimpostare la password.</p>
+          <p>Usa questo codice per procedere:</p>
+          <div class="code">{{ code }}</div>
+          <p>Se non hai richiesto tu il reset, ignora questa email.</p>
+        </div>
+        <div class="footer">
+          &copy; 2024 Agritech - Innovazione per l'agricoltura del futuro
+        </div>
+      </div>
+    </body>
+    </html>
+    """, code=code)
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login("tuoaccount@gmail.com", "TUA_APP_PASSWORD")  # <-- cambia con la tua app password
-            server.sendmail(msg["From"], [msg["To"]], msg.as_string())
-        print("Email inviata correttamente")
+        mail.send(msg)
+        print("✅ Email inviata correttamente")
         return True
     except Exception as e:
-        print("Errore invio mail:", e)
+        print("❌ Errore invio mail:", e)
         return False
-
-###############################################################################
 
 ########################### Context Processor #########################
 
@@ -203,6 +282,7 @@ def token_required(f):
 
 ########################### RESET PASSWORD #####################################
 
+
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     message = ""
@@ -211,7 +291,8 @@ def forgot_password():
 
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            cursor.execute("SELECT username FROM users WHERE email=%s", (email,))
+            cursor.execute(
+                "SELECT username FROM users WHERE email=%s", (email,))
             user = cursor.fetchone()
 
         if user:
