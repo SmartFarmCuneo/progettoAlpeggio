@@ -507,7 +507,8 @@ def aggiungiCampo(current_user):
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                cursor.execute("SELECT id_u FROM users WHERE username=%s", (current_user,))
+                cursor.execute(
+                    "SELECT id_u FROM users WHERE username=%s", (current_user,))
                 user_db = cursor.fetchone()
                 if not user_db:
                     error = "Utente non trovato."
@@ -531,8 +532,9 @@ def aggiungiCampo(current_user):
             print("Errore durante l'inserimento:", e)
         finally:
             connection.close()
-            
-    print("Rendering aggiungiCampo con:", coordinate, provincia, comune, cap, error)
+
+    print("Rendering aggiungiCampo con:",
+          coordinate, provincia, comune, cap, error)
 
     return render_template(
         'aggiungi_campo.html',
@@ -575,10 +577,10 @@ def salvaCoordinate():
 
     return redirect(url_for('aggiungiCampo'))
 
+
 @app.route('/api/get_session_coordinate')
 def get_session_coordinate():
     return jsonify(session.get('coordinate', {}))
-
 
 
 @app.route('/mappa', methods=['GET', 'POST'])
@@ -610,18 +612,167 @@ def mappaManuale(current_user):
     return render_template('mappaManuale.html', error=error)
 
 
+# Aggiungi queste funzioni al tuo file Flask principale
+
+@app.route("/api/campi-utente")
+@token_required
+def api_campi_utente(current_user):
+    """Restituisce tutti i campi dell'utente con i loro dettagli"""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.num_bestiame, f.coordinate 
+                FROM fields f 
+                INNER JOIN users u ON f.id_user = u.id_u 
+                WHERE u.username = %s 
+                ORDER BY f.id_t
+            """, (current_user,))
+            campi = cursor.fetchall()
+            return jsonify(campi)
+    except Exception as e:
+        print(f"Errore nel recupero campi utente: {e}")
+        return jsonify({"error": "Errore interno del server"}), 500
+    finally:
+        conn.close()
+
+
+@app.route("/api/campo/<int:campo_id>")
+@token_required
+def api_dettaglio_campo(current_user, campo_id):
+    """Restituisce i dettagli di un campo specifico"""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Verifica che il campo appartenga all'utente
+            cursor.execute("""
+                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.num_bestiame, f.coordinate,
+                       u.username
+                FROM fields f 
+                INNER JOIN users u ON f.id_user = u.id_u 
+                WHERE f.id_t = %s AND u.username = %s
+            """, (campo_id, current_user))
+
+            campo = cursor.fetchone()
+            if not campo:
+                return jsonify({"error": "Campo non trovato"}), 404
+
+            return jsonify(campo)
+    except Exception as e:
+        print(f"Errore nel recupero dettaglio campo: {e}")
+        return jsonify({"error": "Errore interno del server"}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
 def gestioneCampo(current_user):
-    session['gestioneCampo'] = True
+    """Gestisce la modifica e cancellazione dei campi"""
+    if request.method == 'GET':
+        return render_template('gestione_campo.html')
+
     if request.method == 'POST':
-        if 'action-save' in request.form:
-            coordinate = session.get('coordinate')
-            campo_selezionato = request.form.get('campoSelezionato')
-            state = request.form.get('state')
-            zip_code = request.form.get('zip')
-            print(coordinate, campo_selezionato, state, zip_code)
-    return render_template('gestione_campo.html')
+        action = request.form.get('action')
+        campo_id = request.form.get('campoSelezionato')
+
+        if not campo_id:
+            return redirect(url_for('gestioneCampo'))
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                # Verifica che il campo appartenga all'utente
+                cursor.execute("""
+                    SELECT f.id_t FROM fields f 
+                    INNER JOIN users u ON f.id_user = u.id_u 
+                    WHERE f.id_t = %s AND u.username = %s
+                """, (campo_id, current_user))
+
+                if not cursor.fetchone():
+                    return redirect(url_for('gestioneCampo'))
+
+                if action == 'delete':
+                    # Elimina il campo
+                    cursor.execute(
+                        "DELETE FROM fields WHERE id_t = %s", (campo_id,))
+                    conn.commit()
+                    return redirect(url_for('home'))
+
+                elif action == 'save':
+                    # Aggiorna il campo
+                    livestock_count = request.form.get('livestockCount')
+                    provincia = request.form.get('provincia')
+                    comune = request.form.get('comune')
+                    cap = request.form.get('zip')
+
+                    cursor.execute("""
+                        UPDATE fields 
+                        SET num_bestiame = %s, provincia = %s, comune = %s, CAP = %s
+                        WHERE id_t = %s
+                    """, (livestock_count, provincia, comune, cap, campo_id))
+                    conn.commit()
+
+                    return redirect(url_for('gestioneCampo'))
+
+        except Exception as e:
+            print(f"Errore nella gestione campo: {e}")
+            return redirect(url_for('gestioneCampo'))
+        finally:
+            conn.close()
+
+    return redirect(url_for('gestioneCampo'))
+
+
+# Modifica anche la funzione esistente get_campi per essere più robusta
+def get_campi(current_user):
+    """Restituisce il numero di campi dell'utente"""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT COUNT(*) as count 
+                FROM fields f 
+                INNER JOIN users u ON f.id_user = u.id_u 
+                WHERE u.username = %s
+            """, (current_user,))
+            result = cursor.fetchone()
+            return result['count'] if result else 0
+    except Exception as e:
+        print(f"Errore nel conteggio campi: {e}")
+        return 0
+    finally:
+        conn.close()
+
+
+# Migliora anche la funzione get_info_campi
+def get_info_campi(current_user):
+    """Restituisce informazioni sui campi dell'utente"""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT f.coordinate, f.comune, f.num_bestiame 
+                FROM fields f 
+                INNER JOIN users u ON f.id_user = u.id_u 
+                WHERE u.username = %s 
+                ORDER BY f.id_t
+            """, (current_user,))
+            risultato = cursor.fetchall()
+
+            info_parts = []
+            for campo in risultato:
+                coord = campo["coordinate"] if campo["coordinate"] else "N/A"
+                comune = campo["comune"] if campo["comune"] else "N/A"
+                bestiame = campo["num_bestiame"] if campo["num_bestiame"] else 0
+                info_parts.append(f"{coord}/{comune}/{bestiame}")
+
+            return "|".join(info_parts)
+    except Exception as e:
+        print(f"Errore nel recupero info campi: {e}")
+        return ""
+    finally:
+        conn.close()
 
 
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
@@ -737,7 +888,6 @@ def get_location_by_coords():
         "sigla_provincia": nearest["sigla_provincia"]
     }
     return jsonify(result)
-
 
 
 def get_campi(current_user):

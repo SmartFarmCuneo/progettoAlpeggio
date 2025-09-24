@@ -21,6 +21,79 @@
     />
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
+    
+    <style>
+      /* Stili per i pulsanti di azione */
+      .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      
+      .action-btn {
+        flex: 1;
+        max-width: 200px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      
+      .btn-delete {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+      }
+      
+      .btn-delete:hover {
+        background: linear-gradient(135deg, #c82333, #bd2130);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+      }
+      
+      .btn-location {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+      }
+      
+      .btn-location:hover {
+        background: linear-gradient(135deg, #138496, #117a8b);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+      }
+      
+      .btn-icon {
+        width: 20px;
+        height: 20px;
+      }
+      
+      /* Loading state */
+      .loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      
+      .spinner {
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #3498db;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: none;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
 
   <body>
@@ -51,18 +124,16 @@
             width="72"
             height="57"
           />
-          <h2>Aggiornamento campo</h2>
-          <p class="lead">Pagina per aggiornare i tuoi campi</p>
+          <h2>Gestione campo</h2>
+          <p class="lead">Modifica e gestisci i tuoi campi agricoli</p>
         </div>
 
-        <!-- Primo form per la ricerca -->
+        <!-- Form per la ricerca del campo -->
         <form class="form" id="searchForm">
-          <div class="col-md-7 col-lg-8 mx-auto">
+          <div class="col-md-8 col-lg-6 mx-auto">
             <h4 class="mb-3">Seleziona un campo</h4>
             <div class="mb-3">
-              <label for="fieldSelect" class="form-label"
-                >Seleziona Campo</label
-              >
+              <label for="fieldSelect" class="form-label">Campo da gestire</label>
               <div class="d-flex">
                 <select
                   class="form-select me-2"
@@ -72,21 +143,21 @@
                 >
                   <option value="">Scegli un campo...</option>
                 </select>
+                <div class="spinner" id="loadingSpinner"></div>
               </div>
             </div>
-            <hr class="my-4" />
             <button
               id="searchButton"
               class="w-100 btn btn-primary btn-lg"
               type="submit"
             >
-              Ricerca
+              Carica dati campo
             </button>
             <hr class="my-4" />
           </div>
         </form>
 
-        <!-- Secondo form per i dati del campo -->
+        <!-- Form per i dati del campo -->
         <form
           class="form"
           action="/gestioneCampo"
@@ -94,8 +165,8 @@
           id="detailForm"
           style="display: none"
         >
-          <div class="col-md-7 col-lg-8 mx-auto">
-            <h4 class="mb-3">Dati campo</h4>
+          <div class="col-md-8 col-lg-6 mx-auto">
+            <h4 class="mb-3">Gestisci campo: <span id="campoNome"></span></h4>
             <input
               type="hidden"
               id="campoSelezionato"
@@ -103,146 +174,40 @@
               value=""
             />
 
-            <div class="row g-3">
-              <div class="col-6">
-                <label for="deleteButton" class="form-label"
-                  >Elimina il terreno</label
-                >
+            <!-- Pulsanti di azione -->
+            <div class="action-buttons mb-4">
+              <button
+                type="button"
+                id="deleteButton"
+                class="action-btn btn-delete"
+                name="action"
+                value="delete"
+              >
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+                Elimina campo
+              </button>
+              
+              <a
+                href="/mappa"
+                id="geoButton"
+                class="action-btn btn-location"
+                style="text-decoration: none;"
+              >
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"/>
+                </svg>
+                Modifica posizione
+              </a>
+            </div>
 
-                <button
-                  id="deleteButton"
-                  class="button"
-                  type="button"
-                  id="deleteButton"
-                  name="action-delete"
-                >
-                  <span class="button__text">Delete</span>
-                  <span class="button__icon"
-                    ><svg
-                      class="svg"
-                      height="512"
-                      viewBox="0 0 512 512"
-                      width="512"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <title></title>
-                      <path
-                        d="M112,112l20,320c.95,18.49,14.4,32,32,32H348c17.67,0,30.87-13.51,32-32l20-320"
-                        style="
-                          fill: none;
-                          stroke: #fff;
-                          stroke-linecap: round;
-                          stroke-linejoin: round;
-                          stroke-width: 32px;
-                        "
-                      ></path>
-                      <line
-                        style="
-                          stroke: #fff;
-                          stroke-linecap: round;
-                          stroke-miterlimit: 10;
-                          stroke-width: 32px;
-                        "
-                        x1="80"
-                        x2="432"
-                        y1="112"
-                        y2="112"
-                      ></line>
-                      <path
-                        d="M192,112V72h0a23.93,23.93,0,0,1,24-24h80a23.93,23.93,0,0,1,24,24h0v40"
-                        style="
-                          fill: none;
-                          stroke: #fff;
-                          stroke-linecap: round;
-                          stroke-linejoin: round;
-                          stroke-width: 32px;
-                        "
-                      ></path>
-                      <line
-                        style="
-                          fill: none;
-                          stroke: #fff;
-                          stroke-linecap: round;
-                          stroke-linejoin: round;
-                          stroke-width: 32px;
-                        "
-                        x1="256"
-                        x2="256"
-                        y1="176"
-                        y2="400"
-                      ></line>
-                      <line
-                        style="
-                          fill: none;
-                          stroke: #fff;
-                          stroke-linecap: round;
-                          stroke-linejoin: round;
-                          stroke-width: 32px;
-                        "
-                        x1="184"
-                        x2="192"
-                        y1="176"
-                        y2="400"
-                      ></line>
-                      <line
-                        style="
-                          fill: none;
-                          stroke: #fff;
-                          stroke-linecap: round;
-                          stroke-linejoin: round;
-                          stroke-width: 32px;
-                        "
-                        x1="328"
-                        x2="320"
-                        y1="176"
-                        y2="400"
-                      ></line>
-                    </svg>
-                  </span>
-                </button>
-              </div>
-              <div class="col-6">
-                <label for="geoButton" class="form-label"
-                  >Geolocalizza il terreno</label
-                >
-                <a
-                  href="{{ url_for('mappa') }}"
-                  id="geoButton"
-                  style="
-                    width: 100%;
-                    height: 50%;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                  "
-                  type="button"
-                >
-                  <svg
-                    aria-hidden="true"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  <span class="ms-2">Avvia ricerca</span>
-                </a>
-              </div>
+            <div class="row g-3">
               <div class="col-12">
-                <label for="livestockCount" class="form-label"
-                  >Inserire numero di bestiame previsto sul territorio</label
-                >
+                <label for="livestockCount" class="form-label">
+                  Numero bestiame previsto
+                </label>
                 <input
                   type="number"
                   class="form-control"
@@ -251,13 +216,13 @@
                   min="0"
                   max="100000"
                   step="1"
-                  value="0"
                   required
                 />
                 <div class="invalid-feedback">Inserire un numero valido.</div>
               </div>
-              <div class="col-md-5">
-                <label for="country" class="form-label">Provincia</label>
+              
+              <div class="col-md-6">
+                <label for="select_provincia" class="form-label">Provincia</label>
                 <select
                   class="form-select"
                   name="provincia"
@@ -266,10 +231,11 @@
                 >
                   <option value="">Scegli...</option>
                 </select>
-                <div class="invalid-feedback">Scegliere un valido stato</div>
+                <div class="invalid-feedback">Scegliere una provincia valida</div>
               </div>
-              <div class="col-md-4">
-                <label for="state" class="form-label">Comune</label>
+              
+              <div class="col-md-6">
+                <label for="select_comune" class="form-label">Comune</label>
                 <select
                   class="form-select"
                   id="select_comune"
@@ -278,43 +244,44 @@
                 >
                   <option value="">Scegli...</option>
                 </select>
-                <div class="invalid-feedback">
-                  Scegliere una valida provincia
-                </div>
+                <div class="invalid-feedback">Scegliere un comune valido</div>
               </div>
-              <div class="col-md-3">
+              
+              <div class="col-12">
                 <label for="zip" class="form-label">CAP</label>
                 <input
                   type="text"
                   class="form-control"
                   id="zip"
                   name="zip"
+                  pattern="[0-9]{5}"
+                  maxlength="5"
                   required
                 />
-                <div class="invalid-feedback">Codice CAP richiesto</div>
+                <div class="invalid-feedback">Inserire un CAP valido (5 cifre)</div>
               </div>
             </div>
+            
             <hr class="my-4" />
-            <div class="form-check">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                id="save-info"
-                name="save-info"
-              />
-              <label class="form-check-label" for="save-info"
-                >Ricorda queste informazioni prossimamente</label
+            
+            
+            <div class="d-grid gap-2">
+              <button
+                class="btn btn-success btn-lg"
+                type="submit"
+                name="action"
+                value="save"
               >
+                Salva modifiche
+              </button>
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                onclick="resetForm()"
+              >
+                Annulla modifiche
+              </button>
             </div>
-            <hr class="my-4" />
-            <button
-              class="w-100 btn btn-primary btn-lg"
-              type="submit"
-              name="action-save"
-              value="salva"
-            >
-              Continua e salva
-            </button>
           </div>
         </form>
       </main>
@@ -331,6 +298,7 @@
           </ul>
         </div>
       </footer>
+      {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
     </div>
 
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
@@ -342,155 +310,232 @@
         const searchButton = document.getElementById("searchButton");
         const detailForm = document.getElementById("detailForm");
         const campoSelezionato = document.getElementById("campoSelezionato");
+        const campoNome = document.getElementById("campoNome");
+        const deleteButton = document.getElementById("deleteButton");
+        const loadingSpinner = document.getElementById("loadingSpinner");
 
-        // Funzione per mostrare il form dei dettagli
-        function showDetailForm() {
-          if (fieldSelect.value) {
-            // Imposta il valore del campo selezionato nel form dei dettagli
-            campoSelezionato.value = fieldSelect.value;
-            // Mostra il form dei dettagli
-            detailForm.style.display = "block";
-            // Qui potresti anche aggiungere una chiamata AJAX per caricare i dettagli del campo selezionato
+        // Dati del campo attualmente caricato
+        let currentFieldData = null;
+
+        // Funzione per mostrare/nascondere loading
+        function toggleLoading(show) {
+          if (show) {
+            loadingSpinner.style.display = "inline-block";
+            searchButton.classList.add("loading");
           } else {
-            alert("Seleziona un campo prima di proseguire.");
+            loadingSpinner.style.display = "none";
+            searchButton.classList.remove("loading");
           }
         }
 
-        // Listener per il pulsante di ricerca
-        searchButton.addEventListener("click", showDetailForm);
+        // Variabili per i dati del campo dalla sessione/database
+        let sessionProvincia = "";
+        let sessionComune = "";
+        let sessionCap = "";
+        let sessionBestiame = 0;
 
-        // Funzione per caricare i campi tramite l'API
-        function caricaCampi() {
-          fetch("/api/numCampi")
-            .then((response) => response.json()) // Supponiamo che la risposta sia un numero intero
-            .then((numCampi) => {
-              console.log(numCampi); // Mostra il numero ricevuto
-              if (numCampi > 0) {
-                // Svuota la select prima di aggiungere nuove opzioni
-                fieldSelect.innerHTML =
-                  '<option value="">Scegli un campo...</option>';
-
-                // Aggiungi le opzioni ai campi ricevuti
-                for (let i = 0; i < numCampi; i++) {
-                  const option = document.createElement("option");
-                  option.value = "campo" + (i + 1); // Aggiungi un campo con un numero
-                  option.textContent = "Campo " + (i + 1);
-                  fieldSelect.appendChild(option);
-                }
-              }
-            })
-            .catch((error) => {
-              console.error("Errore nel caricamento dei campi:", error);
-              fieldSelect.innerHTML =
-                '<option value="">Errore nel caricamento dei campi</option>';
-            });
+        // Funzione per caricare i dati del campo selezionato
+        async function caricaDatiCampo(fieldId) {
+          try {
+            toggleLoading(true);
+            
+            // Chiamata API per ottenere i dati del campo
+            const response = await fetch(`/api/campo/${fieldId}`);
+            if (!response.ok) {
+              throw new Error("Errore nel caricamento dei dati del campo");
+            }
+            
+            const fieldData = await response.json();
+            currentFieldData = fieldData;
+            
+            // Salva i dati del campo nelle variabili di sessione
+            sessionProvincia = fieldData.provincia || "";
+            sessionComune = fieldData.comune || "";
+            sessionCap = fieldData.CAP || "";
+            sessionBestiame = fieldData.num_bestiame || 0;
+            
+            // Popola il campo bestiame
+            document.getElementById("livestockCount").value = sessionBestiame;
+            
+            // Carica le province con i dati del campo
+            await populateProvince();
+            
+            // Mostra il form e imposta il nome del campo
+            campoSelezionato.value = fieldId;
+            campoNome.textContent = fieldSelect.options[fieldSelect.selectedIndex].text;
+            detailForm.style.display = "block";
+            
+            // Scroll verso il form
+            detailForm.scrollIntoView({ behavior: "smooth" });
+            
+          } catch (error) {
+            console.error("Errore nel caricamento dei dati:", error);
+            alert("Errore nel caricamento dei dati del campo. Riprova.");
+          } finally {
+            toggleLoading(false);
+          }
         }
+
+        // Event listener per il form di ricerca
+        searchButton.addEventListener("click", function(e) {
+          e.preventDefault();
+          
+          if (!fieldSelect.value) {
+            alert("Seleziona un campo prima di proseguire.");
+            return;
+          }
+          
+          caricaDatiCampo(fieldSelect.value);
+        });
+
+        // Event listener per il pulsante elimina
+        deleteButton.addEventListener("click", function() {
+          if (confirm("Sei sicuro di voler eliminare questo campo? Questa azione non può essere annullata.")) {
+            const form = document.getElementById("detailForm");
+            const actionInput = document.createElement("input");
+            actionInput.type = "hidden";
+            actionInput.name = "action";
+            actionInput.value = "delete";
+            form.appendChild(actionInput);
+            form.submit();
+          }
+        });
+
+        // Funzione per caricare i campi dell'utente
+        async function caricaCampi() {
+          try {
+            const response = await fetch("/api/campi-utente");
+            if (!response.ok) {
+              throw new Error("Errore nel caricamento dei campi");
+            }
+            
+            const campi = await response.json();
+            
+            // Svuota la select
+            fieldSelect.innerHTML = '<option value="">Scegli un campo...</option>';
+            
+            // Aggiungi i campi
+            campi.forEach((campo, index) => {
+              const option = document.createElement("option");
+              option.value = campo.id_t;
+              option.textContent = `Campo ${index + 1} - ${campo.comune}`;
+              fieldSelect.appendChild(option);
+            });
+            
+          } catch (error) {
+            console.error("Errore nel caricamento dei campi:", error);
+            fieldSelect.innerHTML = '<option value="">Errore nel caricamento dei campi</option>';
+          }
+        }
+
+        // Funzione per caricare le province con logica della sessione
+        async function populateProvince() {
+          try {
+            const response = await fetch("/api/get_provincia");
+            const data = await response.json();
+            
+            const selectProvincia = document.getElementById("select_provincia");
+            selectProvincia.innerHTML = '<option value="">Scegli...</option>';
+            
+            if (data.province && Array.isArray(data.province)) {
+              data.province.forEach((provincia) => {
+                const option = document.createElement("option");
+                option.value = provincia.sigla_provincia;
+                option.textContent = provincia.denominazione_provincia;
+                
+                // Seleziona la provincia se corrisponde a quella del campo
+                if (provincia.sigla_provincia === sessionProvincia) {
+                  option.selected = true;
+                }
+                
+                selectProvincia.appendChild(option);
+              });
+            }
+            
+            // Se c'è una provincia salvata, carica i relativi comuni
+            if (sessionProvincia) {
+              await populateComuni(sessionProvincia);
+            }
+          } catch (error) {
+            console.error("Errore nel caricamento delle province:", error);
+          }
+        }
+
+        // Funzione per caricare i comuni con logica della sessione
+        async function populateComuni(provinciaSelezionata) {
+          try {
+            const selectComune = document.getElementById("select_comune");
+            selectComune.innerHTML = '<option value="">Scegli...</option>';
+            
+            if (!provinciaSelezionata) return;
+            
+            const response = await fetch(`/api/get_comune?provincia=${provinciaSelezionata}`);
+            const data = await response.json();
+            
+            if (data.comuni && Array.isArray(data.comuni)) {
+              data.comuni.forEach((comune) => {
+                const option = document.createElement("option");
+                option.value = comune.denominazione_ita;
+                option.textContent = comune.denominazione_ita;
+                
+                // Seleziona il comune se corrisponde a quello del campo
+                if (comune.denominazione_ita === sessionComune) {
+                  option.selected = true;
+                }
+                
+                selectComune.appendChild(option);
+              });
+            }
+            
+            // Imposta il CAP del campo
+            document.getElementById("zip").value = sessionCap || "";
+            
+          } catch (error) {
+            console.error("Errore nel caricamento dei comuni:", error);
+          }
+        }
+
+        // Event listener per cambio provincia
+        document.getElementById("select_provincia").addEventListener("change", function() {
+          const provinciaSelezionata = this.value;
+          
+          // Reset dei valori di comune e CAP quando cambia la provincia
+          sessionComune = "";
+          sessionCap = "";
+          
+          if (provinciaSelezionata) {
+            populateComuni(provinciaSelezionata);
+          } else {
+            document.getElementById("select_comune").innerHTML = '<option value="">Scegli...</option>';
+            document.getElementById("zip").value = "";
+          }
+        });
+
+        // Funzione per resettare il form
+        window.resetForm = function() {
+          if (currentFieldData) {
+            // Ripristina i valori originali
+            document.getElementById("livestockCount").value = currentFieldData.num_bestiame || 0;
+            document.getElementById("zip").value = currentFieldData.CAP || "";
+            // Ripristina provincia e comune se necessario
+          }
+        };
+
+        // Validazione del form
+        const forms = document.querySelectorAll(".needs-validation");
+        Array.from(forms).forEach(function (form) {
+          form.addEventListener("submit", function (event) {
+            if (!form.checkValidity()) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            form.classList.add("was-validated");
+          }, false);
+        });
 
         // Carica i campi all'avvio della pagina
         caricaCampi();
-
-        // Validation functionality
-        const forms = document.querySelectorAll(".needs-validation");
-        Array.from(forms).forEach(function (form) {
-          form.addEventListener(
-            "submit",
-            function (event) {
-              if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-              form.classList.add("was-validated");
-            },
-            false
-          );
-        });
       });
     </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const selectProvincia = document.getElementById("select_provincia");
-        const selectComune = document.getElementById("select_comune");
-
-        // URL dell'API per ottenere le province
-        const apiUrl1 = "/api/get_provincia";
-
-        // Fetch per ottenere le province
-        fetch(apiUrl1)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`Errore HTTP! Stato: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then((data) => {
-            // Controlla se ci sono province nel JSON
-            if (data.province && Array.isArray(data.province)) {
-              // Pulisce eventuali opzioni esistenti (escluso il primo "Scegli...")
-              selectProvincia.innerHTML = '<option value="">Scegli...</option>';
-
-              // Popola la select con le province ricevute
-              data.province.forEach((provincia) => {
-                let option = document.createElement("option");
-                option.value = provincia.sigla_provincia; // Usa la sigla della provincia come valore
-                option.textContent = provincia.denominazione_provincia; // Usa il nome della provincia
-                selectProvincia.appendChild(option);
-              });
-            } else {
-              console.error("Formato JSON non valido:", data);
-            }
-          })
-          .catch((error) => {
-            console.error("Errore nel recupero delle province:", error);
-          });
-
-        // Aggiungi un ascoltatore di eventi per quando l'utente seleziona una provincia
-        selectProvincia.addEventListener("change", function () {
-          const provinciaSelezionata = selectProvincia.value;
-
-          // Se non è stata selezionata una provincia, esci dalla funzione
-          if (!provinciaSelezionata) {
-            selectComune.innerHTML = '<option value="">Scegli...</option>';
-            return;
-          }
-
-          // URL dell'API per ottenere i comuni della provincia selezionata
-          const apiUrl2 = `/api/get_comune?provincia=${provinciaSelezionata}`;
-
-          // Fetch per ottenere i comuni della provincia selezionata
-          fetch(apiUrl2)
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error(`Errore HTTP! Stato: ${response.status}`);
-              }
-              return response.json();
-            })
-            .then((data) => {
-              // Controlla se ci sono comuni nel JSON
-              if (data.comuni && Array.isArray(data.comuni)) {
-                // Pulisce eventuali opzioni esistenti (escluso il primo "Scegli...")
-                selectComune.innerHTML = '<option value="">Scegli...</option>';
-
-                // Popola la select con i comuni ricevuti
-                data.comuni.forEach((comune) => {
-                  let option = document.createElement("option");
-                  option.value = comune.codice_istat; // Imposta il valore come il codice ISTAT del comune
-                  option.textContent = comune.denominazione_ita; // Mostra il nome del comune
-                  selectComune.appendChild(option);
-                });
-              } else {
-                console.error("Formato JSON non valido:", data);
-                selectComune.innerHTML =
-                  '<option value="">Nessun comune disponibile</option>';
-              }
-            })
-            .catch((error) => {
-              console.error("Errore nel recupero dei comuni:", error);
-              selectComune.innerHTML =
-                '<option value="">Errore nel recupero dei comuni</option>';
-            });
-        });
-      });
-    </script>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
   </body>
 </html>
