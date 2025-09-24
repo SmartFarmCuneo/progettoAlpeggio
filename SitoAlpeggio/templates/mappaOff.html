@@ -52,7 +52,9 @@
       >
         <h3>Perimetro del terreno - seleziona l'area interessata</h3>
         <button class="btn btn-primary" type="button">
-          Inizializza manualmente le coordinate
+          <a class="nav-link" href="/mappaManuale" id="manualCoordinatesLink"
+            >Inserisci manualmente le coordinate</a
+          >
         </button>
       </header>
 
@@ -174,6 +176,48 @@
           }
         });
     </script>
+
+    <script>
+      async function fetchConsent() {
+        try {
+          const res = await fetch("/get-consent", {
+            method: "GET",
+            credentials: "same-origin",
+          });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function centraMappaSuUtente() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+              map.setView([lat, lng], 15); // zoom più vicino
+              //L.marker([lat, lng]).addTo(map).bindPopup("Sei qui").openPopup();
+            },
+            function (error) {
+              console.warn("Impossibile ottenere la posizione:", error.message);
+            }
+          );
+        } else {
+          console.warn("Geolocalizzazione non supportata dal browser");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        const consent = await fetchConsent();
+        if (consent && consent.necessary && consent.analytics && consent.ads) {
+          // 🔑 solo se ha accettato TUTTI i cookie
+          centraMappaSuUtente();
+        }
+      });
+    </script>
+
     <!-- FOOTER -->
     <footer id="contact">
       <div class="container">

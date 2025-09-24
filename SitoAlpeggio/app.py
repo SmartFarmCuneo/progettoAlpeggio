@@ -11,8 +11,13 @@ import os
 import json
 import smtplib
 import random
+import math
+import re
 from email.mime.text import MIMEText
 from flask_mail import Message, Mail
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JSON_DIR = os.path.join(BASE_DIR, "static", "json")
 
 
 ############################# Flask-DB connection ##############################
@@ -49,6 +54,8 @@ def inject_cookie_consent():
 # -----------------------------------------------------
 # Endpoint per settare il consenso (chiamato dal banner)
 # -----------------------------------------------------
+
+
 @app.route("/set-consent", methods=["POST"])
 def set_consent():
     # semplice validazione della richiesta
@@ -84,6 +91,8 @@ def set_consent():
 # -----------------------------------------------------
 # Endpoint per leggere lo stato del consenso (opzionale, utile per JS)
 # -----------------------------------------------------
+
+
 @app.route("/get-consent", methods=["GET"])
 def get_consent():
     consent_cookie = request.cookies.get("cookie_consent")
@@ -99,6 +108,8 @@ def get_consent():
 # -----------------------------------------------------
 # Endpoint per revocare il consenso (utile nel footer “Gestisci cookie”)
 # -----------------------------------------------------
+
+
 @app.route("/revoke-consent", methods=["POST"])
 def revoke_consent():
     resp = make_response(jsonify({"status": "revoked"}))
@@ -120,6 +131,7 @@ def get_user_data(username):
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         return cursor.fetchone()
     conn.close()
+
 
 ############################## FUNZIONE INVIO MAIL #############################
 ############################## CONFIG MAIL #############################
@@ -462,57 +474,111 @@ def storici(current_user):
 @token_required
 def aggiungiCampo(current_user):
     error = ""
-    session['aggiungiCampo'] = False
     coordinate = session.get('coordinate', None)
-    if coordinate is None:
-        error = "Le coordinate non sono disponibili."
-        return render_template('aggiungi_campo.html', error=error)
+
+    # Inizializza sempre le variabili
+    provincia = ""
+    comune = ""
+    cap = ""
+
+    # Se coordinate ci sono (dalla mappa), ricava automaticamente comune/provincia/CAP
+    if coordinate:
+        try:
+            import requests
+            res = requests.get(
+                url_for('get_location_by_coords',
+                        lat=coordinate['lat'], lon=coordinate['lon'], _external=True)
+            )
+            if res.status_code == 200:
+                loc = res.json()
+                provincia = loc.get('provincia', "")
+                comune = loc.get('comune', "")
+                cap = loc.get('cap', "")
+        except Exception as e:
+            print("Errore fetch location:", e)
 
     if request.method == 'POST':
-        provincia = request.form['provincia']
-        comune = request.form['comune']
-        cap = request.form['cap']
+        # Se l’utente modifica i campi, sovrascrivi
+        provincia = request.form.get('provincia', provincia)
+        comune = request.form.get('comune', comune)
+        cap = request.form.get('cap', cap)
         num_bestiame = request.form['num_bestiame']
 
         try:
             connection = get_db_connection()
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id_u FROM users WHERE username = %s", (current_user,))
+                cursor.execute("SELECT id_u FROM users WHERE username=%s", (current_user,))
                 user_db = cursor.fetchone()
-
-                if user_db is None:
+                if not user_db:
                     error = "Utente non trovato."
                     return render_template('aggiungi_campo.html', error=error)
                 user_id = user_db["id_u"]
 
+                # Salvataggio coordinate come stringa "raw" se esistono
+                coord_str = coordinate['raw'] if coordinate and 'raw' in coordinate else None
+
                 cursor.execute(
                     "INSERT INTO fields (id_user, provincia, comune, CAP, num_bestiame, coordinate) "
                     "VALUES (%s, %s, %s, %s, %s, %s)",
-                    (user_id, provincia, comune, cap, num_bestiame, coordinate)
+                    (user_id, provincia, comune, cap, num_bestiame, coord_str)
                 )
                 connection.commit()
+                # Pulisci sessione dopo salvataggio
+                session.pop('coordinate', None)
                 return redirect(url_for('home'))
         except Exception as e:
             error = f"Errore del database: {str(e)}"
             print("Errore durante l'inserimento:", e)
         finally:
             connection.close()
+            
+    print("Rendering aggiungiCampo con:", coordinate, provincia, comune, cap, error)
 
-    return render_template('aggiungi_campo.html', error=error)
+    return render_template(
+        'aggiungi_campo.html',
+        coordinate=coordinate,
+        provincia=provincia,
+        comune=comune,
+        cap=cap,
+        error=error
+    )
 
 
 @app.route('/salva-coordinate', methods=['POST'])
-def getCoordinate():
-    coordinate = request.form.get('coordinate')
-    print(f'Coordinate ricevute: {coordinate}')
-    session['coordinate'] = coordinate
-    if session['gestioneCampo'] == True:
-        session['gestioneCampo'] = False
-        return render_template("gestione_campo.html")
-    else:
-        session['aggiungiCampo'] = False
-        return render_template("aggiungi_campo.html")
+def salvaCoordinate():
+    coordinate = request.form.get('coordinate')  # stringa dal frontend
+
+    # Validazione base: almeno due coordinate e formato corretto
+    matches = re.findall(
+        r'\((-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)', coordinate)
+    if len(matches) < 2:
+        print("Coordinate non valide o insufficienti")
+        session['coordinate'] = None
+        return redirect(url_for('aggiungiCampo'))
+
+    # Salvataggio della stringa completa come è, con la virgola finale
+    if not coordinate.endswith(','):
+        coordinate += ','
+
+    # Calcolo del centroide solo per uso interno
+    lats = [float(lat) for lat, lon in matches]
+    lons = [float(lon) for lat, lon in matches]
+    centro_lat = sum(lats) / len(lats)
+    centro_lon = sum(lons) / len(lons)
+
+    # Salva in sessione sia il centroide che la stringa completa
+    session['coordinate'] = {
+        'lat': centro_lat,
+        'lon': centro_lon,
+        'raw': coordinate  # <-- questa è la stringa da salvare in DB
+    }
+
+    return redirect(url_for('aggiungiCampo'))
+
+@app.route('/api/get_session_coordinate')
+def get_session_coordinate():
+    return jsonify(session.get('coordinate', {}))
+
 
 
 @app.route('/mappa', methods=['GET', 'POST'])
@@ -524,13 +590,30 @@ def mappa(current_user):
 @app.route('/mappaManuale', methods=['GET', 'POST'])
 @token_required
 def mappaManuale(current_user):
-    return render_template('mappaManuale.html')
+    error = ""
+    if request.method == "POST":
+        coord_list = request.form.getlist('coordinate')  # ['(lat,lon)',...]
+        if len(coord_list) < 2 or coord_list[0] != coord_list[-1]:
+            error = "L'ultima coordinata deve coincidere con la prima!"
+        else:
+            # Calcolo centroide
+            coords = [tuple(map(float, c.strip('()').split(',')))
+                      for c in coord_list]
+            lats = [c[0] for c in coords]
+            lons = [c[1] for c in coords]
+            centro_lat = sum(lats)/len(lats)
+            centro_lon = sum(lons)/len(lons)
+            session['coordinate'] = {
+                'lat': centro_lat, 'lon': centro_lon, 'raw': ','.join(coord_list)}
+            return redirect(url_for('aggiungiCampo'))
+
+    return render_template('mappaManuale.html', error=error)
 
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
 def gestioneCampo(current_user):
-    session["gestioneCampo"] = True
+    session['gestioneCampo'] = True
     if request.method == 'POST':
         if 'action-save' in request.form:
             coordinate = session.get('coordinate')
@@ -593,10 +676,12 @@ def profilo(current_user):
     # Render del template con i dati aggiornati
     return render_template('profilo.html', user=user)
 
+
 @app.route('/pagamenti', methods=['GET', 'POST'])
 @token_required
 def pagamenti(current_user):
     return render_template('pagamenti.html')
+
 
 @app.route('/privacy', methods=['GET', 'POST'])
 @token_required
@@ -613,6 +698,48 @@ def terms(current_user):
 #############################################################
 
 #################### GESTIONE DINAMICA DEI CAMPI E API###############################
+
+def haversine(lat1, lon1, lat2, lon2):
+    # distanza in km tra due coordinate
+    R = 6371
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi/2)**2 + math.cos(phi1) * \
+        math.cos(phi2) * math.sin(dlambda/2)**2
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+@app.route("/api/get_location_by_coords", methods=["GET"])
+def get_location_by_coords():
+    lat = float(request.args.get("lat"))
+    lon = float(request.args.get("lon"))
+
+    file_path = os.path.join(JSON_DIR, "gi_comuni_cap.json")
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    comuni = data.get("dati", [])
+    if not comuni:
+        return jsonify({"error": "Nessun comune trovato"}), 404
+
+    # Trova il comune più vicino
+    nearest = min(
+        comuni,
+        key=lambda c: haversine(lat, lon, float(c["lat"]), float(c["lon"]))
+    )
+
+    result = {
+        "comune": nearest["denominazione_ita"],   # <-- il vero nome del comune
+        "cap": nearest["cap"],
+        "provincia": nearest["denominazione_provincia"],
+        "sigla_provincia": nearest["sigla_provincia"]
+    }
+    return jsonify(result)
+
+
+
 def get_campi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -652,22 +779,24 @@ def api_info_campi(current_user):
 
 @app.route("/api/get_provincia")
 def get_provincia():
-    with open("./static/json/gi_province.json", "r", encoding="utf-8") as file:
+    file_path = os.path.join(JSON_DIR, "gi_province.json")
+    with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
-    province = data.get("province", [])
-    return jsonify({"province": province})
+    return jsonify({"province": data.get("province", [])})
 
 
 @app.route("/api/get_comune", methods=["GET"])
 def get_comune():
-    with open("./static/json/gi_comuni_cap.json", "r", encoding="utf-8") as file:
+    file_path = os.path.join(JSON_DIR, "gi_comuni_cap.json")
+    with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
+
     comuni = data.get("dati", [])
-    if 'provincia' in request.args:
-        provincia = str(request.args['provincia'])
-        comuniP = [
-            comune for comune in comuni if comune['sigla_provincia'] == provincia]
-    return jsonify({"comuni": comuniP})
+    provincia = request.args.get("provincia")
+    if provincia:
+        comuni = [c for c in comuni if c['sigla_provincia'] == provincia]
+
+    return jsonify({"comuni": comuni})
 ########################################################################################
 
 ############################# Avvio del drone#######################################

@@ -1,24 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="auto">
+<html lang="en">
   <head>
-    <script src="../static/assets/js/color-modes.js"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="" />
-    <meta
-      name="author"
-      content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
-    />
-    <meta name="generator" content="Hugo 0.122.0" />
     <title>Agritech - Aggiunta campo</title>
-    <link
-      rel="canonical"
-      href="https://getbootstrap.com/docs/5.3/examples/checkout/"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"
-    />
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
   </head>
@@ -54,79 +39,74 @@
           <h2>Aggiunta campo</h2>
           <p class="lead">Pagina per inizializzazione del nuovo campo</p>
         </div>
+
         <div class="col-md-7 col-lg-8 mx-auto">
           <h4 class="mb-3">Dati campo</h4>
-          <form class="form" action="/aggiungiCampo" method="POST">
+          <form
+            class="needs-validation"
+            action="/aggiungiCampo"
+            method="POST"
+            novalidate
+          >
             <div class="row g-3">
+              <!-- Geolocalizzazione -->
               <div class="col-6">
                 <label for="geoButton" class="form-label"
                   >Geolocalizza il terreno</label
                 >
                 <a
-                  href="{{ url_for('mappa') }}"
+                  href="/mappa"
                   id="geoButton"
-                  style="
-                    width: 100%;
-                    height: 50%;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                  "
-                  type="button"
+                  class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
                 >
-                  <svg
-                    aria-hidden="true"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                  <span class="ms-2">Avvia ricerca</span>
+                  Avvia ricerca
                 </a>
               </div>
+
+              <!-- Coordinate nascoste -->
+              <input type="hidden" id="campo_lat" name="lat" />
+              <input type="hidden" id="campo_lon" name="lon" />
+
+              <!-- Numero di bestiame -->
               <div class="col-12">
                 <label for="livestockCount" class="form-label"
-                  >Inserire numero di bestiame previsto sul territorio</label
+                  >Numero di bestiame previsto</label
                 >
                 <input
                   type="number"
                   class="form-control"
                   id="livestockCount"
+                  name="num_bestiame"
                   min="0"
                   max="100000"
                   step="1"
                   value="0"
-                  name="num_bestiame"
                   required
                 />
                 <div class="invalid-feedback">Inserire un numero valido.</div>
               </div>
+
+              <!-- Provincia -->
               <div class="col-md-5">
-                <label for="country" class="form-label">Provincia</label>
+                <label for="select_provincia" class="form-label"
+                  >Provincia</label
+                >
                 <select
                   class="form-select"
-                  name="provincia"
                   id="select_provincia"
+                  name="provincia"
                   required
                 >
                   <option value="">Scegli...</option>
                 </select>
-                <div class="invalid-feedback">Scegliere un valido stato</div>
+                <div class="invalid-feedback">
+                  Scegliere una provincia valida
+                </div>
               </div>
+
+              <!-- Comune -->
               <div class="col-md-4">
-                <label for="state" class="form-label">Comune</label>
+                <label for="select_comune" class="form-label">Comune</label>
                 <select
                   class="form-select"
                   id="select_comune"
@@ -135,10 +115,10 @@
                 >
                   <option value="">Scegli...</option>
                 </select>
-                <div class="invalid-feedback">
-                  Scegliere una valida provincia
-                </div>
+                <div class="invalid-feedback">Scegliere un comune valido</div>
               </div>
+
+              <!-- CAP -->
               <div class="col-md-3">
                 <label for="zip" class="form-label">CAP</label>
                 <input
@@ -151,13 +131,7 @@
                 <div class="invalid-feedback">Codice CAP richiesto</div>
               </div>
             </div>
-            <hr class="my-4" />
-            <div class="form-check">
-              <input type="checkb ox" class="form-check-input" id="save-info" />
-              <label class="form-check-label" for="save-info"
-                >Ricorda queste informazioni prossimamente</label
-              >
-            </div>
+
             <hr class="my-4" />
             <button class="w-100 btn btn-primary btn-lg" type="submit">
               Continua e salva
@@ -165,10 +139,11 @@
           </form>
         </div>
       </main>
+
       <!-- FOOTER -->
       <footer id="contact">
         <div class="container">
-          <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+          <p>&copy; 2025 Agritech. Innovazione per l'agricoltura del futuro.</p>
           <ul class="footer-links">
             <li><a href="/privacy">Privacy Policy</a></li>
             <li><a href="/terms">Termini di Servizio</a></li>
@@ -184,111 +159,95 @@
       document.addEventListener("DOMContentLoaded", function () {
         const selectProvincia = document.getElementById("select_provincia");
         const selectComune = document.getElementById("select_comune");
+        const zipInput = document.getElementById("zip");
+        const campoLat = document.getElementById("campo_lat");
+        const campoLon = document.getElementById("campo_lon");
 
-        // URL dell'API per ottenere le province
-        const apiUrl1 = "/api/get_provincia";
+        let sessionProvincia = "";
+        let sessionComune = "";
+        let sessionCap = "";
 
-        // Fetch per ottenere le province
-        fetch(apiUrl1)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`Errore HTTP! Stato: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then((data) => {
-            // Controlla se ci sono province nel JSON
-            if (data.province && Array.isArray(data.province)) {
-              // Pulisce eventuali opzioni esistenti (escluso il primo "Scegli...")
-              selectProvincia.innerHTML = '<option value="">Scegli...</option>';
+        // Recupera coordinate dalla sessione
+        fetch("/api/get_session_coordinate")
+          .then((res) => res.json())
+          .then((coord) => {
+            if (coord && coord.lat && coord.lon) {
+              campoLat.value = coord.lat;
+              campoLon.value = coord.lon;
 
-              // Popola la select con le province ricevute
-              data.province.forEach((provincia) => {
-                let option = document.createElement("option");
-                option.value = provincia.sigla_provincia; // Usa la sigla della provincia come valore
-                option.textContent = provincia.denominazione_provincia; // Usa il nome della provincia
-                selectProvincia.appendChild(option);
-              });
+              fetch(
+                `/api/get_location_by_coords?lat=${coord.lat}&lon=${coord.lon}`
+              )
+                .then((res) => res.json())
+                .then((data) => {
+                  sessionProvincia = data.sigla_provincia || "";
+                  sessionComune = data.comune || "";
+                  sessionCap = data.cap || "";
+                  populateProvince();
+                })
+                .catch((err) => {
+                  console.error("Errore fetch location:", err);
+                  populateProvince();
+                });
             } else {
-              console.error("Formato JSON non valido:", data);
+              populateProvince();
             }
           })
-          .catch((error) => {
-            console.error("Errore nel recupero delle province:", error);
+          .catch((err) => {
+            console.error("Errore fetch session coordinate:", err);
+            populateProvince();
           });
 
-        // Aggiungi un ascoltatore di eventi per quando l'utente seleziona una provincia
-        selectProvincia.addEventListener("change", function () {
-          const provinciaSelezionata = selectProvincia.value;
-
-          // Se non è stata selezionata una provincia, esci dalla funzione
-          if (!provinciaSelezionata) {
-            selectComune.innerHTML = '<option value="">Scegli...</option>';
-            return;
-          }
-
-          // URL dell'API per ottenere i comuni della provincia selezionata
-          const apiUrl2 = `/api/get_comune?provincia=${provinciaSelezionata}`;
-
-          // Fetch per ottenere i comuni della provincia selezionata
-          fetch(apiUrl2)
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error(`Errore HTTP! Stato: ${response.status}`);
-              }
-              return response.json();
-            })
+        // Popola province
+        function populateProvince() {
+          fetch("/api/get_provincia")
+            .then((res) => res.json())
             .then((data) => {
-              // Controlla se ci sono comuni nel JSON
-              if (data.comuni && Array.isArray(data.comuni)) {
-                // Pulisce eventuali opzioni esistenti (escluso il primo "Scegli...")
-                selectComune.innerHTML = '<option value="">Scegli...</option>';
+              selectProvincia.innerHTML = '<option value="">Scegli...</option>';
+              if (data.province) {
+                data.province.forEach((p) => {
+                  const option = document.createElement("option");
+                  option.value = p.sigla_provincia;
+                  option.textContent = p.denominazione_provincia;
+                  if (p.sigla_provincia === sessionProvincia)
+                    option.selected = true;
+                  selectProvincia.appendChild(option);
+                });
+              }
+              if (sessionProvincia) populateComuni(sessionProvincia);
+            })
+            .catch((err) => console.error("Errore fetch province:", err));
+        }
 
-                // Popola la select con i comuni ricevuti
-                data.comuni.forEach((comune) => {
-                  let option = document.createElement("option");
-                  option.value = comune.codice_istat; // Imposta il valore come il codice ISTAT del comune
-                  option.textContent = comune.denominazione_ita; // Mostra il nome del comune
+        // Popola comuni
+        function populateComuni(prov) {
+          selectComune.innerHTML = '<option value="">Scegli...</option>';
+          if (!prov) return;
+          fetch(`/api/get_comune?provincia=${prov}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.comuni) {
+                data.comuni.forEach((c) => {
+                  const option = document.createElement("option");
+                  option.value = c.denominazione_ita;
+                  option.textContent = c.denominazione_ita;
+                  if (c.denominazione_ita === sessionComune)
+                    option.selected = true;
                   selectComune.appendChild(option);
                 });
-              } else {
-                console.error("Formato JSON non valido:", data);
-                selectComune.innerHTML =
-                  '<option value="">Nessun comune disponibile</option>';
               }
+              zipInput.value = sessionCap || "";
             })
-            .catch((error) => {
-              console.error("Errore nel recupero dei comuni:", error);
-              selectComune.innerHTML =
-                '<option value="">Errore nel recupero dei comuni</option>';
-            });
+            .catch((err) => console.error("Errore fetch comuni:", err));
+        }
+
+        // Quando cambia provincia
+        selectProvincia.addEventListener("change", () => {
+          sessionComune = "";
+          sessionCap = "";
+          populateComuni(selectProvincia.value);
         });
       });
     </script>
-
-    <script>
-      (function () {
-        "use strict";
-
-        // Seleziona tutti i form con la classe 'needs-validation'
-        var forms = document.querySelectorAll(".needs-validation");
-
-        // Aggiunge un listener di submit per ciascun form
-        Array.from(forms).forEach(function (form) {
-          form.addEventListener(
-            "submit",
-            function (event) {
-              if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-              form.classList.add("was-validated");
-            },
-            false
-          );
-        });
-      })();
-    </script>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
   </body>
 </html>
