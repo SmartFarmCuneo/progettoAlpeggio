@@ -23,6 +23,55 @@
     <link rel="stylesheet" href="../static/css/style.css" />
     
     <style>
+      /* CSS per mantenere le stesse dimensioni della home */
+      .main-content {
+        display: flex;
+        margin-top: 30px;
+        gap: 30px;
+        max-width: 100%;
+        overflow-x: hidden; /* Previeni overflow orizzontale */
+      }
+
+      .sidebar {
+        width: 250px;
+        background-color: var(--bg-light);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        padding: 20px;
+        flex-shrink: 0; /* Impedisce al sidebar di ridursi troppo */
+      }
+
+      .profile-content {
+        border: none !important;
+        flex: 1;
+        background-color: var(--bg-light);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        padding: 30px;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeUp 1s ease forwards 0.3s;
+        overflow-x: auto; /* Gestisci overflow del contenuto se necessario */
+      }
+
+      /* Assicurati che il container non superi la larghezza della viewport */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      /* Rimuovi margini extra dal main interno */
+      .profile-content main {
+        margin-top: 0;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
       /* Stili per i pulsanti di azione */
       .action-buttons {
         display: flex;
@@ -114,192 +163,204 @@
       </div>
     </nav>
 
-    <div class="container">
-      <main>
-        <div class="py-5 text-center">
-          <img
-            class="d-block mx-auto mb-4"
-            src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
-            alt=""
-            width="72"
-            height="57"
-          />
-          <h2>Gestione campo</h2>
-          <p class="lead">Modifica e gestisci i tuoi campi agricoli</p>
+    <!-- MAIN -->
+    <div class="container main-content">
+      <div class="sidebar">
+        <div class="menu-item"><a href="/home">Home</a></div>
+        <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+        <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
+        <div class="menu-item active"><a href="/gestioneCampo">Gestione Campo</a></div>
+        <div class="menu-item">
+          <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
         </div>
+      </div>
 
-        <!-- Form per la ricerca del campo -->
-        <form class="form" id="searchForm">
-          <div class="col-md-8 col-lg-6 mx-auto">
-            <h4 class="mb-3">Seleziona un campo</h4>
-            <div class="mb-3">
-              <label for="fieldSelect" class="form-label">Campo da gestire</label>
-              <div class="d-flex">
-                <select
-                  class="form-select me-2"
-                  id="fieldSelect"
-                  name="sceltaCampoGestione"
-                  required
-                >
-                  <option value="">Scegli un campo...</option>
-                </select>
-                <div class="spinner" id="loadingSpinner"></div>
-              </div>
-            </div>
-            <button
-              id="searchButton"
-              class="w-100 btn btn-primary btn-lg"
-              type="submit"
-            >
-              Carica dati campo
-            </button>
-            <hr class="my-4" />
-          </div>
-        </form>
-
-        <!-- Form per i dati del campo -->
-        <form
-          class="form"
-          action="/gestioneCampo"
-          method="POST"
-          id="detailForm"
-          style="display: none"
-        >
-          <div class="col-md-8 col-lg-6 mx-auto">
-            <h4 class="mb-3">Gestisci campo: <span id="campoNome"></span></h4>
-            <input
-              type="hidden"
-              id="campoSelezionato"
-              name="campoSelezionato"
-              value=""
+      <div class="profile-content">
+        <main>
+          <div class="py-5 text-center">
+            <img
+              class="d-block mx-auto mb-4"
+              src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
+              alt=""
+              width="72"
+              height="57"
             />
-
-            <!-- Pulsanti di azione -->
-            <div class="action-buttons mb-4">
-              <button
-                type="button"
-                id="deleteButton"
-                class="action-btn btn-delete"
-                name="action"
-                value="delete"
-              >
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                </svg>
-                Elimina campo
-              </button>
-              
-              <a
-                href="/mappa"
-                id="geoButton"
-                class="action-btn btn-location"
-                style="text-decoration: none;"
-              >
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"/>
-                </svg>
-                Modifica posizione
-              </a>
-            </div>
-
-            <div class="row g-3">
-              <div class="col-12">
-                <label for="livestockCount" class="form-label">
-                  Numero bestiame previsto
-                </label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="livestockCount"
-                  name="livestockCount"
-                  min="0"
-                  max="100000"
-                  step="1"
-                  required
-                />
-                <div class="invalid-feedback">Inserire un numero valido.</div>
-              </div>
-              
-              <div class="col-md-6">
-                <label for="select_provincia" class="form-label">Provincia</label>
-                <select
-                  class="form-select"
-                  name="provincia"
-                  id="select_provincia"
-                  required
-                >
-                  <option value="">Scegli...</option>
-                </select>
-                <div class="invalid-feedback">Scegliere una provincia valida</div>
-              </div>
-              
-              <div class="col-md-6">
-                <label for="select_comune" class="form-label">Comune</label>
-                <select
-                  class="form-select"
-                  id="select_comune"
-                  name="comune"
-                  required
-                >
-                  <option value="">Scegli...</option>
-                </select>
-                <div class="invalid-feedback">Scegliere un comune valido</div>
-              </div>
-              
-              <div class="col-12">
-                <label for="zip" class="form-label">CAP</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="zip"
-                  name="zip"
-                  pattern="[0-9]{5}"
-                  maxlength="5"
-                  required
-                />
-                <div class="invalid-feedback">Inserire un CAP valido (5 cifre)</div>
-              </div>
-            </div>
-            
-            <hr class="my-4" />
-            
-            
-            <div class="d-grid gap-2">
-              <button
-                class="btn btn-success btn-lg"
-                type="submit"
-                name="action"
-                value="save"
-              >
-                Salva modifiche
-              </button>
-              <button
-                class="btn btn-outline-secondary"
-                type="button"
-                onclick="resetForm()"
-              >
-                Annulla modifiche
-              </button>
-            </div>
+            <h2>Gestione campo</h2>
+            <p class="lead">Modifica e gestisci i tuoi campi agricoli</p>
           </div>
-        </form>
-      </main>
 
-      <!-- FOOTER -->
-      <footer id="contact">
-        <div class="container">
-          <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-          <ul class="footer-links">
-            <li><a href="/privacy">Privacy Policy</a></li>
-            <li><a href="/terms">Termini di Servizio</a></li>
-            <li><a href="#">Supporto</a></li>
-            <li><a href="#">Contatti</a></li>
-          </ul>
-        </div>
-      </footer>
-      {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+          <!-- Form per la ricerca del campo -->
+          <form class="form" id="searchForm">
+            <div class="col-md-8 col-lg-6 mx-auto">
+              <h4 class="mb-3">Seleziona un campo</h4>
+              <div class="mb-3">
+                <label for="fieldSelect" class="form-label">Campo da gestire</label>
+                <div class="d-flex">
+                  <select
+                    class="form-select me-2"
+                    id="fieldSelect"
+                    name="sceltaCampoGestione"
+                    required
+                  >
+                    <option value="">Scegli un campo...</option>
+                  </select>
+                  <div class="spinner" id="loadingSpinner"></div>
+                </div>
+              </div>
+              <button
+                id="searchButton"
+                class="w-100 btn btn-primary btn-lg"
+                type="submit"
+              >
+                Carica dati campo
+              </button>
+              <hr class="my-4" />
+            </div>
+          </form>
+
+          <!-- Form per i dati del campo -->
+          <form
+            class="form"
+            action="/gestioneCampo"
+            method="POST"
+            id="detailForm"
+            style="display: none"
+          >
+            <div class="col-md-8 col-lg-6 mx-auto">
+              <h4 class="mb-3">Gestisci campo: <span id="campoNome"></span></h4>
+              <input
+                type="hidden"
+                id="campoSelezionato"
+                name="campoSelezionato"
+                value=""
+              />
+
+              <!-- Pulsanti di azione -->
+              <div class="action-buttons mb-4">
+                <button
+                  type="button"
+                  id="deleteButton"
+                  class="action-btn btn-delete"
+                  name="action"
+                  value="delete"
+                >
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                  </svg>
+                  Elimina campo
+                </button>
+                
+                <a
+                  href="/mappa"
+                  id="geoButton"
+                  class="action-btn btn-location"
+                  style="text-decoration: none;"
+                >
+                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"/>
+                  </svg>
+                  Modifica posizione
+                </a>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <label for="livestockCount" class="form-label">
+                    Numero bestiame previsto
+                  </label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="livestockCount"
+                    name="livestockCount"
+                    min="0"
+                    max="100000"
+                    step="1"
+                    required
+                  />
+                  <div class="invalid-feedback">Inserire un numero valido.</div>
+                </div>
+                
+                <div class="col-md-6">
+                  <label for="select_provincia" class="form-label">Provincia</label>
+                  <select
+                    class="form-select"
+                    name="provincia"
+                    id="select_provincia"
+                    required
+                  >
+                    <option value="">Scegli...</option>
+                  </select>
+                  <div class="invalid-feedback">Scegliere una provincia valida</div>
+                </div>
+                
+                <div class="col-md-6">
+                  <label for="select_comune" class="form-label">Comune</label>
+                  <select
+                    class="form-select"
+                    id="select_comune"
+                    name="comune"
+                    required
+                  >
+                    <option value="">Scegli...</option>
+                  </select>
+                  <div class="invalid-feedback">Scegliere un comune valido</div>
+                </div>
+                
+                <div class="col-12">
+                  <label for="zip" class="form-label">CAP</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="zip"
+                    name="zip"
+                    pattern="[0-9]{5}"
+                    maxlength="5"
+                    required
+                  />
+                  <div class="invalid-feedback">Inserire un CAP valido (5 cifre)</div>
+                </div>
+              </div>
+              
+              <hr class="my-4" />
+              
+              <div class="d-grid gap-2">
+                <button
+                  class="btn btn-success btn-lg"
+                  type="submit"
+                  name="action"
+                  value="save"
+                >
+                  Salva modifiche
+                </button>
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  onclick="resetForm()"
+                >
+                  Annulla modifiche
+                </button>
+              </div>
+            </div>
+          </form>
+        </main>
+      </div>
     </div>
+
+    <!-- FOOTER -->
+    <footer id="contact">
+      <div class="container">
+        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
+          <li><a href="#">Supporto</a></li>
+          <li><a href="#">Contatti</a></li>
+        </ul>
+      </div>
+    </footer>
+    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
 

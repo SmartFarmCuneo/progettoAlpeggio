@@ -6,13 +6,63 @@
     <title>Agritech - Aggiunta campo</title>
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
+    <style>
+    /* CSS per mantenere le stesse dimensioni della home */
+    .main-content {
+      display: flex;
+      margin-top: 30px;
+      gap: 30px;
+      max-width: 100%;
+      overflow-x: hidden; /* Previeni overflow orizzontale */
+    }
+
+    .sidebar {
+      width: 250px;
+      background-color: var(--bg-light);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      flex-shrink: 0; /* Impedisce al sidebar di ridursi troppo */
+    }
+
+    .profile-content {
+      border: none !important;
+      flex: 1;
+      background-color: var(--bg-light);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      padding: 30px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 1s ease forwards 0.3s;
+      overflow-x: auto; /* Gestisci overflow del contenuto se necessario */
+    }
+
+    /* Assicurati che il container non superi la larghezza della viewport */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Rimuovi margini extra dal main interno */
+    .profile-content main {
+      margin-top: 0;
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  </style>
   </head>
 
   <body>
     <!-- NAVBAR -->
     <nav class="navbar" role="navigation">
       <div class="navbar-top container">
-        <a href="/home" class="logo">🌱 Agritech</a>
+        <a href="/home" class="logo">Agritech</a>
         <div class="user-nav">
           <div class="user-info">
             <img
@@ -26,133 +76,146 @@
       </div>
     </nav>
 
-    <div class="container">
-      <main>
-        <div class="py-5 text-center">
-          <img
-            class="d-block mx-auto mb-4"
-            src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
-            alt=""
-            width="72"
-            height="57"
-          />
-          <h2>Aggiunta campo</h2>
-          <p class="lead">Pagina per inizializzazione del nuovo campo</p>
+    <!-- MAIN -->
+    <div class="container main-content">
+      <div class="sidebar">
+        <div class="menu-item"><a href="/home">Home</a></div>
+        <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+        <div class="menu-item active"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
+        <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
+        <div class="menu-item">
+          <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
         </div>
+      </div>
 
-        <div class="col-md-7 col-lg-8 mx-auto">
-          <h4 class="mb-3">Dati campo</h4>
-          <form
-            class="needs-validation"
-            action="/aggiungiCampo"
-            method="POST"
-            novalidate
-          >
-            <div class="row g-3">
-              <!-- Geolocalizzazione -->
-              <div class="col-6">
-                <label for="geoButton" class="form-label"
-                  >Geolocalizza il terreno</label
-                >
-                <a
-                  href="/mappa"
-                  id="geoButton"
-                  class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
-                >
-                  Avvia ricerca
-                </a>
-              </div>
+      <div class="profile-content">
+        <main>
+          <div class="py-5 text-center">
+            <img
+              class="d-block mx-auto mb-4"
+              src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
+              alt=""
+              width="72"
+              height="57"
+            />
+            <h2>Aggiunta campo</h2>
+            <p class="lead">Pagina per inizializzazione del nuovo campo</p>
+          </div>
 
-              <!-- Coordinate nascoste -->
-              <input type="hidden" id="campo_lat" name="lat" />
-              <input type="hidden" id="campo_lon" name="lon" />
+          <div class="col-md-7 col-lg-8 mx-auto">
+            <h4 class="mb-3">Dati campo</h4>
+            <form
+              class="needs-validation"
+              action="/aggiungiCampo"
+              method="POST"
+              novalidate
+            >
+              <div class="row g-3">
+                <!-- Geolocalizzazione -->
+                <div class="col-6">
+                  <label for="geoButton" class="form-label"
+                    >Geolocalizza il terreno</label
+                  >
+                  <a
+                    href="/mappa"
+                    id="geoButton"
+                    class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
+                  >
+                    Avvia ricerca
+                  </a>
+                </div>
 
-              <!-- Numero di bestiame -->
-              <div class="col-12">
-                <label for="livestockCount" class="form-label"
-                  >Numero di bestiame previsto</label
-                >
-                <input
-                  type="number"
-                  class="form-control"
-                  id="livestockCount"
-                  name="num_bestiame"
-                  min="0"
-                  max="100000"
-                  step="1"
-                  value="0"
-                  required
-                />
-                <div class="invalid-feedback">Inserire un numero valido.</div>
-              </div>
+                <!-- Coordinate nascoste -->
+                <input type="hidden" id="campo_lat" name="lat" />
+                <input type="hidden" id="campo_lon" name="lon" />
 
-              <!-- Provincia -->
-              <div class="col-md-5">
-                <label for="select_provincia" class="form-label"
-                  >Provincia</label
-                >
-                <select
-                  class="form-select"
-                  id="select_provincia"
-                  name="provincia"
-                  required
-                >
-                  <option value="">Scegli...</option>
-                </select>
-                <div class="invalid-feedback">
-                  Scegliere una provincia valida
+                <!-- Numero di bestiame -->
+                <div class="col-12">
+                  <label for="livestockCount" class="form-label"
+                    >Numero di bestiame previsto</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="livestockCount"
+                    name="num_bestiame"
+                    min="0"
+                    max="100000"
+                    step="1"
+                    value="0"
+                    required
+                  />
+                  <div class="invalid-feedback">Inserire un numero valido.</div>
+                </div>
+
+                <!-- Provincia -->
+                <div class="col-md-5">
+                  <label for="select_provincia" class="form-label"
+                    >Provincia</label
+                  >
+                  <select
+                    class="form-select"
+                    id="select_provincia"
+                    name="provincia"
+                    required
+                  >
+                    <option value="">Scegli...</option>
+                  </select>
+                  <div class="invalid-feedback">
+                    Scegliere una provincia valida
+                  </div>
+                </div>
+
+                <!-- Comune -->
+                <div class="col-md-4">
+                  <label for="select_comune" class="form-label">Comune</label>
+                  <select
+                    class="form-select"
+                    id="select_comune"
+                    name="comune"
+                    required
+                  >
+                    <option value="">Scegli...</option>
+                  </select>
+                  <div class="invalid-feedback">Scegliere un comune valido</div>
+                </div>
+
+                <!-- CAP -->
+                <div class="col-md-3">
+                  <label for="zip" class="form-label">CAP</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="zip"
+                    name="cap"
+                    required
+                  />
+                  <div class="invalid-feedback">Codice CAP richiesto</div>
                 </div>
               </div>
 
-              <!-- Comune -->
-              <div class="col-md-4">
-                <label for="select_comune" class="form-label">Comune</label>
-                <select
-                  class="form-select"
-                  id="select_comune"
-                  name="comune"
-                  required
-                >
-                  <option value="">Scegli...</option>
-                </select>
-                <div class="invalid-feedback">Scegliere un comune valido</div>
-              </div>
-
-              <!-- CAP -->
-              <div class="col-md-3">
-                <label for="zip" class="form-label">CAP</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="zip"
-                  name="cap"
-                  required
-                />
-                <div class="invalid-feedback">Codice CAP richiesto</div>
-              </div>
-            </div>
-
-            <hr class="my-4" />
-            <button class="w-100 btn btn-primary btn-lg" type="submit">
-              Continua e salva
-            </button>
-          </form>
-        </div>
-      </main>
-
-      <!-- FOOTER -->
-      <footer id="contact">
-        <div class="container">
-          <p>&copy; 2025 Agritech. Innovazione per l'agricoltura del futuro.</p>
-          <ul class="footer-links">
-            <li><a href="/privacy">Privacy Policy</a></li>
-            <li><a href="/terms">Termini di Servizio</a></li>
-            <li><a href="#">Supporto</a></li>
-            <li><a href="#">Contatti</a></li>
-          </ul>
-        </div>
-      </footer>
+              <hr class="my-4" />
+              <button class="w-100 btn btn-primary btn-lg" type="submit">
+                Continua e salva
+              </button>
+            </form>
+          </div>
+        </main>
+      </div>
     </div>
+
+    <!-- FOOTER -->
+    <footer id="contact">
+      <div class="container">
+        <p>&copy; 2025 Agritech. Innovazione per l'agricoltura del futuro.</p>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
+          <li><a href="#">Supporto</a></li>
+          <li><a href="#">Contatti</a></li>
+        </ul>
+      </div>
+    </footer>
 
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
     <script>
