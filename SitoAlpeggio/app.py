@@ -589,31 +589,6 @@ def mappa(current_user):
     return render_template('mappaOff.html')
 
 
-@app.route('/mappaManuale', methods=['GET', 'POST'])
-@token_required
-def mappaManuale(current_user):
-    error = ""
-    if request.method == "POST":
-        coord_list = request.form.getlist('coordinate')  # ['(lat,lon)',...]
-        if len(coord_list) < 2 or coord_list[0] != coord_list[-1]:
-            error = "L'ultima coordinata deve coincidere con la prima!"
-        else:
-            # Calcolo centroide
-            coords = [tuple(map(float, c.strip('()').split(',')))
-                      for c in coord_list]
-            lats = [c[0] for c in coords]
-            lons = [c[1] for c in coords]
-            centro_lat = sum(lats)/len(lats)
-            centro_lon = sum(lons)/len(lons)
-            session['coordinate'] = {
-                'lat': centro_lat, 'lon': centro_lon, 'raw': ','.join(coord_list)}
-            return redirect(url_for('aggiungiCampo'))
-
-    return render_template('mappaManuale.html', error=error)
-
-
-# Aggiungi queste funzioni al tuo file Flask principale
-
 @app.route("/api/campi-utente")
 @token_required
 def api_campi_utente(current_user):
@@ -724,7 +699,6 @@ def gestioneCampo(current_user):
     return redirect(url_for('gestioneCampo'))
 
 
-# Modifica anche la funzione esistente get_campi per essere più robusta
 def get_campi(current_user):
     """Restituisce il numero di campi dell'utente"""
     conn = get_db_connection()
@@ -745,7 +719,6 @@ def get_campi(current_user):
         conn.close()
 
 
-# Migliora anche la funzione get_info_campi
 def get_info_campi(current_user):
     """Restituisce informazioni sui campi dell'utente"""
     conn = get_db_connection()
