@@ -81,7 +81,7 @@ def set_consent():
     resp.set_cookie(
         "cookie_consent",
         json.dumps(consent),
-        max_age=60 * 60 * 24 * 365,  # 1 anno
+        max_age=60 * 60 * 24 * 7,  # 1 settimana
         httponly=False,   # deve essere leggibile da JS per mostrare/nascondere banner
         secure=secure_flag,
         samesite="Lax"

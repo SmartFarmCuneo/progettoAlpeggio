@@ -21,7 +21,8 @@
     />
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
-    
+    <script src="../static/js/gestione_campo.js" defer></script>
+
     <style>
       /* CSS per mantenere le stesse dimensioni della home */
       .main-content {
@@ -78,7 +79,7 @@
         gap: 15px;
         margin-bottom: 20px;
       }
-      
+
       .action-btn {
         flex: 1;
         max-width: 200px;
@@ -94,40 +95,40 @@
         transition: all 0.3s ease;
         cursor: pointer;
       }
-      
+
       .btn-delete {
         background: linear-gradient(135deg, #dc3545, #c82333);
         color: white;
       }
-      
+
       .btn-delete:hover {
         background: linear-gradient(135deg, #c82333, #bd2130);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
       }
-      
+
       .btn-location {
         background: linear-gradient(135deg, #17a2b8, #138496);
         color: white;
       }
-      
+
       .btn-location:hover {
         background: linear-gradient(135deg, #138496, #117a8b);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
       }
-      
+
       .btn-icon {
         width: 20px;
         height: 20px;
       }
-      
+
       /* Loading state */
       .loading {
         opacity: 0.6;
         pointer-events: none;
       }
-      
+
       .spinner {
         border: 2px solid #f3f3f3;
         border-top: 2px solid #3498db;
@@ -137,10 +138,14 @@
         animation: spin 1s linear infinite;
         display: none;
       }
-      
+
       @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </head>
@@ -169,7 +174,9 @@
         <div class="menu-item"><a href="/home">Home</a></div>
         <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
         <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
-        <div class="menu-item active"><a href="/gestioneCampo">Gestione Campo</a></div>
+        <div class="menu-item active">
+          <a href="/gestioneCampo">Gestione Campo</a>
+        </div>
         <div class="menu-item">
           <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
         </div>
@@ -194,7 +201,9 @@
             <div class="col-md-8 col-lg-6 mx-auto">
               <h4 class="mb-3">Seleziona un campo</h4>
               <div class="mb-3">
-                <label for="fieldSelect" class="form-label">Campo da gestire</label>
+                <label for="fieldSelect" class="form-label"
+                  >Campo da gestire</label
+                >
                 <div class="d-flex">
                   <select
                     class="form-select me-2"
@@ -245,20 +254,30 @@
                   value="delete"
                 >
                   <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    <path
+                      d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                    />
                   </svg>
                   Elimina campo
                 </button>
-                
+
                 <a
                   href="/mappa"
                   id="geoButton"
                   class="action-btn btn-location"
-                  style="text-decoration: none;"
+                  style="text-decoration: none"
                 >
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"/>
+                  <svg
+                    class="btn-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path
+                      d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18"
+                    />
                   </svg>
                   Modifica posizione
                 </a>
@@ -281,9 +300,11 @@
                   />
                   <div class="invalid-feedback">Inserire un numero valido.</div>
                 </div>
-                
+
                 <div class="col-md-6">
-                  <label for="select_provincia" class="form-label">Provincia</label>
+                  <label for="select_provincia" class="form-label"
+                    >Provincia</label
+                  >
                   <select
                     class="form-select"
                     name="provincia"
@@ -292,9 +313,11 @@
                   >
                     <option value="">Scegli...</option>
                   </select>
-                  <div class="invalid-feedback">Scegliere una provincia valida</div>
+                  <div class="invalid-feedback">
+                    Scegliere una provincia valida
+                  </div>
                 </div>
-                
+
                 <div class="col-md-6">
                   <label for="select_comune" class="form-label">Comune</label>
                   <select
@@ -307,7 +330,7 @@
                   </select>
                   <div class="invalid-feedback">Scegliere un comune valido</div>
                 </div>
-                
+
                 <div class="col-12">
                   <label for="zip" class="form-label">CAP</label>
                   <input
@@ -319,12 +342,14 @@
                     maxlength="5"
                     required
                   />
-                  <div class="invalid-feedback">Inserire un CAP valido (5 cifre)</div>
+                  <div class="invalid-feedback">
+                    Inserire un CAP valido (5 cifre)
+                  </div>
                 </div>
               </div>
-              
+
               <hr class="my-4" />
-              
+
               <div class="d-grid gap-2">
                 <button
                   class="btn btn-success btn-lg"
@@ -363,240 +388,5 @@
     {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Elementi del DOM
-        const fieldSelect = document.getElementById("fieldSelect");
-        const searchButton = document.getElementById("searchButton");
-        const detailForm = document.getElementById("detailForm");
-        const campoSelezionato = document.getElementById("campoSelezionato");
-        const campoNome = document.getElementById("campoNome");
-        const deleteButton = document.getElementById("deleteButton");
-        const loadingSpinner = document.getElementById("loadingSpinner");
-
-        // Dati del campo attualmente caricato
-        let currentFieldData = null;
-
-        // Funzione per mostrare/nascondere loading
-        function toggleLoading(show) {
-          if (show) {
-            loadingSpinner.style.display = "inline-block";
-            searchButton.classList.add("loading");
-          } else {
-            loadingSpinner.style.display = "none";
-            searchButton.classList.remove("loading");
-          }
-        }
-
-        // Variabili per i dati del campo dalla sessione/database
-        let sessionProvincia = "";
-        let sessionComune = "";
-        let sessionCap = "";
-        let sessionBestiame = 0;
-
-        // Funzione per caricare i dati del campo selezionato
-        async function caricaDatiCampo(fieldId) {
-          try {
-            toggleLoading(true);
-            
-            // Chiamata API per ottenere i dati del campo
-            const response = await fetch(`/api/campo/${fieldId}`);
-            if (!response.ok) {
-              throw new Error("Errore nel caricamento dei dati del campo");
-            }
-            
-            const fieldData = await response.json();
-            currentFieldData = fieldData;
-            
-            // Salva i dati del campo nelle variabili di sessione
-            sessionProvincia = fieldData.provincia || "";
-            sessionComune = fieldData.comune || "";
-            sessionCap = fieldData.CAP || "";
-            sessionBestiame = fieldData.num_bestiame || 0;
-            
-            // Popola il campo bestiame
-            document.getElementById("livestockCount").value = sessionBestiame;
-            
-            // Carica le province con i dati del campo
-            await populateProvince();
-            
-            // Mostra il form e imposta il nome del campo
-            campoSelezionato.value = fieldId;
-            campoNome.textContent = fieldSelect.options[fieldSelect.selectedIndex].text;
-            detailForm.style.display = "block";
-            
-            // Scroll verso il form
-            detailForm.scrollIntoView({ behavior: "smooth" });
-            
-          } catch (error) {
-            console.error("Errore nel caricamento dei dati:", error);
-            alert("Errore nel caricamento dei dati del campo. Riprova.");
-          } finally {
-            toggleLoading(false);
-          }
-        }
-
-        // Event listener per il form di ricerca
-        searchButton.addEventListener("click", function(e) {
-          e.preventDefault();
-          
-          if (!fieldSelect.value) {
-            alert("Seleziona un campo prima di proseguire.");
-            return;
-          }
-          
-          caricaDatiCampo(fieldSelect.value);
-        });
-
-        // Event listener per il pulsante elimina
-        deleteButton.addEventListener("click", function() {
-          if (confirm("Sei sicuro di voler eliminare questo campo? Questa azione non può essere annullata.")) {
-            const form = document.getElementById("detailForm");
-            const actionInput = document.createElement("input");
-            actionInput.type = "hidden";
-            actionInput.name = "action";
-            actionInput.value = "delete";
-            form.appendChild(actionInput);
-            form.submit();
-          }
-        });
-
-        // Funzione per caricare i campi dell'utente
-        async function caricaCampi() {
-          try {
-            const response = await fetch("/api/campi-utente");
-            if (!response.ok) {
-              throw new Error("Errore nel caricamento dei campi");
-            }
-            
-            const campi = await response.json();
-            
-            // Svuota la select
-            fieldSelect.innerHTML = '<option value="">Scegli un campo...</option>';
-            
-            // Aggiungi i campi
-            campi.forEach((campo, index) => {
-              const option = document.createElement("option");
-              option.value = campo.id_t;
-              option.textContent = `Campo ${index + 1} - ${campo.comune}`;
-              fieldSelect.appendChild(option);
-            });
-            
-          } catch (error) {
-            console.error("Errore nel caricamento dei campi:", error);
-            fieldSelect.innerHTML = '<option value="">Errore nel caricamento dei campi</option>';
-          }
-        }
-
-        // Funzione per caricare le province con logica della sessione
-        async function populateProvince() {
-          try {
-            const response = await fetch("/api/get_provincia");
-            const data = await response.json();
-            
-            const selectProvincia = document.getElementById("select_provincia");
-            selectProvincia.innerHTML = '<option value="">Scegli...</option>';
-            
-            if (data.province && Array.isArray(data.province)) {
-              data.province.forEach((provincia) => {
-                const option = document.createElement("option");
-                option.value = provincia.sigla_provincia;
-                option.textContent = provincia.denominazione_provincia;
-                
-                // Seleziona la provincia se corrisponde a quella del campo
-                if (provincia.sigla_provincia === sessionProvincia) {
-                  option.selected = true;
-                }
-                
-                selectProvincia.appendChild(option);
-              });
-            }
-            
-            // Se c'è una provincia salvata, carica i relativi comuni
-            if (sessionProvincia) {
-              await populateComuni(sessionProvincia);
-            }
-          } catch (error) {
-            console.error("Errore nel caricamento delle province:", error);
-          }
-        }
-
-        // Funzione per caricare i comuni con logica della sessione
-        async function populateComuni(provinciaSelezionata) {
-          try {
-            const selectComune = document.getElementById("select_comune");
-            selectComune.innerHTML = '<option value="">Scegli...</option>';
-            
-            if (!provinciaSelezionata) return;
-            
-            const response = await fetch(`/api/get_comune?provincia=${provinciaSelezionata}`);
-            const data = await response.json();
-            
-            if (data.comuni && Array.isArray(data.comuni)) {
-              data.comuni.forEach((comune) => {
-                const option = document.createElement("option");
-                option.value = comune.denominazione_ita;
-                option.textContent = comune.denominazione_ita;
-                
-                // Seleziona il comune se corrisponde a quello del campo
-                if (comune.denominazione_ita === sessionComune) {
-                  option.selected = true;
-                }
-                
-                selectComune.appendChild(option);
-              });
-            }
-            
-            // Imposta il CAP del campo
-            document.getElementById("zip").value = sessionCap || "";
-            
-          } catch (error) {
-            console.error("Errore nel caricamento dei comuni:", error);
-          }
-        }
-
-        // Event listener per cambio provincia
-        document.getElementById("select_provincia").addEventListener("change", function() {
-          const provinciaSelezionata = this.value;
-          
-          // Reset dei valori di comune e CAP quando cambia la provincia
-          sessionComune = "";
-          sessionCap = "";
-          
-          if (provinciaSelezionata) {
-            populateComuni(provinciaSelezionata);
-          } else {
-            document.getElementById("select_comune").innerHTML = '<option value="">Scegli...</option>';
-            document.getElementById("zip").value = "";
-          }
-        });
-
-        // Funzione per resettare il form
-        window.resetForm = function() {
-          if (currentFieldData) {
-            // Ripristina i valori originali
-            document.getElementById("livestockCount").value = currentFieldData.num_bestiame || 0;
-            document.getElementById("zip").value = currentFieldData.CAP || "";
-            // Ripristina provincia e comune se necessario
-          }
-        };
-
-        // Validazione del form
-        const forms = document.querySelectorAll(".needs-validation");
-        Array.from(forms).forEach(function (form) {
-          form.addEventListener("submit", function (event) {
-            if (!form.checkValidity()) {
-              event.preventDefault();
-              event.stopPropagation();
-            }
-            form.classList.add("was-validated");
-          }, false);
-        });
-
-        // Carica i campi all'avvio della pagina
-        caricaCampi();
-      });
-    </script>
   </body>
 </html>

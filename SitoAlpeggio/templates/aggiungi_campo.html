@@ -6,63 +6,64 @@
     <title>Agritech - Aggiunta campo</title>
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
+    <script src="../static/js/aggiungi_campo.js" defer></script>
     <style>
-    /* CSS per mantenere le stesse dimensioni della home */
-    .main-content {
-      display: flex;
-      margin-top: 30px;
-      gap: 30px;
-      max-width: 100%;
-      overflow-x: hidden; /* Previeni overflow orizzontale */
-    }
+      /* CSS per mantenere le stesse dimensioni della home */
+      .main-content {
+        display: flex;
+        margin-top: 30px;
+        gap: 30px;
+        max-width: 100%;
+        overflow-x: hidden; /* Previeni overflow orizzontale */
+      }
 
-    .sidebar {
-      width: 250px;
-      background-color: var(--bg-light);
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      padding: 20px;
-      flex-shrink: 0; /* Impedisce al sidebar di ridursi troppo */
-    }
+      .sidebar {
+        width: 250px;
+        background-color: var(--bg-light);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        padding: 20px;
+        flex-shrink: 0; /* Impedisce al sidebar di ridursi troppo */
+      }
 
-    .profile-content {
-      border: none !important;
-      flex: 1;
-      background-color: var(--bg-light);
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      padding: 30px;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeUp 1s ease forwards 0.3s;
-      overflow-x: auto; /* Gestisci overflow del contenuto se necessario */
-    }
+      .profile-content {
+        border: none !important;
+        flex: 1;
+        background-color: var(--bg-light);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        padding: 30px;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeUp 1s ease forwards 0.3s;
+        overflow-x: auto; /* Gestisci overflow del contenuto se necessario */
+      }
 
-    /* Assicurati che il container non superi la larghezza della viewport */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+      /* Assicurati che il container non superi la larghezza della viewport */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-    /* Rimuovi margini extra dal main interno */
-    .profile-content main {
-      margin-top: 0;
-      padding: 0;
-      background: transparent;
-      box-shadow: none;
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
-  </style>
+      /* Rimuovi margini extra dal main interno */
+      .profile-content main {
+        margin-top: 0;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+    </style>
   </head>
 
   <body>
     <!-- NAVBAR -->
     <nav class="navbar" role="navigation">
       <div class="navbar-top container">
-        <a href="/home" class="logo">Agritech</a>
+        <a href="/home" class="logo">🌱 Agritech</a>
         <div class="user-nav">
           <div class="user-info">
             <img
@@ -81,7 +82,9 @@
       <div class="sidebar">
         <div class="menu-item"><a href="/home">Home</a></div>
         <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
-        <div class="menu-item active"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
+        <div class="menu-item active">
+          <a href="/aggiungiCampo">Aggiungi Campo</a>
+        </div>
         <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
         <div class="menu-item">
           <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
@@ -218,99 +221,5 @@
     </footer>
 
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const selectProvincia = document.getElementById("select_provincia");
-        const selectComune = document.getElementById("select_comune");
-        const zipInput = document.getElementById("zip");
-        const campoLat = document.getElementById("campo_lat");
-        const campoLon = document.getElementById("campo_lon");
-
-        let sessionProvincia = "";
-        let sessionComune = "";
-        let sessionCap = "";
-
-        // Recupera coordinate dalla sessione
-        fetch("/api/get_session_coordinate")
-          .then((res) => res.json())
-          .then((coord) => {
-            if (coord && coord.lat && coord.lon) {
-              campoLat.value = coord.lat;
-              campoLon.value = coord.lon;
-
-              fetch(
-                `/api/get_location_by_coords?lat=${coord.lat}&lon=${coord.lon}`
-              )
-                .then((res) => res.json())
-                .then((data) => {
-                  sessionProvincia = data.sigla_provincia || "";
-                  sessionComune = data.comune || "";
-                  sessionCap = data.cap || "";
-                  populateProvince();
-                })
-                .catch((err) => {
-                  console.error("Errore fetch location:", err);
-                  populateProvince();
-                });
-            } else {
-              populateProvince();
-            }
-          })
-          .catch((err) => {
-            console.error("Errore fetch session coordinate:", err);
-            populateProvince();
-          });
-
-        // Popola province
-        function populateProvince() {
-          fetch("/api/get_provincia")
-            .then((res) => res.json())
-            .then((data) => {
-              selectProvincia.innerHTML = '<option value="">Scegli...</option>';
-              if (data.province) {
-                data.province.forEach((p) => {
-                  const option = document.createElement("option");
-                  option.value = p.sigla_provincia;
-                  option.textContent = p.denominazione_provincia;
-                  if (p.sigla_provincia === sessionProvincia)
-                    option.selected = true;
-                  selectProvincia.appendChild(option);
-                });
-              }
-              if (sessionProvincia) populateComuni(sessionProvincia);
-            })
-            .catch((err) => console.error("Errore fetch province:", err));
-        }
-
-        // Popola comuni
-        function populateComuni(prov) {
-          selectComune.innerHTML = '<option value="">Scegli...</option>';
-          if (!prov) return;
-          fetch(`/api/get_comune?provincia=${prov}`)
-            .then((res) => res.json())
-            .then((data) => {
-              if (data.comuni) {
-                data.comuni.forEach((c) => {
-                  const option = document.createElement("option");
-                  option.value = c.denominazione_ita;
-                  option.textContent = c.denominazione_ita;
-                  if (c.denominazione_ita === sessionComune)
-                    option.selected = true;
-                  selectComune.appendChild(option);
-                });
-              }
-              zipInput.value = sessionCap || "";
-            })
-            .catch((err) => console.error("Errore fetch comuni:", err));
-        }
-
-        // Quando cambia provincia
-        selectProvincia.addEventListener("change", () => {
-          sessionComune = "";
-          sessionCap = "";
-          populateComuni(selectProvincia.value);
-        });
-      });
-    </script>
   </body>
 </html>

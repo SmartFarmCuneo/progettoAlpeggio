@@ -199,6 +199,7 @@
           </ul>
         </div>
       </footer>
+      {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
     </div>
 
     <script>
@@ -210,6 +211,5 @@
       });
     </script>
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
   </body>
 </html>

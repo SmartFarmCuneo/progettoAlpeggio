@@ -89,6 +89,20 @@
       </main>
     </div>
 
+    <!-- FOOTER -->
+    <footer id="contact">
+      <div class="container">
+        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
+          <li><a href="#">Supporto</a></li>
+          <li><a href="#">Contatti</a></li>
+        </ul>
+      </div>
+    </footer>
+    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
     <script>
       // animazione semplice per mostrare titolo e form
       window.addEventListener("load", function () {
@@ -113,18 +127,5 @@
       });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="#">Supporto</a></li>
-          <li><a href="#">Contatti</a></li>
-        </ul>
-      </div>
-    </footer>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
   </body>
 </html>
