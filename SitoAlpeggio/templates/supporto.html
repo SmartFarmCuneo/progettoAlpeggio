@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agritech - Supporto</title>
+    <link rel="stylesheet" href="../static/css/style.css" />
+    <script src="../static/js/supporto.js" defer></script>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+      <div class="navbar-top container">
+        <a href="/" class="logo">🌱 Agritech</a>
+      </div>
+
+      <div class="navbar-menu container">
+        <ul class="nav-links">
+          <li class="nav-link"><a href="/">Home</a></li>
+          <li class="nav-link"><a href="/#services">Servizi</a></li>
+          <li class="nav-link"><a href="/#about">Chi Siamo</a></li>
+          <li class="nav-link"><a href="/#products">Prodotti</a></li>
+        </ul>
+      </div>
+    </nav>
+    <!-- MAIN -->
+    <div class="container">
+      <main class="privacy-main">
+        <h1 class="privacy-title">Supporto</h1>
+        <section class="privacy-section">
+          <h2 class="privacy-section-title">FAQ - Domande Frequenti</h2>
+          <div class="faq">
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>Come accedo alla mia area personale?</span>
+                <span class="arrow">▼</span>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  Puoi accedere cliccando su "Accedi" in alto a destra ed
+                  inserendo le tue credenziali.
+                </p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>Posso modificare i dati del mio profilo?</span>
+                <span class="arrow">▼</span>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  Sì, puoi modificare i tuoi dati dalla sezione "Profilo" nella
+                  tua area riservata.
+                </p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-question">
+                <span>Come funziona il sistema di sensori IoT?</span>
+                <span class="arrow">▼</span>
+              </button>
+              <div class="faq-answer">
+                <p>
+                  I sensori raccolgono dati in tempo reale sul campo agricolo e
+                  li inviano alla piattaforma, dove puoi consultarli dall'app o
+                  dal sito.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="privacy-section">
+          <h2 class="privacy-section-title">Assistenza Tecnica</h2>
+          <p>
+            Se riscontri problemi con i nostri servizi o hai bisogno di supporto
+            tecnico, puoi contattarci direttamente dalla sezione
+            <a href="/contatti" style="color: var(--primary)">Contatti</a>.
+          </p>
+        </section>
+        <section class="privacy-section">
+          <h2 class="privacy-section-title">Guide Rapide</h2>
+          <p>
+            Consulta i nostri manuali per imparare ad usare droni, sensori IoT e
+            l'app mobile. Le guide sono disponibili nella tua area riservata.
+          </p>
+        </section>
+      </main>
+    </div>
+    <!-- FOOTER -->
+    <footer id="contact">
+      <div class="container">
+        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
+          <li><a href="/supporto">Supporto</a></li>
+          <li><a href="/contatti">Contatti</a></li>
+        </ul>
+      </div>
+    </footer>
+    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+  </body>
+</html>

@@ -808,16 +808,22 @@ def pagamenti(current_user):
 
 
 @app.route('/privacy', methods=['GET', 'POST'])
-@token_required
-def privacy(current_user):
+def privacy():
     return render_template('privacy.html')
 
 
 @app.route('/terms', methods=['GET', 'POST'])
-@token_required
-def terms(current_user):
+def terms():
     return render_template('terms.html')
 
+
+@app.route('/contatti', methods=['GET', 'POST'])
+def contatti():
+    return render_template('contatti.html')
+
+@app.route("/supporto")
+def supporto():
+    return render_template("supporto.html")
 
 #############################################################
 

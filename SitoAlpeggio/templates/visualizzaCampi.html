@@ -24,104 +24,6 @@
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../static/css/style.css" rel="stylesheet" />
     <script src="../static/js/visualizza_campi.js" defer></script>
-
-    <style>
-      /* CSS per mantenere le stesse dimensioni della home */
-      .main-content {
-        display: flex;
-        margin-top: 30px;
-        gap: 30px;
-        max-width: 100%;
-        overflow-x: hidden; /* Previeni overflow orizzontale */
-      }
-
-      .sidebar {
-        width: 250px;
-        background-color: var(--bg-light);
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        padding: 20px;
-        flex-shrink: 0; /* Impedisce al sidebar di ridursi troppo */
-      }
-
-      .profile-content {
-        border: none !important;
-        flex: 1;
-        background-color: var(--bg-light);
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        padding: 30px;
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeUp 1s ease forwards 0.3s;
-        overflow-x: auto; /* Gestisci overflow del contenuto se necessario */
-      }
-
-      /* Assicurati che il container non superi la larghezza della viewport */
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-
-      /* Rimuovi margini extra dal main interno */
-      .profile-content main {
-        margin-top: 0;
-        padding: 0;
-        background: transparent;
-        box-shadow: none;
-        animation: none;
-        opacity: 1;
-        transform: none;
-      }
-
-      /* Stili personalizzati per la visualizzazione campi */
-      .coordinate-list {
-        max-height: 150px;
-        overflow-y: auto;
-        font-size: 0.9rem;
-        color: var(--text-body);
-      }
-
-      .campo-card {
-        background: var(--bg-dark);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        transition: all 0.3s ease;
-      }
-
-      .campo-card:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-      }
-
-      .campo-card h2 {
-        color: var(--primary);
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-      }
-
-      .campo-card p {
-        color: var(--text-body);
-        margin-bottom: 1rem;
-      }
-
-      .campo-card h5 {
-        color: white;
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .map-container {
-        background: var(--bg-dark);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        min-height: 250px;
-      }
-    </style>
   </head>
 
   <body>
@@ -182,8 +84,8 @@
         <ul class="footer-links">
           <li><a href="/privacy">Privacy Policy</a></li>
           <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="#">Supporto</a></li>
-          <li><a href="#">Contatti</a></li>
+          <li><a href="/supporto">Supporto</a></li>
+          <li><a href="/contatti">Contatti</a></li>
         </ul>
       </div>
     </footer>

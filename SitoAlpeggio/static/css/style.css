@@ -999,6 +999,71 @@ footer a:hover {
   font-size: 1.1rem;
   line-height: 1.6;
 }
+
+.plan-card:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.plan-card:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.plan-card:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* ============================================
+   SUPPORTO E FAQ
+   ============================================= */
+
+.faq-item {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 10px 0;
+  transition: color 0.3s ease;
+  color: white;
+
+}
+
+.faq-question:hover {
+  color: var(--primary);
+}
+
+.arrow {
+  transition: transform 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.faq-answer p {
+  margin: 0;
+  padding: 5px 0 10px;
+  font-size: medium;
+  color: white;
+}
+
 /* ============================================
    PRIVACY E COOKIE POLICY
    ============================================= */
@@ -1123,6 +1188,17 @@ footer a:hover {
   background: rgba(45, 55, 72, 0.7);
 }
 
+.storici-table-responsive {
+  overflow-x: auto;
+}
+
+.link-style {
+  color: white;
+  text-decoration: none;
+}
+.link-style:hover {
+  color: var(--primary);
+}
 /* =============================================
    TERMINI E CONDIZIONI
    ============================================= */
@@ -1332,6 +1408,121 @@ footer a:hover {
   color: var(--text-body);
 }
 
+.coordinate-list {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  color: var(--text-body);
+}
+
+.campo-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.campo-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.campo-card h2 {
+  color: var(--primary);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.campo-card p {
+  color: var(--text-body);
+  margin-bottom: 1rem;
+}
+
+.campo-card h5 {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.map-container {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 250px;
+}
+
+/* =============================================
+   BOTTONI GESTIONE
+   ============================================= */
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.action-btn {
+  flex: 1;
+  max-width: 200px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+}
+
+.btn-delete:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-location {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+}
+
+.btn-location:hover {
+  background: linear-gradient(135deg, #138496, #117a8b);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  display: none;
+}
+
 /* =============================================
    RESPONSIVE
    ============================================= */
@@ -1480,14 +1671,11 @@ footer a:hover {
   }
 }
 
-.plan-card:nth-child(1) {
-  animation-delay: 0.2s;
-}
-
-.plan-card:nth-child(2) {
-  animation-delay: 0.4s;
-}
-
-.plan-card:nth-child(3) {
-  animation-delay: 0.6s;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

@@ -22,132 +22,6 @@
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
     <script src="../static/js/gestione_campo.js" defer></script>
-
-    <style>
-      /* CSS per mantenere le stesse dimensioni della home */
-      .main-content {
-        display: flex;
-        margin-top: 30px;
-        gap: 30px;
-        max-width: 100%;
-        overflow-x: hidden; /* Previeni overflow orizzontale */
-      }
-
-      .sidebar {
-        width: 250px;
-        background-color: var(--bg-light);
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        padding: 20px;
-        flex-shrink: 0; /* Impedisce al sidebar di ridursi troppo */
-      }
-
-      .profile-content {
-        border: none !important;
-        flex: 1;
-        background-color: var(--bg-light);
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        padding: 30px;
-        opacity: 0;
-        transform: translateY(20px);
-        animation: fadeUp 1s ease forwards 0.3s;
-        overflow-x: auto; /* Gestisci overflow del contenuto se necessario */
-      }
-
-      /* Assicurati che il container non superi la larghezza della viewport */
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-
-      /* Rimuovi margini extra dal main interno */
-      .profile-content main {
-        margin-top: 0;
-        padding: 0;
-        background: transparent;
-        box-shadow: none;
-        animation: none;
-        opacity: 1;
-        transform: none;
-      }
-
-      /* Stili per i pulsanti di azione */
-      .action-buttons {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-      }
-
-      .action-btn {
-        flex: 1;
-        max-width: 200px;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 500;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-      }
-
-      .btn-delete {
-        background: linear-gradient(135deg, #dc3545, #c82333);
-        color: white;
-      }
-
-      .btn-delete:hover {
-        background: linear-gradient(135deg, #c82333, #bd2130);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-      }
-
-      .btn-location {
-        background: linear-gradient(135deg, #17a2b8, #138496);
-        color: white;
-      }
-
-      .btn-location:hover {
-        background: linear-gradient(135deg, #138496, #117a8b);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
-      }
-
-      .btn-icon {
-        width: 20px;
-        height: 20px;
-      }
-
-      /* Loading state */
-      .loading {
-        opacity: 0.6;
-        pointer-events: none;
-      }
-
-      .spinner {
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #3498db;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        animation: spin 1s linear infinite;
-        display: none;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-    </style>
   </head>
 
   <body>
@@ -380,8 +254,8 @@
         <ul class="footer-links">
           <li><a href="/privacy">Privacy Policy</a></li>
           <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="#">Supporto</a></li>
-          <li><a href="#">Contatti</a></li>
+          <li><a href="/supporto">Supporto</a></li>
+          <li><a href="/contatti">Contatti</a></li>
         </ul>
       </div>
     </footer>
