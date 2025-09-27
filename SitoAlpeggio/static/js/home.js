@@ -19,7 +19,14 @@ document.addEventListener("DOMContentLoaded", function () {
               </div>
               <div class="azione-buttons">
                 <a href="/gestioneCampo" class="azione-button">Gestisci Campo</a>
-                <a href="/storici" class="azione-button">Avvia operazioni</a>
+                <div class="dropdown-container">
+                  <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
+                  <div id="dropdown-menu" class="dropdown-menu hidden">
+                    <a href="/contr_man" class="dropdown-item">Controllo manuale</a>
+                    <a href="/ric_spec" class="dropdown-item">Ricerca specifica</a>
+                    <a href="/ric_tot_parz" class="dropdown-item">Ricerca totale-parziale</a>
+                  </div>
+                </div>
               </div>
             </div>
           `;
@@ -44,6 +51,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     // Seleziona automaticamente il primo campo
                     selezionaCampo(listaPulsanti.firstChild, dettagliArea);
+
+                    // Inizializza il menu a tendina
+                    inizializzaDropdown();
                 } else {
                     containerCampi.innerHTML = `
             <div class="nessun-campo">
@@ -52,6 +62,45 @@ document.addEventListener("DOMContentLoaded", function () {
           `;
                 }
             });
+    }
+
+    function inizializzaDropdown() {
+        const avviaBtn = document.getElementById("avvia-operazioni-btn");
+        const dropdownMenu = document.getElementById("dropdown-menu");
+
+        if (avviaBtn && dropdownMenu) {
+            avviaBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                
+                // Calcola la posizione ottimale per il dropdown
+                const rect = avviaBtn.getBoundingClientRect();
+                const windowHeight = window.innerHeight;
+                const menuHeight = 150; // Altezza approssimativa del menu
+                const spaceBelow = windowHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                
+                // Rimuovi classi precedenti
+                dropdownMenu.classList.remove("dropdown-up", "dropdown-down");
+                
+                // Decidi se aprire verso l'alto o verso il basso
+                if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+                    dropdownMenu.classList.add("dropdown-up");
+                } else {
+                    dropdownMenu.classList.add("dropdown-down");
+                }
+                
+                dropdownMenu.classList.toggle("hidden");
+                avviaBtn.classList.toggle("active");
+            });
+
+            // Chiudi il menu se si clicca fuori
+            document.addEventListener("click", function(e) {
+                if (!e.target.closest(".dropdown-container")) {
+                    dropdownMenu.classList.add("hidden");
+                    avviaBtn.classList.remove("active");
+                }
+            });
+        }
     }
 
     function selezionaCampo(button, dettagliArea) {
