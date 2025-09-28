@@ -11,6 +11,12 @@ document.addEventListener("DOMContentLoaded", function () {
   // Dati del campo attualmente caricato
   let currentFieldData = null;
 
+  // Funzione per ottenere parametri URL
+  function getUrlParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+  }
+
   // Funzione per mostrare/nascondere loading
   function toggleLoading(show) {
     if (show) {
@@ -115,6 +121,21 @@ document.addEventListener("DOMContentLoaded", function () {
         option.textContent = `Campo ${index + 1} - ${campo.comune}`;
         fieldSelect.appendChild(option);
       });
+
+      // Controlla se c'è un parametro URL per preselezionare un campo
+      const campoIdFromUrl = getUrlParameter('campo_id');
+      if (campoIdFromUrl) {
+        // Trova e seleziona il campo corrispondente
+        const optionToSelect = Array.from(fieldSelect.options).find(
+          option => option.value === campoIdFromUrl
+        );
+        
+        if (optionToSelect) {
+          fieldSelect.value = campoIdFromUrl;
+          // Carica automaticamente i dati del campo
+          await caricaDatiCampo(campoIdFromUrl);
+        }
+      }
 
     } catch (error) {
       console.error("Errore nel caricamento dei campi:", error);

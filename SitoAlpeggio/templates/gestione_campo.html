@@ -72,7 +72,7 @@
 
           <!-- Form per la ricerca del campo -->
           <form class="form" id="searchForm">
-            <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="col-md-7 col-lg-8 mx-auto">
               <h4 class="mb-3">Seleziona un campo</h4>
               <div class="mb-3">
                 <label for="fieldSelect" class="form-label"
@@ -109,8 +109,8 @@
             id="detailForm"
             style="display: none"
           >
-            <div class="col-md-8 col-lg-6 mx-auto">
-              <h4 class="mb-3">Gestisci campo: <span id="campoNome"></span></h4>
+            <div class="col-md-7 col-lg-8 mx-auto">
+              <h4 class="mb-3 text-center">Gestisci campo: <span id="campoNome"></span></h4>
               <input
                 type="hidden"
                 id="campoSelezionato"
@@ -118,8 +118,8 @@
                 value=""
               />
 
-              <!-- Pulsanti di azione -->
-              <div class="action-buttons mb-4">
+              <!-- Pulsanti di azione centrati -->
+              <div class="d-flex justify-content-center gap-3 mb-4">
                 <button
                   type="button"
                   id="deleteButton"
@@ -175,7 +175,7 @@
                   <div class="invalid-feedback">Inserire un numero valido.</div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <label for="select_provincia" class="form-label"
                     >Provincia</label
                   >
@@ -192,7 +192,7 @@
                   </div>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label for="select_comune" class="form-label">Comune</label>
                   <select
                     class="form-select"
@@ -205,7 +205,7 @@
                   <div class="invalid-feedback">Scegliere un comune valido</div>
                 </div>
 
-                <div class="col-12">
+                <div class="col-md-3">
                   <label for="zip" class="form-label">CAP</label>
                   <input
                     type="text"

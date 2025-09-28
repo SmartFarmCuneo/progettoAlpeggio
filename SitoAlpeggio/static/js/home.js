@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const containerCampi = document.getElementById("campi");
     let campoSelezionato = null;
+    let campoIdSelezionato = null; // Aggiungiamo l'ID del campo
 
     function caricaCampi() {
         fetch("/api/campi-utente")
@@ -18,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div id="mini-map" style="height:100%;"></div>
               </div>
               <div class="azione-buttons">
-                <a href="/gestioneCampo" class="azione-button">Gestisci Campo</a>
+                <button id="gestisci-campo-btn" class="azione-button">Gestisci Campo</button>
                 <div class="dropdown-container">
                   <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
                   <div id="dropdown-menu" class="dropdown-menu hidden">
@@ -41,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         const comune = campo.comune ? campo.comune : "";
                         button.textContent = `${nomeCampo} - ${comune}`;
                         button.dataset.campo = nomeCampo;
+                        button.dataset.campoId = campo.id_t; // Aggiungiamo l'ID del campo
                         button.dataset.coordinate = campo.coordinate || null;
 
                         button.addEventListener("click", () =>
@@ -54,6 +56,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     // Inizializza il menu a tendina
                     inizializzaDropdown();
+                    
+                    // Inizializza il pulsante gestisci campo
+                    inizializzaGestisciCampo();
                 } else {
                     containerCampi.innerHTML = `
             <div class="nessun-campo">
@@ -62,6 +67,23 @@ document.addEventListener("DOMContentLoaded", function () {
           `;
                 }
             });
+    }
+
+    function inizializzaGestisciCampo() {
+        const gestisciBtn = document.getElementById("gestisci-campo-btn");
+        
+        if (gestisciBtn) {
+            gestisciBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                
+                if (campoIdSelezionato) {
+                    // Reindirizza alla pagina di gestione campo con l'ID del campo selezionato
+                    window.location.href = `/gestioneCampo?campo_id=${campoIdSelezionato}`;
+                } else {
+                    alert("Seleziona un campo prima di procedere con la gestione.");
+                }
+            });
+        }
     }
 
     function inizializzaDropdown() {
@@ -109,6 +131,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .forEach((btn) => btn.classList.remove("selected"));
         button.classList.add("selected");
         campoSelezionato = button.dataset.campo;
+        campoIdSelezionato = button.dataset.campoId; // Salviamo l'ID del campo selezionato
         dettagliArea.querySelector(".campo-nome").textContent =
             campoSelezionato;
 
