@@ -821,6 +821,7 @@ def terms():
 def contatti():
     return render_template('contatti.html')
 
+
 @app.route("/supporto")
 def supporto():
     return render_template("supporto.html")
@@ -828,6 +829,7 @@ def supporto():
 #############################################################
 
 #################### GESTIONE DINAMICA DEI CAMPI E API###############################
+
 
 def haversine(lat1, lon1, lat2, lon2):
     # distanza in km tra due coordinate
@@ -861,7 +863,7 @@ def get_location_by_coords():
     )
 
     result = {
-        "comune": nearest["denominazione_ita"],   # <-- il vero nome del comune
+        "comune": nearest["denominazione_ita"],
         "cap": nearest["cap"],
         "provincia": nearest["denominazione_provincia"],
         "sigla_provincia": nearest["sigla_provincia"]
@@ -971,7 +973,7 @@ def index():
             jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             return redirect(url_for('home'))
         except Exception:
-            pass  # se il token non è valido, resta sulla pagina index
+            pass  
     return render_template("index.html")  # pagina pubblica iniziale
 
 
