@@ -472,7 +472,7 @@ h1 {
 #ricerca {
   border: none;
   padding: 0.75rem 1.5rem;
-  background-color: #488aec;
+  background-color: var(--primary);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
@@ -486,7 +486,8 @@ h1 {
 }
 
 #ricerca:hover {
-  box-shadow: 0 10px 15px -3px #488aec4f, 0 4px 6px -2px #488aec17;
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
 }
 
 #ricerca:focus,
@@ -508,6 +509,114 @@ h1 {
   background-color: rgba(56, 161, 105, 0.2);
   color: var(--primary-hover);
   border: 1px solid var(--success);
+}
+
+/* =============================================
+   DROPDOWN MENU
+   ============================================= */
+
+/* Stili per il menu a tendina */
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  left: 0;
+  background: var(--bg-light);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  min-width: 180px;
+  z-index: 1000;
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Nascondi di default */
+.dropdown-menu.hidden {
+  display: none;
+}
+
+/* Apri con hover */
+.dropdown-container:hover .dropdown-menu {
+  display: block;
+}
+
+/* Menu che si apre verso il basso (default) */
+.dropdown-menu.dropdown-down {
+  top: 100%;
+  transform-origin: top center;
+}
+
+.dropdown-menu.dropdown-down.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Menu che si apre verso l'alto */
+.dropdown-menu.dropdown-up {
+  bottom: 100%;
+  transform-origin: bottom center;
+}
+
+.dropdown-menu.dropdown-up.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 15px 20px;
+  text-decoration: none;
+  color: var(--text-body);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.3s ease;
+  font-weight: 500;
+  position: relative;
+}
+
+.dropdown-item:hover {
+  background: rgba(72, 187, 120, 0.1);
+  color: var(--primary);
+  transform: translateX(3px);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+/* Aggiunta di una piccola freccia al pulsante */
+#avvia-operazioni-btn {
+  position: relative;
+  cursor: pointer;
+}
+
+#avvia-operazioni-btn::after {
+  content: " ▼";
+  font-size: 0.8em;
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+}
+
+#avvia-operazioni-btn.active::after {
+  transform: rotate(180deg);
+}
+
+/* Freccia che punta verso l'alto quando il menu si apre verso l'alto */
+.dropdown-container:has(.dropdown-up) #avvia-operazioni-btn::after {
+  content: " ▲";
+}
+
+.dropdown-container:has(.dropdown-up) #avvia-operazioni-btn.active::after {
+  transform: rotate(180deg);
 }
 
 /* =============================================
@@ -1035,7 +1144,6 @@ footer a:hover {
   padding: 10px 0;
   transition: color 0.3s ease;
   color: white;
-
 }
 
 .faq-question:hover {
