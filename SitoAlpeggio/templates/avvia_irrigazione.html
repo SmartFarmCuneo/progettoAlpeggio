@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agritech - Associa e gestisci sensori</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/css/style.css" />
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+
+    <script src="../static/js/home.js" defer></script>
+  </head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+      <div class="navbar-top container">
+        <a href="/home" class="logo">🌱 Agritech</a>
+        <div class="user-nav">
+          <div class="user-info">
+            <img
+              src="../static/image/profilo.png"
+              alt="Profilo"
+              class="user-avatar-img"
+            />
+            <a href="/profilo" class="profile-link">{{user['username']}}</a>
+            <form method="POST" action="/logout">
+              <button type="submit" class="logout-btn">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+</body>
+</html>

@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="dropdown-container">
                   <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
                   <div id="dropdown-menu" class="dropdown-menu hidden">
-                    <a href="/contr_man" class="dropdown-item">Controllo manuale</a>
-                    <a href="/ric_spec" class="dropdown-item">Ricerca specifica</a>
-                    <a href="/ric_tot_parz" class="dropdown-item">Ricerca totale-parziale</a>
+                    <a href="/assoc_gest_sens" class="dropdown-item">Associa - gestisci sensori</a>
+                    <a href="/avvia_irr" class="dropdown-item">Avvia irrigazione</a>
+                    <a href="/reg_irr" class="dropdown-item">Registro irrigazioni</a>
                   </div>
                 </div>
               </div>

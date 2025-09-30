@@ -932,7 +932,7 @@ def get_comune():
 
 ############################# Avvio del drone#######################################
 
-
+############################# PROVA ################################################
 def avvioDrone(campo):
     home1_path = os.path.join(os.getcwd(), 'home1.py')
     try:
@@ -948,6 +948,20 @@ def avvioDrone(campo):
         print("Stderr:", e.stderr)
 ###################################################################################
 
+############################ AZIONI IRRIGAZIONE #########################################
+
+@app.route('/assoc_gest_sens', methods=['GET', 'POST'])
+def associaSensori():
+    return render_template('assoc_gest_sens.html')
+
+@app.route('/avvia_irr', methods=['GET', 'POST'])
+def avviaIrrigazione():
+    return render_template('avvia_irrigazione.html')
+
+@app.route('/reg_irr', methods=['GET', 'POST'])
+def registroIrrigazione():
+    return render_template('storici.html')
+####################################################################################
 
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
