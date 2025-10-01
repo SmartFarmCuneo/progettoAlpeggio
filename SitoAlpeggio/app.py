@@ -19,20 +19,29 @@ from flask_mail import Message, Mail
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIR = os.path.join(BASE_DIR, "static", "json")
 
-
-############################# Flask-DB connection ##############################
+############################ Flask app setup ######################################
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "chiave_super_segreta"
+# SECRET_KEY
+app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "default_secret")
 
+# Config mail
+app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
+app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
+app.config['MAIL_DEFAULT_SENDER'] = (
+    os.environ.get("MAIL_SENDER_NAME", "Agritech"),
+    os.environ.get("MAIL_SENDER_EMAIL", "tuoaccount@gmail.com")
+)
 
+# Database connection
 def get_db_connection():
     return pymysql.connect(
-        host='localhost',
-        user='root',
-        password='',
-        database='alpeggio',
+        host=os.environ.get("DB_HOST", "localhost"),
+        user=os.environ.get("DB_USER", "root"),
+        password=os.environ.get("DB_PASSWORD", ""),
+        database=os.environ.get("DB_NAME", "alpeggio"),
         cursorclass=pymysql.cursors.DictCursor
     )
+
 ###############################################################################
 
 
@@ -134,13 +143,9 @@ def get_user_data(username):
 
 
 ############################## FUNZIONE INVIO MAIL #############################
-############################## CONFIG MAIL #############################
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = "tuoaccount@gmail.com"      # <-- cambia qui
-app.config['MAIL_PASSWORD'] = "TUA_APP_PASSWORD"          # <-- cambia qui
-app.config['MAIL_DEFAULT_SENDER'] = ("Agritech", "tuoaccount@gmail.com")
 
 mail = Mail(app)
 
@@ -1031,5 +1036,5 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='localhost')
+    app.run(debug=True, host='0.0.0.0', port=5000)
     # per pubblicare app.debug=False

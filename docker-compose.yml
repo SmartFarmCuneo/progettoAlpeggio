@@ -1,4 +1,14 @@
 services:
+  flask-app:
+    build: ./SitoAlpeggio
+    container_name: flask-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+
   php-fpm:
     image: php:8.2-fpm
     volumes:
@@ -15,14 +25,11 @@ services:
   mysql:
     image: mysql:latest
     environment:
-      MYSQL_ROOT_PASSWORD: 
-      MYSQL_DATABASE: your_database_name
-      MYSQL_USER: your_username
-      MYSQL_PASSWORD: your_password
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+
     volumes:
       - ./mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
@@ -30,6 +37,7 @@ services:
       - mysql
     environment:
       PMA_HOST: mysql
-      MYSQL_ROOT_PASSWORD: 
+      PMA_USER: root
+      PMA_PASSWORD: ciao
     ports:
       - "8081:80"
