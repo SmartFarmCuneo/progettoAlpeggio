@@ -1,0 +1,54 @@
+# ==========================
+# MySQL / Database
+# ==========================
+mysql_data/
+*.ibd
+*.dblwr
+*.frm
+*.ibdata*
+*.log
+
+# ==========================
+# Node.js
+# ==========================
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# ==========================
+# PHP / Composer
+# ==========================
+vendor/
+composer.lock
+
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+venv/
+.env.local
+
+# ==========================
+# Docker
+# ==========================
+.docker/
+docker-compose.override.yml
+
+# ==========================
+# IDE / Editor
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# OS files
+# ==========================
+.DS_Store
+Thumbs.db
