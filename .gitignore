@@ -37,6 +37,8 @@ venv/
 # Docker
 # ==========================
 .docker/
+docker-compose.override.yml
+
 *.yml
 
 # ==========================
