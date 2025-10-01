@@ -20,7 +20,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIR = os.path.join(BASE_DIR, "static", "json")
 
 
-
 ############################# Flask-DB connection ##############################
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "chiave_super_segreta"
