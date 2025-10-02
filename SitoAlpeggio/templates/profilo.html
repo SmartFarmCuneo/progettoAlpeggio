@@ -1,233 +1,149 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech - Profilo</title>
-    <link rel="stylesheet" href="../static/css/style.css" />
-    <script src="../static/js/profilo.js" defer></script>
-  </head>
 
-  <body>
-    <header>
-      <div class="container header-content">
-        <a href="/home" class="logo">🌱 Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <span>{{user['username']}}</span>
-            <form action="/logout" method="POST">
-              <button class="logout-btn">Logout</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agritech - Profilo</title>
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <script src="../static/js/profilo.js" defer></script>
+</head>
 
-    <div class="container">
-      <div class="main-content">
-        <div class="sidebar">
-          <div class="menu-item">
-            <a href="/home">Home</a>
-          </div>
-          <div class="menu-item active">
-            <a href="/profilo">Il Mio Profilo</a>
-          </div>
-          <div class="menu-item">
-            <a href="/pagamenti">Up-grade dell'account</a>
-          </div>
-          <div class="menu-item"><a href="/supporto">Supporto</a></div>
-        </div>
-
-        <div class="profile-content">
-          <div
-            id="success-alert"
-            class="alert alert-success"
-            style="display: none"
-          >
-            Profilo aggiornato con successo!
-          </div>
-
-          <form id="profile-form" action="/profilo" method="POST">
-            <div class="profile-header">
-              <h1>Il Mio Profilo</h1>
-              <div class="btn-right">
-                <button
-                  type="button"
-                  id="cancel-btn"
-                  class="edit-mode-toggle cancel"
-                  style="display: none"
-                >
-                  Annulla
-                </button>
-                <button
-                  type="button"
-                  id="edit-btn"
-                  class="edit-mode-toggle"
-                  name="action-salvataggio"
-                  value="Modifica"
-                >
-                  Modifica
-                </button>
-              </div>
-            </div>
-
-            <div class="profile-section">
-              <h2 class="section-title">Informazioni Personali</h2>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="nome">Nome</label>
-                  <input
-                    type="text"
-                    id="nome"
-                    name="nome"
-                    class="form-control"
-                    value="{{user['nome']}}"
-                    name="nome"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="cognome">Cognome</label>
-                  <input
-                    type="text"
-                    id="cognome"
-                    name="cognome"
-                    class="form-control"
-                    value="{{user['cognome']}}"
-                    readonly
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="email">Email</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    class="form-control"
-                    value="{{user['email']}}"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="telefono">Telefono</label>
-                  <input
-                    type="tel"
-                    id="telefono"
-                    name="telefono"
-                    class="form-control"
-                    value="{{user['telefono']}}"
-                    readonly
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="codice-fiscale"
-                    >Codice Fiscale</label
-                  >
-                  <input
-                    type="text"
-                    id="codice-fiscale"
-                    name="cod_fiscale"
-                    class="form-control"
-                    value="{{user['cod_fiscale']}}"
-                    readonly
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="data-nascita"
-                    >Data di Nascita</label
-                  >
-                  <input
-                    type="date"
-                    id="data-nascita"
-                    name="DataDiNascita"
-                    class="form-control"
-                    value="{{user['DataDiNascita']}}"
-                    readonly
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="profile-section">
-              <h2 class="section-title">Impostazioni Account</h2>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="username">Nome Utente</label>
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    class="form-control"
-                    value="{{user['username']}}"
-                    readonly
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="notifiche"
-                    >Notifiche Email</label
-                  >
-                  <select
-                    id="notifiche"
-                    name="notifiche"
-                    class="form-control"
-                    disabled
-                  >
-                    <option value="all" selected>Tutte le notifiche</option>
-                    <option value="important">Solo notifiche importanti</option>
-                    <option value="none">Nessuna notifica</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="password">Password</label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    class="form-control"
-                    value="********"
-                    readonly
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Hidden submit button -->
-            <input
-              type="hidden"
-              name="action-salvataggio"
-              id="action-salvataggio"
-              value=""
-            />
+<body>
+  <header>
+    <div class="container header-content">
+      <a href="/home" class="logo">🌱 Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <span>{{user['username']}}</span>
+          <form action="/logout" method="POST">
+            <button class="logout-btn">Logout</button>
           </form>
         </div>
       </div>
     </div>
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
+  </header>
+
+  <div class="container">
+    <div class="main-content">
+      <div class="sidebar">
+        <div class="menu-item">
+          <a href="/home">Home</a>
+        </div>
+        <div class="menu-item active">
+          <a href="/profilo">Il Mio Profilo</a>
+        </div>
+        <div class="menu-item">
+          <a href="/pagamenti">Up-grade dell'account</a>
+        </div>
+        <div class="menu-item"><a href="/supporto">Supporto</a></div>
       </div>
-    </footer>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
-  </body>
+
+      <div class="profile-content">
+        <div id="success-alert" class="alert alert-success" style="display: none">
+          Profilo aggiornato con successo!
+        </div>
+
+        <form id="profile-form" action="/profilo" method="POST">
+          <div class="profile-header">
+            <h1>Il Mio Profilo</h1>
+            <div class="btn-right">
+              <button type="button" id="cancel-btn" class="edit-mode-toggle cancel" style="display: none">
+                Annulla
+              </button>
+              <button type="button" id="edit-btn" class="edit-mode-toggle" name="action-salvataggio" value="Modifica">
+                Modifica
+              </button>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h2 class="section-title">Informazioni Personali</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="nome">Nome</label>
+                <input type="text" id="nome" name="nome" class="form-control" value="{{user['nome']}}" name="nome"
+                  readonly />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="cognome">Cognome</label>
+                <input type="text" id="cognome" name="cognome" class="form-control" value="{{user['cognome']}}"
+                  readonly />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{user['email']}}" readonly />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="telefono">Telefono</label>
+                <input type="tel" id="telefono" name="telefono" class="form-control" value="{{user['telefono']}}"
+                  readonly />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="codice-fiscale">Codice Fiscale</label>
+                <input type="text" id="codice-fiscale" name="cod_fiscale" class="form-control"
+                  value="{{user['cod_fiscale']}}" readonly />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="data-nascita">Data di Nascita</label>
+                <input type="date" id="data-nascita" name="DataDiNascita" class="form-control"
+                  value="{{user['DataDiNascita']}}" readonly />
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h2 class="section-title">Impostazioni Account</h2>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="username">Nome Utente</label>
+                <input type="text" id="username" name="username" class="form-control" value="{{user['username']}}"
+                  readonly />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="notifiche">Notifiche Email</label>
+                <select id="notifiche" name="notifiche" class="form-control" disabled>
+                  <option value="all" selected>Tutte le notifiche</option>
+                  <option value="important">Solo notifiche importanti</option>
+                  <option value="none">Nessuna notifica</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" value="********" readonly />
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden submit button -->
+          <input type="hidden" name="action-salvataggio" id="action-salvataggio" value="" />
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+</body>
+
 </html>

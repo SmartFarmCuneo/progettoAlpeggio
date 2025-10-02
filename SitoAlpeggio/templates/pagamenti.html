@@ -1,183 +1,173 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech - Abbonamenti</title>
-    <link rel="stylesheet" href="../static/css/style.css" />
-    <script src="../static/js/pagamenti.js" defer></script>
-  </head>
 
-  <body>
-    <header>
-      <div class="container header-content">
-        <a href="/home" class="logo">🌱 Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <span>{{user['username']}}</span>
-            <form action="/logout" method="POST">
-              <button class="logout-btn">Logout</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agritech - Abbonamenti</title>
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <script src="../static/js/pagamenti.js" defer></script>
+</head>
 
-    <div class="container">
-      <div class="main-content">
-        <div class="sidebar">
-          <div class="menu-item"><a href="/profilo">Il Mio Profilo</a></div>
-          <div class="menu-item active">
-            <a href="/pagamenti">Up-grade dell'account</a>
-          </div>
-          <div class="menu-item"><a href="/supporto">Supporto</a></div>
-        </div>
-
-        <div class="profile-content">
-          <div class="profile-header">
-            <h1>Scegli il Tuo Piano</h1>
-            <p style="color: white; margin-top: 0.5rem">
-              Seleziona l'abbonamento più adatto alle tue esigenze agricole
-            </p>
-          </div>
-
-          <div class="billing-info">
-            <h3>🔄 Fatturazione Mensile</h3>
-            <p>
-              Tutti i piani si rinnovano automaticamente ogni mese. Puoi
-              cancellare in qualsiasi momento senza costi aggiuntivi.
-            </p>
-          </div>
-
-          <div class="subscription-plans">
-            <!-- Piano Free -->
-            <div class="plan-card">
-              <div class="plan-title">Free</div>
-              <div class="plan-price"><span class="currency">€</span>0</div>
-              <div class="plan-period">al mese</div>
-
-              <ul class="plan-features">
-                <li>Monitoraggio fino a 5 ettari</li>
-                <li>Dati meteorologici base</li>
-                <li>3 tipi di sensori</li>
-                <li>Supporto email</li>
-                <li>Report mensili</li>
-                <li class="unavailable">Analisi predittive AI</li>
-                <li class="unavailable">Supporto prioritario</li>
-                <li class="unavailable">API personalizzate</li>
-              </ul>
-
-              <button
-                class="subscribe-btn secondary"
-                onclick="selectPlan('basic')"
-              >
-                Scegli Free
-              </button>
-            </div>
-
-            <!-- Piano Basic -->
-            <div class="plan-card">
-              <div class="plan-title">Basic</div>
-              <div class="plan-price"><span class="currency">€</span>19</div>
-              <div class="plan-period">al mese</div>
-
-              <ul class="plan-features">
-                <li>Monitoraggio fino a 5 ettari</li>
-                <li>Dati meteorologici base</li>
-                <li>3 tipi di sensori</li>
-                <li>Supporto email</li>
-                <li>Report mensili</li>
-                <li class="unavailable">Analisi predittive AI</li>
-                <li class="unavailable">Supporto prioritario</li>
-                <li class="unavailable">API personalizzate</li>
-              </ul>
-
-              <button
-                class="subscribe-btn secondary"
-                onclick="selectPlan('basic')"
-              >
-                Scegli Basic
-              </button>
-            </div>
-
-            <!-- Piano Professional (Consigliato) -->
-            <div class="plan-card recommended">
-              <div class="plan-title">Professional</div>
-              <div class="plan-price"><span class="currency">€</span>49</div>
-              <div class="plan-period">al mese</div>
-
-              <ul class="plan-features">
-                <li>Monitoraggio fino a 25 ettari</li>
-                <li>Dati meteorologici avanzati</li>
-                <li>8 tipi di sensori</li>
-                <li>Supporto email e telefono</li>
-                <li>Report settimanali</li>
-                <li>Analisi predittive AI</li>
-                <li>Allerte automatiche</li>
-                <li class="unavailable">API personalizzate</li>
-              </ul>
-
-              <button
-                class="subscribe-btn"
-                onclick="selectPlan('professional')"
-              >
-                Scegli Professional
-              </button>
-            </div>
-
-            <!-- Piano Enterprise -->
-            <div class="plan-card">
-              <div class="plan-title">Enterprise</div>
-              <div class="plan-price"><span class="currency">€</span>99</div>
-              <div class="plan-period">al mese</div>
-
-              <ul class="plan-features">
-                <li>Monitoraggio illimitato</li>
-                <li>Dati meteorologici premium</li>
-                <li>Tutti i tipi di sensori</li>
-                <li>Supporto prioritario 24/7</li>
-                <li>Report personalizzati</li>
-                <li>Analisi predittive AI avanzate</li>
-                <li>Allerte in tempo reale</li>
-                <li>API personalizzate</li>
-              </ul>
-
-              <button class="subscribe-btn" onclick="selectPlan('enterprise')">
-                Scegli Enterprise
-              </button>
-            </div>
-          </div>
-
-          <div class="billing-info">
-            <h3>💳 Metodi di Pagamento Accettati</h3>
-            <p>
-              Carte di credito, PayPal, Bonifico bancario • Fatturazione
-              elettronica disponibile
-            </p>
-          </div>
+<body>
+  <header>
+    <div class="container header-content">
+      <a href="/home" class="logo">🌱 Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <span>{{user['username']}}</span>
+          <form action="/logout" method="POST">
+            <button class="logout-btn">Logout</button>
+          </form>
         </div>
       </div>
     </div>
+  </header>
 
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
+  <div class="container">
+    <div class="main-content">
+      <div class="sidebar">
+        <div class="menu-item"><a href="/home">Home</a></div>
+        <div class="menu-item"><a href="/profilo">Il Mio Profilo</a></div>
+        <div class="menu-item active">
+          <a href="/pagamenti">Up-grade dell'account</a>
+        </div>
+        <div class="menu-item"><a href="/supporto">Supporto</a></div>
       </div>
-    </footer>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
-    
-  </body>
+      <div class="profile-content">
+        <div class="profile-header">
+          <h1>Scegli il Tuo Piano</h1>
+          <p style="color: white; margin-top: 0.5rem">
+            Seleziona l'abbonamento più adatto alle tue esigenze agricole
+          </p>
+        </div>
+
+        <div class="billing-info">
+          <h3>🔄 Fatturazione Mensile</h3>
+          <p>
+            Tutti i piani si rinnovano automaticamente ogni mese. Puoi
+            cancellare in qualsiasi momento senza costi aggiuntivi.
+          </p>
+        </div>
+
+        <div class="subscription-plans">
+          <!-- Piano Free -->
+          <div class="plan-card">
+            <div class="plan-title">Free</div>
+            <div class="plan-price"><span class="currency">€</span>0</div>
+            <div class="plan-period">al mese</div>
+
+            <ul class="plan-features">
+              <li>Monitoraggio fino a 5 ettari</li>
+              <li>Dati meteorologici base</li>
+              <li>3 tipi di sensori</li>
+              <li>Supporto email</li>
+              <li>Report mensili</li>
+              <li class="unavailable">Analisi predittive AI</li>
+              <li class="unavailable">Supporto prioritario</li>
+              <li class="unavailable">API personalizzate</li>
+            </ul>
+
+            <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
+              Scegli Free
+            </button>
+          </div>
+
+          <!-- Piano Basic -->
+          <div class="plan-card">
+            <div class="plan-title">Basic</div>
+            <div class="plan-price"><span class="currency">€</span>19</div>
+            <div class="plan-period">al mese</div>
+
+            <ul class="plan-features">
+              <li>Monitoraggio fino a 5 ettari</li>
+              <li>Dati meteorologici base</li>
+              <li>3 tipi di sensori</li>
+              <li>Supporto email</li>
+              <li>Report mensili</li>
+              <li class="unavailable">Analisi predittive AI</li>
+              <li class="unavailable">Supporto prioritario</li>
+              <li class="unavailable">API personalizzate</li>
+            </ul>
+
+            <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
+              Scegli Basic
+            </button>
+          </div>
+
+          <!-- Piano Professional (Consigliato) -->
+          <div class="plan-card recommended">
+            <div class="plan-title">Professional</div>
+            <div class="plan-price"><span class="currency">€</span>49</div>
+            <div class="plan-period">al mese</div>
+
+            <ul class="plan-features">
+              <li>Monitoraggio fino a 25 ettari</li>
+              <li>Dati meteorologici avanzati</li>
+              <li>8 tipi di sensori</li>
+              <li>Supporto email e telefono</li>
+              <li>Report settimanali</li>
+              <li>Analisi predittive AI</li>
+              <li>Allerte automatiche</li>
+              <li class="unavailable">API personalizzate</li>
+            </ul>
+
+            <button class="subscribe-btn" onclick="selectPlan('professional')">
+              Scegli Professional
+            </button>
+          </div>
+
+          <!-- Piano Enterprise -->
+          <div class="plan-card">
+            <div class="plan-title">Enterprise</div>
+            <div class="plan-price"><span class="currency">€</span>99</div>
+            <div class="plan-period">al mese</div>
+
+            <ul class="plan-features">
+              <li>Monitoraggio illimitato</li>
+              <li>Dati meteorologici premium</li>
+              <li>Tutti i tipi di sensori</li>
+              <li>Supporto prioritario 24/7</li>
+              <li>Report personalizzati</li>
+              <li>Analisi predittive AI avanzate</li>
+              <li>Allerte in tempo reale</li>
+              <li>API personalizzate</li>
+            </ul>
+
+            <button class="subscribe-btn" onclick="selectPlan('enterprise')">
+              Scegli Enterprise
+            </button>
+          </div>
+        </div>
+
+        <div class="billing-info">
+          <h3>💳 Metodi di Pagamento Accettati</h3>
+          <p>
+            Carte di credito, PayPal, Bonifico bancario • Fatturazione
+            elettronica disponibile
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+
+</body>
+
 </html>
