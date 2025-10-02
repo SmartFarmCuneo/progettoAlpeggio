@@ -9,20 +9,6 @@ mysql_data/
 *.log
 
 # ==========================
-# Node.js
-# ==========================
-node_modules/
-npm-debug.log
-yarn-error.log
-pnpm-debug.log
-
-# ==========================
-# PHP / Composer
-# ==========================
-vendor/
-composer.lock
-
-# ==========================
 # Python
 # ==========================
 __pycache__/
@@ -32,13 +18,6 @@ __pycache__/
 *.env
 venv/
 .env.local
-
-# ==========================
-# Docker
-# ==========================
-.docker/
-docker-compose.override.yml
-*.yml
 
 # ==========================
 # IDE / Editor
