@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const containerCampi = document.getElementById("campi");
     let campoSelezionato = null;
-    let campoIdSelezionato = null; // Aggiungiamo l'ID del campo
+    let campoIdSelezionato = null;
 
     function caricaCampi() {
         fetch("/api/campi-utente")
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   <div id="dropdown-menu" class="dropdown-menu hidden">
                     <a href="/assoc_gest_sens" class="dropdown-item">Associa - gestisci sensori</a>
                     <a href="/avvia_irr" class="dropdown-item">Avvia irrigazione</a>
-                    <a href="/reg_irr" class="dropdown-item">Registro irrigazioni</a>
+                    <a href="#" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
                   </div>
                 </div>
               </div>
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         const comune = campo.comune ? campo.comune : "";
                         button.textContent = `${nomeCampo} - ${comune}`;
                         button.dataset.campo = nomeCampo;
-                        button.dataset.campoId = campo.id_t; // Aggiungiamo l'ID del campo
+                        button.dataset.campoId = campo.id_t;
                         button.dataset.coordinate = campo.coordinate || null;
 
                         button.addEventListener("click", () =>
@@ -59,6 +59,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     
                     // Inizializza il pulsante gestisci campo
                     inizializzaGestisciCampo();
+                    
+                    // Inizializza il link registro irrigazioni
+                    inizializzaRegistroIrrigazioni();
                 } else {
                     containerCampi.innerHTML = `
             <div class="nessun-campo">
@@ -77,10 +80,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 e.preventDefault();
                 
                 if (campoIdSelezionato) {
-                    // Reindirizza alla pagina di gestione campo con l'ID del campo selezionato
                     window.location.href = `/gestioneCampo?campo_id=${campoIdSelezionato}`;
                 } else {
                     alert("Seleziona un campo prima di procedere con la gestione.");
+                }
+            });
+        }
+    }
+
+    function inizializzaRegistroIrrigazioni() {
+        const registroIrrLink = document.getElementById("registro-irrigazioni-link");
+        
+        if (registroIrrLink) {
+            registroIrrLink.addEventListener("click", function(e) {
+                e.preventDefault();
+                
+                if (campoIdSelezionato) {
+                    console.log("Campo ID selezionato:", campoIdSelezionato);
+                    window.location.href = `/reg_irr?campo_id=${campoIdSelezionato}`;
+                } else {
+                    alert("Seleziona un campo prima di procedere.");
                 }
             });
         }
@@ -94,17 +113,14 @@ document.addEventListener("DOMContentLoaded", function () {
             avviaBtn.addEventListener("click", function(e) {
                 e.preventDefault();
                 
-                // Calcola la posizione ottimale per il dropdown
                 const rect = avviaBtn.getBoundingClientRect();
                 const windowHeight = window.innerHeight;
-                const menuHeight = 150; // Altezza approssimativa del menu
+                const menuHeight = 150;
                 const spaceBelow = windowHeight - rect.bottom;
                 const spaceAbove = rect.top;
                 
-                // Rimuovi classi precedenti
                 dropdownMenu.classList.remove("dropdown-up", "dropdown-down");
                 
-                // Decidi se aprire verso l'alto o verso il basso
                 if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
                     dropdownMenu.classList.add("dropdown-up");
                 } else {
@@ -115,7 +131,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 avviaBtn.classList.toggle("active");
             });
 
-            // Chiudi il menu se si clicca fuori
             document.addEventListener("click", function(e) {
                 if (!e.target.closest(".dropdown-container")) {
                     dropdownMenu.classList.add("hidden");
@@ -131,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .forEach((btn) => btn.classList.remove("selected"));
         button.classList.add("selected");
         campoSelezionato = button.dataset.campo;
-        campoIdSelezionato = button.dataset.campoId; // Salviamo l'ID del campo selezionato
+        campoIdSelezionato = button.dataset.campoId;
         dettagliArea.querySelector(".campo-nome").textContent =
             campoSelezionato;
 
@@ -158,7 +173,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // Parsing formato Visualizza Campi
         let coords = coordinateStr.replace(/[()]/g, "").split(",");
         const latlngs = [];
         for (let i = 0; i < coords.length; i += 2) {

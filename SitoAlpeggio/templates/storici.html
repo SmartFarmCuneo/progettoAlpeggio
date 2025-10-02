@@ -23,6 +23,8 @@
     />
     <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="../static/css/style.css" />
+    <!-- Passa il campo preselezionato al JavaScript -->
+
     <script src="../static/js/storici.js" defer></script>
   </head>
 
@@ -135,4 +137,10 @@
 
     <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
   </body>
+
+  <script>
+        {% if campo_id_preselezionato %}
+        window.campoIdPreselezionato = "{{ campo_id_preselezionato }}";
+        {% endif %}
+    </script>
 </html>

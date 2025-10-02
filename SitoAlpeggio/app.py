@@ -966,6 +966,7 @@ def avviaIrrigazione():
 @app.route('/reg_irr', methods=['GET', 'POST'])
 def registroIrrigazione():
     return render_template('storici.html')
+
 ####################################################################################
 
 def associazioneSessionCampi(current_user):
