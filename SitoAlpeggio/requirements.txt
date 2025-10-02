@@ -1,5 +1,7 @@
-Flask==2.3.2
-PyMySQL==1.1.0
-PyJWT==2.8.0
-Flask-Mail==0.9.1
-requests==2.32.0
+Flask
+PyMySQL
+PyJWT
+Flask-Mail
+requests
+python-dotenv
+cryptography
