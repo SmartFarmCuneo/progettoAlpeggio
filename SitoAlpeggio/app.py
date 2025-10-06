@@ -507,7 +507,6 @@ def aggiungiCampo(current_user):
         provincia = request.form.get('provincia', provincia)
         comune = request.form.get('comune', comune)
         cap = request.form.get('cap', cap)
-        num_bestiame = request.form['num_bestiame']
 
         try:
             connection = get_db_connection()
@@ -524,9 +523,9 @@ def aggiungiCampo(current_user):
                 coord_str = coordinate['raw'] if coordinate and 'raw' in coordinate else None
 
                 cursor.execute(
-                    "INSERT INTO fields (id_user, provincia, comune, CAP, num_bestiame, coordinate) "
-                    "VALUES (%s, %s, %s, %s, %s, %s)",
-                    (user_id, provincia, comune, cap, num_bestiame, coord_str)
+                    "INSERT INTO fields (id_user, provincia, comune, CAP, coordinate) "
+                    "VALUES (%s, %s, %s, %s, %s)",
+                    (user_id, provincia, comune, cap, coord_str)
                 )
                 connection.commit()
                 # Pulisci sessione dopo salvataggio
@@ -602,7 +601,7 @@ def api_campi_utente(current_user):
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.num_bestiame, f.coordinate 
+                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.coordinate 
                 FROM fields f 
                 INNER JOIN users u ON f.id_user = u.id_u 
                 WHERE u.username = %s 
@@ -626,7 +625,7 @@ def api_dettaglio_campo(current_user, campo_id):
         with conn.cursor() as cursor:
             # Verifica che il campo appartenga all'utente
             cursor.execute("""
-                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.num_bestiame, f.coordinate,
+                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.coordinate,
                        u.username
                 FROM fields f 
                 INNER JOIN users u ON f.id_user = u.id_u 
@@ -681,16 +680,15 @@ def gestioneCampo(current_user):
 
                 elif action == 'save':
                     # Aggiorna il campo
-                    livestock_count = request.form.get('livestockCount')
                     provincia = request.form.get('provincia')
                     comune = request.form.get('comune')
                     cap = request.form.get('zip')
 
                     cursor.execute("""
                         UPDATE fields 
-                        SET num_bestiame = %s, provincia = %s, comune = %s, CAP = %s
+                        SET provincia = %s, comune = %s, CAP = %s
                         WHERE id_t = %s
-                    """, (livestock_count, provincia, comune, cap, campo_id))
+                    """, ( provincia, comune, cap, campo_id))
                     conn.commit()
 
                     return redirect(url_for('gestioneCampo'))
@@ -730,7 +728,7 @@ def get_info_campi(current_user):
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-                SELECT f.coordinate, f.comune, f.num_bestiame 
+                SELECT f.coordinate, f.comune 
                 FROM fields f 
                 INNER JOIN users u ON f.id_user = u.id_u 
                 WHERE u.username = %s 
@@ -742,8 +740,7 @@ def get_info_campi(current_user):
             for campo in risultato:
                 coord = campo["coordinate"] if campo["coordinate"] else "N/A"
                 comune = campo["comune"] if campo["comune"] else "N/A"
-                bestiame = campo["num_bestiame"] if campo["num_bestiame"] else 0
-                info_parts.append(f"{coord}/{comune}/{bestiame}")
+                info_parts.append(f"{coord}/{comune}")
 
             return "|".join(info_parts)
     except Exception as e:
@@ -897,7 +894,7 @@ def get_info_campi(current_user):
     conn = get_db_connection()
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT coordinate, comune, num_bestiame FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user ", (current_user,))
+            "SELECT coordinate, comune FROM users u, fields f WHERE u.username = %s AND u.id_u = f.id_user ", (current_user,))
         risultato = cursor.fetchall()
         info = ""
         for i in range(0, len(risultato)):

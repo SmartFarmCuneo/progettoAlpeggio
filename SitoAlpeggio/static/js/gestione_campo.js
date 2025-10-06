@@ -229,8 +229,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Funzione per resettare il form
   window.resetForm = function () {
     if (currentFieldData) {
-      // Ripristina i valori originali
-      document.getElementById("livestockCount").value = currentFieldData.num_bestiame || 0;
       document.getElementById("zip").value = currentFieldData.CAP || "";
       // Ripristina provincia e comune se necessario
     }

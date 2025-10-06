@@ -76,7 +76,6 @@ document.addEventListener("DOMContentLoaded", function () {
                                   <!-- Colonna sinistra: Testo -->
                                   <div class="col-md-6">
                                       <h2>Campo ${index + 1} - ${comune}</h2>
-                                      <p>Numero bestiame: <strong>${numBestiame}</strong></p>
                                       <div class="mt-3">
                                           <h5>Coordinate:</h5>
                                           ${coordinateList}
