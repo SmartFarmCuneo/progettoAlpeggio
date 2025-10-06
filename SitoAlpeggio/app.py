@@ -953,6 +953,12 @@ def avvioDrone(campo):
         print("Stderr:", e.stderr)
 ###################################################################################
 
+############################ GESTIONE SENSORI #####################################
+
+@app.route('/sensori', methods=['GET', 'POST'])
+def sensori():
+    return render_template('assoc_gest_sens.html')
+
 ############################ AZIONI IRRIGAZIONE #########################################
 
 @app.route('/assoc_gest_sens', methods=['GET', 'POST'])
