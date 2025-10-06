@@ -899,7 +899,7 @@ def get_info_campi(current_user):
         info = ""
         for i in range(0, len(risultato)):
             info += str(risultato[i]["coordinate"]) + "/" + str(risultato[i]
-                                                                ["comune"]) + "/" + str(risultato[i]["num_bestiame"]) + "|"
+                                                                ["comune"]) + "|"
         return info
 
 
