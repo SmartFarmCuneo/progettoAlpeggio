@@ -52,11 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
       sessionProvincia = fieldData.provincia || "";
       sessionComune = fieldData.comune || "";
       sessionCap = fieldData.CAP || "";
-      sessionBestiame = fieldData.num_bestiame || 0;
-
-      // Popola il campo bestiame
-      document.getElementById("livestockCount").value = sessionBestiame;
-
+      
       // Carica le province con i dati del campo
       await populateProvince();
 

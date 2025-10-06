@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     const campi = data.split("|").filter((el) => el.trim() !== ""); // Split delle info campi
                     campi.forEach((campo, index) => {
-                        const [coordinate, comune, numBestiame] = campo.split("/");
+                        const [coordinate, comune] = campo.split("/");
                         let coordinateComplete = coordinate.split("(").join("");
                         coordinateComplete = coordinateComplete.split(")").join("");
                         const coordinateFinale = coordinateComplete.split(",");
