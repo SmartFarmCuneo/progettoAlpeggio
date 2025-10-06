@@ -9,7 +9,8 @@
 }
 
 html {
-  scroll-padding-top: 80px; /* altezza della navbar */
+  scroll-padding-top: 80px;
+  /* altezza della navbar */
 }
 
 /* =============================================
@@ -196,7 +197,8 @@ body {
 header {
   background: linear-gradient(135deg, var(--bg-light), var(--bg-dark));
   color: white;
-  padding: 8px 0; /* Ridotto da 15px a 8px */
+  padding: 8px 0;
+  /* Ridotto da 15px a 8px */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   animation: fadeDown 0.8s ease;
   border-bottom: 1px solid var(--border);
@@ -263,7 +265,6 @@ header {
   gap: 30px;
 }
 
-/* Sidebar */
 .sidebar {
   width: 250px;
   background-color: var(--bg-light);
@@ -436,7 +437,7 @@ h1 {
   background-color: var(--danger-hover);
 }
 
-/* Bottone geolocalizzazione */
+
 #geoButton {
   border: none;
   display: flex;
@@ -468,7 +469,7 @@ h1 {
   height: 1.25rem;
 }
 
-/* Bottone ricerca */
+
 #ricerca {
   border: none;
   padding: 0.75rem 1.5rem;
@@ -495,6 +496,7 @@ h1 {
   opacity: 0.85;
   box-shadow: none;
 }
+
 /* =============================================
    ALERT
    ============================================= */
@@ -515,7 +517,6 @@ h1 {
    DROPDOWN MENU
    ============================================= */
 
-/* Stili per il menu a tendina */
 .dropdown-container {
   position: relative;
   display: inline-block;
@@ -536,17 +537,16 @@ h1 {
   overflow: hidden;
 }
 
-/* Nascondi di default */
 .dropdown-menu.hidden {
   display: none;
 }
 
-/* Apri con hover */
+
 .dropdown-container:hover .dropdown-menu {
   display: block;
 }
 
-/* Menu che si apre verso il basso (default) */
+
 .dropdown-menu.dropdown-down {
   top: 100%;
   transform-origin: top center;
@@ -559,7 +559,7 @@ h1 {
   pointer-events: none;
 }
 
-/* Menu che si apre verso l'alto */
+
 .dropdown-menu.dropdown-up {
   bottom: 100%;
   transform-origin: bottom center;
@@ -593,7 +593,6 @@ h1 {
   border-bottom: none;
 }
 
-/* Aggiunta di una piccola freccia al pulsante */
 #avvia-operazioni-btn {
   position: relative;
   cursor: pointer;
@@ -610,7 +609,6 @@ h1 {
   transform: rotate(180deg);
 }
 
-/* Freccia che punta verso l'alto quando il menu si apre verso l'alto */
 .dropdown-container:has(.dropdown-up) #avvia-operazioni-btn::after {
   content: " ▲";
 }
@@ -623,12 +621,10 @@ h1 {
    HOMEPAGE SPECIFIC STYLES
    ============================================= */
 .hero {
-  background: linear-gradient(
-    135deg,
-    var(--bg-dark) 0%,
-    #2a4a3a 50%,
-    var(--bg-light) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--bg-dark) 0%,
+      #2a4a3a 50%,
+      var(--bg-light) 100%);
   min-height: 80vh;
   display: flex;
   align-items: center;
@@ -865,6 +861,7 @@ footer a:hover {
   margin-top: 1rem;
   list-style: none;
 }
+
 /* =============================================
    PLACEHOLDER IMAGES
    ============================================= */
@@ -894,18 +891,21 @@ footer a:hover {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
   z-index: 2000;
 }
+
 .cookie-content p {
   color: var(--text-body);
   font-size: 0.95rem;
   margin-bottom: 0.6rem;
   line-height: 1.4;
 }
+
 .cookie-buttons {
   display: flex;
   gap: 0.75rem;
   align-items: center;
   justify-content: flex-end;
 }
+
 .cookie-btn {
   padding: 0.5rem 1rem;
   border-radius: 25px;
@@ -915,10 +915,12 @@ footer a:hover {
   background: transparent;
   color: white;
 }
+
 .cookie-btn.accept {
   background: var(--primary);
   color: var(--bg-dark);
 }
+
 .cookie-manage-link {
   color: var(--text-body);
   text-decoration: underline;
@@ -1176,7 +1178,6 @@ footer a:hover {
    PRIVACY E COOKIE POLICY
    ============================================= */
 
-/* MAIN */
 .privacy-main {
   margin-top: 2rem;
   padding: 3rem 2rem;
@@ -1189,7 +1190,6 @@ footer a:hover {
   animation: fadeUp 1s ease forwards 0.3s;
 }
 
-/* TITOLI */
 .privacy-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -1232,7 +1232,6 @@ footer a:hover {
   font-style: italic;
 }
 
-/* SECTION */
 .privacy-section {
   margin-bottom: 3rem;
   padding: 2rem;
@@ -1247,14 +1246,12 @@ footer a:hover {
   transform: translateX(5px);
 }
 
-/* LISTE */
 .privacy-list {
   color: var(--text-body);
   line-height: 1.7;
   margin: 1rem 0 1rem 2rem;
 }
 
-/* BOX AVVERTIMENTO */
 .privacy-warning {
   background: rgba(237, 137, 54, 0.1);
   border: 1px solid var(--warning);
@@ -1269,7 +1266,6 @@ footer a:hover {
   margin-top: 0;
 }
 
-/* TABELLE */
 .privacy-table {
   width: 100%;
   border-collapse: collapse;
@@ -1304,14 +1300,15 @@ footer a:hover {
   color: white;
   text-decoration: none;
 }
+
 .link-style:hover {
   color: var(--primary);
 }
+
 /* =============================================
    TERMINI E CONDIZIONI
    ============================================= */
 
-/* MAIN */
 .tos-main {
   margin-top: 2rem;
   padding: 3rem 2rem;
@@ -1324,7 +1321,6 @@ footer a:hover {
   animation: fadeUp 1s ease forwards 0.3s;
 }
 
-/* TITOLI */
 .tos-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -1367,7 +1363,6 @@ footer a:hover {
   font-size: 1.05rem;
 }
 
-/* SECTION */
 .tos-section {
   margin-bottom: 3rem;
   padding: 2rem;
@@ -1382,14 +1377,12 @@ footer a:hover {
   transform: translateX(5px);
 }
 
-/* LISTE */
 .tos-list {
   color: var(--text-body);
   line-height: 1.7;
   margin: 1rem 0 1rem 2rem;
 }
 
-/* LINK */
 .tos-list a {
   color: var(--primary);
   text-decoration: none;
@@ -1406,14 +1399,12 @@ footer a:hover {
    HOME CAMPI
    ============================================= */
 
-/* Container principale campi */
 .campi-container {
   display: flex;
   gap: 2rem;
   margin-top: 1rem;
 }
 
-/* Lista campi */
 .campi-lista {
   width: 300px;
   background-color: var(--bg-light);
@@ -1458,7 +1449,6 @@ footer a:hover {
   font-weight: 600;
 }
 
-/* Dettagli campo */
 .campo-dettagli {
   flex: 1;
   background-color: var(--bg-light);
@@ -1615,7 +1605,6 @@ footer a:hover {
   height: 20px;
 }
 
-/* Loading state */
 .loading {
   opacity: 0.6;
   pointer-events: none;
@@ -1716,6 +1705,7 @@ footer a:hover {
   .cookie-content {
     display: block;
   }
+
   .cookie-buttons {
     justify-content: center;
     margin-top: 8px;
@@ -1753,6 +1743,7 @@ footer a:hover {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1763,6 +1754,7 @@ footer a:hover {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1773,6 +1765,7 @@ footer a:hover {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1783,6 +1776,7 @@ footer a:hover {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

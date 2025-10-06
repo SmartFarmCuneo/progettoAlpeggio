@@ -1,6 +1,7 @@
 function selectPlan(planType) {
     // Mostra conferma
     const planNames = {
+        free: "Free (gratuito)",
         basic: "Basic (€19/mese)",
         professional: "Professional (€49/mese)",
         enterprise: "Enterprise (€99/mese)",
