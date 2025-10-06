@@ -590,7 +590,7 @@ def get_session_coordinate():
 @app.route('/mappa', methods=['GET', 'POST'])
 @token_required
 def mappa(current_user):
-    return render_template('mappaOff.html')
+    return render_template('mappa.html')
 
 
 @app.route("/api/campi-utente")

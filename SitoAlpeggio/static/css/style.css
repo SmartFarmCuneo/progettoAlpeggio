@@ -1552,6 +1552,39 @@ footer a:hover {
   min-height: 250px;
 }
 
+.map-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden !important; /* forza Leaflet */
+  border: 1px solid var(--border, #333);
+}
+
+/* la mappa deve riempire completamente il wrapper */
+#map {
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+}
+
+/* 🔒 forza Leaflet Draw controls a rispettare i limiti */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 500; /* sopra la mappa, ma dentro il wrapper */
+  overflow: hidden;
+}
+
+.leaflet-control-container {
+  overflow: hidden !important;
+}
+
+/* A volte Bootstrap mette overflow visibile su .col-md-8 */
+.col-md-8 {
+  overflow: hidden !important;
+}
+
+
 /* =============================================
    BOTTONI GESTIONE
    ============================================= */
