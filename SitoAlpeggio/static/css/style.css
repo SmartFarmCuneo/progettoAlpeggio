@@ -234,7 +234,6 @@ body {
   transform-origin: center;
 }
 
-/* ✅ Transizione simmetrica e centrata */
 .hamburger.active span:nth-child(1) {
   transform: translateY(8px) rotate(45deg);
 }
@@ -259,7 +258,6 @@ header {
   background: linear-gradient(135deg, var(--bg-light), var(--bg-dark));
   color: white;
   padding: 8px 0;
-  /* Ridotto da 15px a 8px */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   animation: fadeDown 0.8s ease;
   border-bottom: 1px solid var(--border);
