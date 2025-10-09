@@ -1,49 +1,70 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech</title>
-    <link rel="stylesheet" href="../static/css/style.css" />
-  </head>
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-top container">
-        <a href="/" class="logo">🌱 Agritech</a>
-        <div class="auth-buttons">
-          <a href="/login" class="auth-btn sign-in">Accedi</a>
-          <a href="/registrati" class="auth-btn sign-up">Registrati</a>
-        </div>
-      </div>
-      <div class="navbar-menu container">
-        <ul class="nav-links">
-          <li class="nav-link"><a href="/#home">Home</a></li>
-          <li class="nav-link"><a href="/#services">Servizi</a></li>
-          <li class="nav-link"><a href="/#about">Chi Siamo</a></li>
-          <li class="nav-link"><a href="/#products">Prodotti</a></li>
-        </ul>
-      </div>
-    </nav>
 
-    <!-- HERO SECTION -->
-    <section id="home" class="hero">
-      <div class="hero-content">
-        <h1>Il Futuro dell'Agricoltura è Qui</h1>
-        <p>
-          Trasformiamo l'agricoltura tradizionale con tecnologie innovative,
-          sostenibilità e intelligenza artificiale per un domani più verde e
-          produttivo.
-        </p>
-        <a href="/#about" class="cta-button">Scopri di Più</a>
-      </div>
-    </section>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agritech</title>
+  <link rel="stylesheet" href="../static/css/style.css" />
+</head>
 
-    <!-- FEATURES SECTION -->
-    <section id="services" class="features">
-      <div class="container">
-        <h2 class="section-title">I Nostri Servizi</h2>
-        <div class="features-grid"><!--
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/" class="logo">🌱 Agritech</a>
+
+      <!-- Bottone hamburger -->
+      <button class="hamburger" id="hamburger" aria-label="Apri menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Pulsanti desktop -->
+      <div class="auth-buttons desktop-auth">
+        <a href="/login" class="auth-btn sign-in">Accedi</a>
+        <a href="/registrati" class="auth-btn sign-up">Registrati</a>
+      </div>
+    </div>
+
+    <!-- Menu principale -->
+    <div class="navbar-menu container" id="navbarMenu">
+      <ul class="nav-links">
+        <li class="nav-link"><a href="/#home">Home</a></li>
+        <li class="nav-link"><a href="/#services">Servizi</a></li>
+        <li class="nav-link"><a href="/#about">Chi Siamo</a></li>
+        <li class="nav-link"><a href="/#products">Prodotti</a></li>
+      </ul>
+
+      <!-- Pulsanti mobile -->
+      <div class="auth-buttons mobile-auth">
+        <a href="/login" class="auth-btn sign-in">Accedi</a>
+        <a href="/registrati" class="auth-btn sign-up">Registrati</a>
+      </div>
+    </div>
+  </nav>
+
+
+
+  <!-- HERO SECTION -->
+  <section id="home" class="hero">
+    <div class="hero-content">
+      <h1>Il Futuro dell'Agricoltura è Qui</h1>
+      <p>
+        Trasformiamo l'agricoltura tradizionale con tecnologie innovative,
+        sostenibilità e intelligenza artificiale per un domani più verde e
+        produttivo.
+      </p>
+      <a href="/#about" class="cta-button">Scopri di Più</a>
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section id="services" class="features">
+    <div class="container">
+      <h2 class="section-title">I Nostri Servizi</h2>
+      <div class="features-grid"><!--
           <div class="feature-card">
             <div class="feature-icon">🚁</div>
             <h3>Monitoraggio Drone</h3>
@@ -53,22 +74,22 @@
               problemi.
             </p>
           </div>-->
-          <div class="feature-card">
-            <div class="feature-icon">🌡️</div>
-            <h3>Sensori IoT</h3>
-            <p>
-              Rete di sensori intelligenti per monitoraggio continuo di umidità,
-              temperatura, pH del suolo e condizioni ambientali in tempo reale.
-            </p>
-          </div>
-          <div class="feature-card">
-            <div class="feature-icon">🤖</div>
-            <h3>AI Predittiva</h3>
-            <p>
-              Algoritmi di machine learning che prevedono raccolti, ottimizzano
-              l'irrigazione e suggeriscono i migliori periodi di semina.
-            </p>
-          </div><!--
+        <div class="feature-card">
+          <div class="feature-icon">🌡️</div>
+          <h3>Sensori IoT</h3>
+          <p>
+            Rete di sensori intelligenti per monitoraggio continuo di umidità,
+            temperatura, pH del suolo e condizioni ambientali in tempo reale.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI Predittiva</h3>
+          <p>
+            Algoritmi di machine learning che prevedono raccolti, ottimizzano
+            l'irrigazione e suggeriscono i migliori periodi di semina.
+          </p>
+        </div><!--
           <div class="feature-card">
             <div class="feature-icon">📱</div>
             <h3>App Mobile</h3>
@@ -85,49 +106,49 @@
               ottimizzare l'uso delle risorse e promuovere pratiche sostenibili.
             </p>
           </div>-->
-          <div class="feature-card">
-            <div class="feature-icon">📊</div>
-            <h3>Analytics Avanzati</h3>
-            <p>
-              Dashboard completi con analisi dettagliate, report
-              personalizzabili e insights per decisioni agricole basate sui
-              dati.
-            </p>
-          </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Analytics Avanzati</h3>
+          <p>
+            Dashboard completi con analisi dettagliate, report
+            personalizzabili e insights per decisioni agricole basate sui
+            dati.
+          </p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ABOUT SECTION -->
-    <section id="about" class="about">
-      <div class="container">
-        <div class="about-content">
-          <div class="about-text">
-            <h2>Chi Siamo</h2>
-            <p>
-              Agritech è una startup innovativa nata dalla passione per
-              l'agricoltura e la tecnologia. Il nostro team di esperti combina
-              conoscenze agronomiche tradizionali con le più moderne tecnologie
-              digitali.
-            </p>
-            <p>
-              Crediamo che l'innovazione tecnologica sia la chiave per
-              un'agricoltura più efficiente, sostenibile e redditizia. Le nostre
-              soluzioni aiutano gli agricoltori di oggi a prepararsi per le
-              sfide di domani.
-            </p>
-            <p>
-              Con oltre 500 aziende agricole che si affidano già alle nostre
-              tecnologie, continuiamo a crescere e innovare per un futuro
-              agricolo migliore.
-            </p>
-          </div>
-          <div class="about-image">🌾</div>
+  <!-- ABOUT SECTION -->
+  <section id="about" class="about">
+    <div class="container">
+      <div class="about-content">
+        <div class="about-text">
+          <h2>Chi Siamo</h2>
+          <p>
+            Agritech è una startup innovativa nata dalla passione per
+            l'agricoltura e la tecnologia. Il nostro team di esperti combina
+            conoscenze agronomiche tradizionali con le più moderne tecnologie
+            digitali.
+          </p>
+          <p>
+            Crediamo che l'innovazione tecnologica sia la chiave per
+            un'agricoltura più efficiente, sostenibile e redditizia. Le nostre
+            soluzioni aiutano gli agricoltori di oggi a prepararsi per le
+            sfide di domani.
+          </p>
+          <p>
+            Con oltre 500 aziende agricole che si affidano già alle nostre
+            tecnologie, continuiamo a crescere e innovare per un futuro
+            agricolo migliore.
+          </p>
         </div>
+        <div class="about-image">🌾</div>
       </div>
-    </section>
-    
-    <!-- STATS SECTION --><!--
+    </div>
+  </section>
+
+  <!-- STATS SECTION --><!--
     <section class="stats">
       <div class="container">
         <div class="stats-grid">
@@ -150,48 +171,77 @@
         </div>
       </div>
     </section>-->
-    <!-- CTA SECTION -->
-    <section class="cta-section">
-      <div class="container">
-        <h2>Pronto a Rivoluzionare la Tua Azienda Agricola?</h2>
-        <p>
-          Unisciti a centinaia di agricoltori che hanno già scelto
-          l'innovazione. Inizia il tuo percorso verso un'agricoltura più smart e
-          sostenibile.
-        </p>
-        <div class="cta-buttons">
-          <a href="/registrati" class="cta-btn">Inizia Gratis</a>
-        </div>
+  <!-- CTA SECTION -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>Pronto a Rivoluzionare la Tua Azienda Agricola?</h2>
+      <p>
+        Unisciti a centinaia di agricoltori che hanno già scelto
+        l'innovazione. Inizia il tuo percorso verso un'agricoltura più smart e
+        sostenibile.
+      </p>
+      <div class="cta-buttons">
+        <a href="/registrati" class="cta-btn">Inizia Gratis</a>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
-      </div>
-    </footer>
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
 
-    <script>
-      // Smooth scrolling
-      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-        anchor.addEventListener("click", function (e) {
+  <script>
+    // Smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener("click", function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute("href"));
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth" });
+        }
+        // Chiudi il menu dopo il click su mobile
+        document.getElementById("navbarMenu").classList.remove("active");
+      });
+    });
+
+    const hamburger = document.getElementById("hamburger");
+    const navbarMenu = document.getElementById("navbarMenu");
+
+    // Toggle apertura/chiusura del menu
+    hamburger.addEventListener("click", () => {
+      navbarMenu.classList.toggle("active");
+      hamburger.classList.toggle("active");
+    });
+
+    // Smooth scrolling + chiusura menu al click su link
+    document.querySelectorAll('.nav-links a, .mobile-auth a').forEach((link) => {
+      link.addEventListener("click", function (e) {
+        // Smooth scroll (solo se link interno)
+        if (this.getAttribute("href").startsWith("#")) {
           e.preventDefault();
           const target = document.querySelector(this.getAttribute("href"));
           if (target) {
-            target.scrollIntoView({
-              behavior: "smooth",
-            });
+            target.scrollIntoView({ behavior: "smooth" });
           }
-        });
+        }
+
+        // Chiudi menu dopo il click (mobile)
+        navbarMenu.classList.remove("active");
+        hamburger.classList.remove("active");
       });
-    </script>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
-  </body>
+    });
+  </script>
+
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+</body>
+
 </html>
