@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
                   <div id="dropdown-menu" class="dropdown-menu hidden">
                     <a href="/assoc_gest_sens" class="dropdown-item">Associa - gestisci sensori</a>
-                    <a href="/avvia_irr" class="dropdown-item">Avvia irrigazione</a>
+                    <a href="/ini_irr" class="dropdown-item">Avvia irrigazione</a>
                     <a href="#" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
                   </div>
                 </div>

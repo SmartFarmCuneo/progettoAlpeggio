@@ -32,13 +32,22 @@ app.config['MAIL_DEFAULT_SENDER'] = (
     os.environ.get("MAIL_SENDER_EMAIL", "tuoaccount@gmail.com")
 )
 
-# Database connection
+"""# Database connection
 def get_db_connection():
     return pymysql.connect(
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
+        cursorclass=pymysql.cursors.DictCursor
+    )"""
+
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        user='root',
+        password='',
+        database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )
 
@@ -935,7 +944,7 @@ def get_comune():
 ############################# Avvio del drone#######################################
 
 ############################# PROVA ################################################
-def avvioDrone(campo):
+"""def avvioDrone(campo):
     home1_path = os.path.join(os.getcwd(), 'home1.py')
     try:
         result = subprocess.run(['python', home1_path, str(
@@ -947,7 +956,7 @@ def avvioDrone(campo):
     except subprocess.CalledProcessError as e:
         print("Errore durante l'esecuzione di home1.py:", e)
         print("Stdout:", e.stdout)
-        print("Stderr:", e.stderr)
+        print("Stderr:", e.stderr)"""
 ###################################################################################
 
 ############################ GESTIONE SENSORI #####################################
@@ -961,6 +970,10 @@ def sensori():
 @app.route('/assoc_gest_sens', methods=['GET', 'POST'])
 def associaSensori():
     return render_template('assoc_gest_sens.html')
+
+@app.route('/ini_irr', methods=['GET', 'POST'])
+def inizializzaIrrigazione():
+    return render_template('inizializzazione_irr.html')
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
@@ -1024,7 +1037,7 @@ def home(current_user):
         if campo_value and campo_value.startswith("Campo "):
             numero_campo = campo_value.split(" ")[1]
             id_campo = session[f'campo{numero_campo}']
-            avvioDrone(id_campo)
+            """avvioDrone(id_campo)"""
             resp = make_response(redirect(url_for('home')))
         return resp
 

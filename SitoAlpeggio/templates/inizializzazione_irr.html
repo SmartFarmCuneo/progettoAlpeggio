@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agritech - Inizializzazione Irrigazione</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/css/style.css" />
+
+    <style>
+      .main-container {
+        padding: 40px 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: calc(100vh - 200px);
+      }
+
+      .page-title {
+        text-align: center;
+        color: white;
+        margin-bottom: 40px;
+      }
+
+      .page-title h1 {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .page-title p {
+        font-size: 18px;
+        opacity: 0.9;
+      }
+
+      .sensors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+      }
+
+      .sensor-card {
+        background: rgba(255, 255, 255, 0.95);
+        border: 3px solid transparent;
+        border-radius: 16px;
+        padding: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .sensor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #4CAF50, #8BC34A);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .sensor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      }
+
+      .sensor-card.selected {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+      }
+
+      .sensor-card.selected::before {
+        transform: scaleX(1);
+      }
+
+      .sensor-checkbox {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 28px;
+        height: 28px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .sensor-card.selected .sensor-checkbox {
+        background: #4CAF50;
+        border-color: #4CAF50;
+      }
+
+      .sensor-checkbox::after {
+        content: '✓';
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.2s ease;
+      }
+
+      .sensor-card.selected .sensor-checkbox::after {
+        opacity: 1;
+        transform: scale(1);
+      }
+      
+      .sensor-name {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .sensor-location {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 12px;
+      }
+
+      .sensor-status {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .sensor-status.disponibile {
+        background: #E8F5E9;
+        color: #4CAF50;
+      }
+
+      .sensor-status.in-uso {
+        background: #FFF3E0;
+        color: #FF9800;
+      }
+
+      .sensor-status.offline {
+        background: #FFEBEE;
+        color: #F44336;
+      }
+
+      .controls-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+      }
+
+      .selection-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .selection-count {
+        font-size: 18px;
+        color: #333;
+        font-weight: 600;
+      }
+
+      .selection-count span {
+        color: #4CAF50;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .bulk-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .bulk-btn {
+        padding: 10px 20px;
+        border: 2px solid #4CAF50;
+        background: white;
+        color: #4CAF50;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .bulk-btn:hover {
+        background: #4CAF50;
+        color: white;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+      }
+
+      .btn-start {
+        background: linear-gradient(135deg, #4CAF50, #8BC34A);
+        color: white;
+        border: none;
+        padding: 18px 50px;
+        font-size: 18px;
+        font-weight: 700;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      }
+
+      .btn-start:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+      }
+
+      .btn-start:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      .btn-cancel {
+        background: white;
+        color: #666;
+        border: 2px solid #ddd;
+        padding: 16px 40px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-cancel:hover {
+        border-color: #999;
+        color: #333;
+      }
+
+      @media (max-width: 768px) {
+        .sensors-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .selection-info {
+          flex-direction: column;
+          gap: 15px;
+          align-items: flex-start;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        .btn-start,
+        .btn-cancel {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+      <div class="navbar-top container">
+        <a href="/home" class="logo">Agritech</a>
+        <div class="user-nav">
+          <div class="user-info">
+            <img
+              src="../static/image/profilo.png"
+              alt="Profilo"
+              class="user-avatar-img"
+            />
+            <a href="/profilo" class="profile-link">{{user['username']}}</a>
+            <form method="POST" action="/logout">
+              <button type="submit" class="logout-btn">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- CONTENUTO PRINCIPALE -->
+    <div class="main-container">
+      <div class="page-title">
+        <h1>Inizializzazione Irrigazione</h1>
+        <p>Seleziona i sensori da utilizzare per avviare il sistema di irrigazione</p>
+      </div>
+
+      <!-- Sezione controlli -->
+      <div class="controls-section">
+        <div class="selection-info">
+          <div class="selection-count">
+            Sensori selezionati: <span id="selected-count">0</span>
+          </div>
+          <div class="bulk-actions">
+            <button class="bulk-btn" id="select-all">Seleziona Tutti</button>
+            <button class="bulk-btn" id="deselect-all">Deseleziona Tutti</button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-cancel" onclick="window.location.href='/home'">
+            Annulla
+          </button>
+          <button class="btn-start" id="start-btn" disabled>
+            Avvia Irrigazione
+          </button>
+        </div>
+      </div>
+
+      <!-- Griglia sensori -->
+      <div class="sensors-grid" id="sensors-grid">
+        <!-- I sensori verranno generati dinamicamente -->
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer id="contact">
+      <div class="container">
+        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+        <ul class="footer-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Termini di Servizio</a></li>
+          <li><a href="/supporto">Supporto</a></li>
+          <li><a href="/contatti">Contatti</a></li>
+        </ul>
+      </div>
+    </footer>
+    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+    <script>
+      // Dati dei sensori (sostituire con dati reali dal backend)
+      const sensorsData = [
+        { id: 1, name: 'Sensore 1', location: 'Campo Nord', status: 'disponibile', icon: '💧' },
+        { id: 2, name: 'Sensore 2', location: 'Campo Nord', status: 'disponibile', icon: '💧' },
+        { id: 3, name: 'Sensore 3', location: 'Campo Est', status: 'disponibile', icon: '💧' },
+        { id: 4, name: 'Sensore 4', location: 'Campo Sud', status: 'in-uso', icon: '💧' },
+        { id: 5, name: 'Sensore 5', location: 'Campo Sud', status: 'disponibile', icon: '💧' },
+        { id: 6, name: 'Sensore 6', location: 'Campo Ovest', status: 'disponibile', icon: '💧' },
+        { id: 7, name: 'Sensore 7', location: 'Campo Ovest', status: 'disponibile', icon: '💧' },
+        { id: 8, name: 'Sensore 8', location: 'Campo Centro', status: 'disponibile', icon: '💧' },
+        { id: 9, name: 'Sensore 9', location: 'Campo Centro', status: 'offline', icon: '💧' },
+        { id: 10, name: 'Sensore 10', location: 'Campo Nord-Est', status: 'disponibile', icon: '💧' },
+        { id: 11, name: 'Sensore 11', location: 'Campo Sud-Est', status: 'disponibile', icon: '💧' },
+        { id: 12, name: 'Sensore 12', location: 'Campo Sud-Ovest', status: 'disponibile', icon: '💧' },
+      ];
+
+      const selectedSensors = new Set();
+      const sensorsGrid = document.getElementById('sensors-grid');
+      const selectedCount = document.getElementById('selected-count');
+      const startBtn = document.getElementById('start-btn');
+
+      // Genera le card dei sensori
+      function renderSensors() {
+        sensorsGrid.innerHTML = '';
+        sensorsData.forEach(sensor => {
+          const card = document.createElement('div');
+          card.className = 'sensor-card';
+          card.dataset.id = sensor.id;
+          
+          // Disabilita sensori non disponibili
+          if (sensor.status !== 'disponibile') {
+            card.style.opacity = '0.6';
+            card.style.cursor = 'not-allowed';
+          }
+
+          card.innerHTML = `
+            <div class="sensor-checkbox"></div>
+            <div class="sensor-name">${sensor.name}</div>
+            <div class="sensor-location">${sensor.location}</div>
+            <span class="sensor-status ${sensor.status}">
+              ${sensor.status === 'disponibile' ? 'Disponibile' : 
+                sensor.status === 'in-uso' ? 'In Uso' : 'Offline'}
+            </span>
+          `;
+
+          // Aggiungi evento click solo se disponibile
+          if (sensor.status === 'disponibile') {
+            card.addEventListener('click', () => toggleSensor(sensor.id, card));
+          }
+
+          sensorsGrid.appendChild(card);
+        });
+      }
+
+      // Toggle selezione sensore
+      function toggleSensor(id, card) {
+        if (selectedSensors.has(id)) {
+          selectedSensors.delete(id);
+          card.classList.remove('selected');
+        } else {
+          selectedSensors.add(id);
+          card.classList.add('selected');
+        }
+        updateUI();
+      }
+
+      // Aggiorna UI
+      function updateUI() {
+        selectedCount.textContent = selectedSensors.size;
+        startBtn.disabled = selectedSensors.size === 0;
+      }
+
+      // Seleziona tutti i sensori disponibili
+      document.getElementById('select-all').addEventListener('click', () => {
+        sensorsData.forEach(sensor => {
+          if (sensor.status === 'disponibile') {
+            selectedSensors.add(sensor.id);
+            const card = document.querySelector(`[data-id="${sensor.id}"]`);
+            if (card) card.classList.add('selected');
+          }
+        });
+        updateUI();
+      });
+
+      // Deseleziona tutti
+      document.getElementById('deselect-all').addEventListener('click', () => {
+        selectedSensors.clear();
+        document.querySelectorAll('.sensor-card').forEach(card => {
+          card.classList.remove('selected');
+        });
+        updateUI();
+      });
+
+      // Avvia irrigazione
+      startBtn.addEventListener('click', () => {
+        if (selectedSensors.size > 0) {
+          // Salva i sensori selezionati (ad esempio in sessionStorage o invia al backend)
+          const sensorsArray = Array.from(selectedSensors);
+          sessionStorage.setItem('selectedSensors', JSON.stringify(sensorsArray));
+          
+          // Reindirizza alla pagina di monitoraggio
+          window.location.href = '/avvia_irr'; // Modifica con il tuo route
+        }
+      });
+
+      // Inizializza la pagina
+      renderSensors();
+    </script>
+  </body>
+</html>
