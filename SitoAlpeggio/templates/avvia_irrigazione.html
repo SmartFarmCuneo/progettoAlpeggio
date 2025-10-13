@@ -1,393 +1,140 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech - Avvia irrigazione</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="../static/css/style.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agritech - Avvia irrigazione</title>
 
-    <!-- Leaflet -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-    />
+  <!-- CSS -->
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <link rel="stylesheet" href="../static/css/avvia_irr.css" />
 
-    <style>
-      .main-container {
-        display: flex;
-        gap: 30px;
-        padding: 30px;
-        max-width: 100%;
-        margin: 0 auto;
-        min-height: calc(100vh - 200px);
-      }
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
 
-      .left-section {
-        flex: 0 0 40%;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .status-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-        height: 540px;
-      }
-
-      .status-card {
-        background: rgba(76, 175, 80, 0.05);
-        border: 2px solid var(--primary, #4CAF50);
-        border-radius: 16px;
-        padding: 25px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .status-card:hover {
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        transform: translateY(-3px);
-      }
-
-      .status-card.active {
-        border-color: white;
-      }
-
-      .status-card h3 {
-        margin: 0 0 20px 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .sensors-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 8px;
-      }
-
-      .sensor-item {
-        padding: 12px 16px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 500;
-        color: white;
-        text-align: center;
-        transition: transform 0.2s ease;
-      }
-
-      .sensor-item:hover {
-        transform: scale(1.05);
-      }
-
-      .status-card[data-status="attivi"] .sensor-item {
-        background: #2196F3;
-      }
-
-      .status-card[data-status="conclusi"] .sensor-item {
-        background: #4CAF50;
-      }
-
-      .status-card[data-status="attesa"] .sensor-item {
-        background: #FFC107;
-        color: #333;
-      }
-
-      .status-card[data-status="sospesi"] .sensor-item {
-        background: #F44336;
-      }
-
-      .center-section {
-        flex: 0 0 40%;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .campo-header {
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      }
-
-      .campo-header h2 {
-        margin: 0 0 10px 0;
-        color: #333;
-        font-size: 24px;
-      }
-
-      .campo-header p {
-        margin: 0;
-        color: #666;
-        font-size: 16px;
-      }
-
-      .map-container {
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        height: 540px;
-      }
-
-      #mini-map {
-        width: 100%;
-        height: 100%;
-      }
-
-      .right-section {
-        flex: 0 0 16%;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .storico-container {
-        background: rgba(76, 175, 80, 0.05);
-        border: 2px solid var(--primary, #4CAF50);
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        height: 540px;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .storico-container h3 {
-        margin: 0 0 20px 0;
-        font-size: 20px;
-        font-weight: 600;
-        color: white;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-align: center;
-        padding-bottom: 15px;
-        border-bottom: 2px solid var(--primary, #4CAF50);
-      }
-
-      .storico-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px 0;
-      }
-
-      .storico-item {
-        background: #f5f5f5;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 12px;
-        transition: all 0.2s ease;
-      }
-
-      .storico-item:hover {
-        background: #e8e8e8;
-        transform: translateX(5px);
-      }
-
-      .storico-item-date {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 5px;
-      }
-
-      .storico-item-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 3px;
-      }
-
-      .storico-item-desc {
-        font-size: 13px;
-        color: #777;
-      }
-
-      @media (max-width: 1200px) {
-        .main-container {
-          flex-direction: column;
-        }
-        
-        .left-section,
-        .center-section,
-        .right-section {
-          flex: none;
-          width: 100%;
-        }
-
-        .status-grid {
-          grid-template-columns: repeat(2, 1fr);
-          height: auto;
-        }
-
-        .storico-container {
-          height: auto;
-          min-height: 300px;
-        }
-
-        .map-container {
-          height: 500px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .status-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-
-    <script src="../static/js/home.js" defer></script>
-  </head>
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-top container">
-        <a href="/home" class="logo">Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <a href="/profilo" class="profile-link">{{user['username']}}</a>
-            <form method="POST" action="/logout">
-              <button type="submit" class="logout-btn">Logout</button>
-            </form>
-          </div>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/home" class="logo">Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <a href="/profilo" class="profile-link">{{user['username']}}</a>
+          <form method="POST" action="/logout">
+            <button type="submit" class="logout-btn">Logout</button>
+          </form>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <!-- CONTENUTO PRINCIPALE -->
-    <div class="main-container">
-      <!-- SEZIONE SINISTRA - Stati (40%) -->
-      <div class="left-section">
-        <div class="status-grid">
-          <div class="status-card active" data-status="attivi">
-            <h3>Attivi</h3>
-            <div class="sensors-list">
-              <div class="sensor-item">Sensore 1</div>
-              <div class="sensor-item">Sensore 2</div>
-              <div class="sensor-item">Sensore 3</div>
-            </div>
-          </div>
-          <div class="status-card" data-status="conclusi">
-            <h3>Conclusi</h3>
-            <div class="sensors-list">
-              <div class="sensor-item">Sensore 4</div>
-              <div class="sensor-item">Sensore 5</div>
-              <div class="sensor-item">Sensore 6</div>
-            </div>
-          </div>
-          <div class="status-card" data-status="attesa">
-            <h3>In Attesa</h3>
-            <div class="sensors-list">
-              <div class="sensor-item">Sensore 7</div>
-              <div class="sensor-item">Sensore 8</div>
-              <div class="sensor-item">Sensore 9</div>
-            </div>
-          </div>
-          <div class="status-card" data-status="sospesi">
-            <h3>Sospesi</h3>
-            <div class="sensors-list">
-              <div class="sensor-item">Sensore 10</div>
-              <div class="sensor-item">Sensore 11</div>
-              <div class="sensor-item">Sensore 12</div>
-            </div>
+  <!-- CONTENUTO PRINCIPALE -->
+  <main>
+    <!-- SEZIONE SINISTRA - Stati (40%) -->
+    <div class="left-section">
+      <div class="status-grid">
+        <div class="status-card active" data-status="attivi">
+          <h3>Attivi</h3>
+          <div class="sensors-list">
+            <div class="sensor-item">Sensore 1</div>
+            <div class="sensor-item">Sensore 2</div>
+            <div class="sensor-item">Sensore 3</div>
           </div>
         </div>
-      </div>
-
-      <!-- SEZIONE CENTRALE - Campo e Mappa (40%) -->
-      <div class="center-section">
-        <!--<div class="campo-header">
-          <h2 id="campo-nome">Seleziona un campo</h2>
-          <p id="campo-info">Visualizza i dettagli del campo sulla mappa</p>
-        </div>-->
-        
-        <div class="map-container">
-          <div id="mini-map"></div>
+        <div class="status-card" data-status="conclusi">
+          <h3>Conclusi</h3>
+          <div class="sensors-list">
+            <div class="sensor-item">Sensore 4</div>
+            <div class="sensor-item">Sensore 5</div>
+            <div class="sensor-item">Sensore 6</div>
+          </div>
         </div>
-      </div>
-
-      <!-- SEZIONE DESTRA - Storico (20%) -->
-      <div class="right-section">
-        <div class="storico-container">
-          <h3>Storico</h3>
-          <div class="storico-content">
-            <div class="storico-item">
-              <div class="storico-item-date">10/10/2024 - 14:30</div>
-              <div class="storico-item-title">Irrigazione completata</div>
-              <div class="storico-item-desc">Sensore 1 - Campo Nord</div>
-            </div>
-            <div class="storico-item">
-              <div class="storico-item-date">09/10/2024 - 09:15</div>
-              <div class="storico-item-title">Manutenzione sensore</div>
-              <div class="storico-item-desc">Sensore 5 - Campo Sud</div>
-            </div>
-            <div class="storico-item">
-              <div class="storico-item-date">08/10/2024 - 16:45</div>
-              <div class="storico-item-title">Irrigazione avviata</div>
-              <div class="storico-item-desc">Sensore 3 - Campo Est</div>
-            </div>
-            <div class="storico-item">
-              <div class="storico-item-date">07/10/2024 - 11:20</div>
-              <div class="storico-item-title">Allarme risolto</div>
-              <div class="storico-item-desc">Sensore 7 - Campo Ovest</div>
-            </div>
-            <div class="storico-item">
-              <div class="storico-item-date">06/10/2024 - 08:00</div>
-              <div class="storico-item-title">Sistema avviato</div>
-              <div class="storico-item-desc">Tutti i sensori</div>
-            </div>
+        <div class="status-card" data-status="attesa">
+          <h3>In Attesa</h3>
+          <div class="sensors-list">
+            <div class="sensor-item">Sensore 7</div>
+            <div class="sensor-item">Sensore 8</div>
+            <div class="sensor-item">Sensore 9</div>
+          </div>
+        </div>
+        <div class="status-card" data-status="sospesi">
+          <h3>Sospesi</h3>
+          <div class="sensors-list">
+            <div class="sensor-item">Sensore 10</div>
+            <div class="sensor-item">Sensore 11</div>
+            <div class="sensor-item">Sensore 12</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
+    <!-- SEZIONE CENTRALE - Campo e Mappa (40%) -->
+    <div class="center-section">
+      <!--<div class="campo-header">
+          <h2 id="campo-nome">Seleziona un campo</h2>
+          <p id="campo-info">Visualizza i dettagli del campo sulla mappa</p>
+        </div>-->
+
+      <div class="map-wrapper">
+        <div id="mini-map"></div>
       </div>
-    </footer>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script>
-      // Gestione click sulle card di stato
-      document.querySelectorAll('.status-card').forEach(card => {
-        card.addEventListener('click', function() {
-          document.querySelectorAll('.status-card').forEach(c => c.classList.remove('active'));
-          this.classList.add('active');
-        });
-      });
+    <!-- SEZIONE DESTRA - Storico (20%) -->
+    <div class="right-section">
+      <div class="storico-container">
+        <h3>Storico</h3>
+        <div class="storico-content">
+          <div class="storico-item">
+            <div class="storico-item-date">10/10/2024 - 14:30</div>
+            <div class="storico-item-title">Irrigazione completata</div>
+            <div class="storico-item-desc">Sensore 1 - Campo Nord</div>
+          </div>
+          <div class="storico-item">
+            <div class="storico-item-date">09/10/2024 - 09:15</div>
+            <div class="storico-item-title">Manutenzione sensore</div>
+            <div class="storico-item-desc">Sensore 5 - Campo Sud</div>
+          </div>
+          <div class="storico-item">
+            <div class="storico-item-date">08/10/2024 - 16:45</div>
+            <div class="storico-item-title">Irrigazione avviata</div>
+            <div class="storico-item-desc">Sensore 3 - Campo Est</div>
+          </div>
+          <div class="storico-item">
+            <div class="storico-item-date">07/10/2024 - 11:20</div>
+            <div class="storico-item-title">Allarme risolto</div>
+            <div class="storico-item-desc">Sensore 7 - Campo Ovest</div>
+          </div>
+          <div class="storico-item">
+            <div class="storico-item-date">06/10/2024 - 08:00</div>
+            <div class="storico-item-title">Sistema avviato</div>
+            <div class="storico-item-desc">Tutti i sensori</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
-      // Inizializzazione mappa
-      if (typeof L !== 'undefined') {
-        const miniMap = L.map('mini-map').setView([41.9028, 12.4964], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(miniMap);
-      }
-    </script>
-  </body>
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+  <!-- Script -->
+  <script src="../static/js/avvia_irr.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+
 </html>

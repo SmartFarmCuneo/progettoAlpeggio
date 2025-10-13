@@ -1,156 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Agritech - Aggiunta campo</title>
-    <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="../static/css/style.css" />
-    <script src="../static/js/aggiungi_campo.js" defer></script>
-  </head>
 
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-top container">
-        <a href="/home" class="logo">Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <a href="/profilo" class="profile-link">{{user['username']}}</a>
-          </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agritech - Aggiunta campo</title>
+  <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="../static/css/style.css" />
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/home" class="logo">Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <a href="/profilo" class="profile-link">{{user['username']}}</a>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <!-- MAIN -->
-    <div class="container main-content">
-      <div class="sidebar">
-        <div class="menu-item"><a href="/home">Home</a></div>
-        <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
-        <div class="menu-item active">
-          <a href="/aggiungiCampo">Aggiungi Campo</a>
-        </div>
-        <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
-        <div class="menu-item">
-          <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
-        </div>
+  <!-- MAIN -->
+  <div class="container main-content">
+    <div class="sidebar">
+      <div class="menu-item"><a href="/home">Home</a></div>
+      <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+      <div class="menu-item active">
+        <a href="/aggiungiCampo">Aggiungi Campo</a>
       </div>
-
-      <div class="profile-content">
-        <main>
-          <div class="py-5 text-center">
-            <img
-              class="d-block mx-auto mb-4"
-              src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
-              alt=""
-              width="72"
-              height="57"
-            />
-            <h2>Aggiunta campo</h2>
-            <p class="lead">Pagina per inizializzazione del nuovo campo</p>
-          </div>
-
-          <div class="col-md-7 col-lg-8 mx-auto">
-            <h4 class="mb-3 text-center">Dati campo</h4>
-            <form
-              class="needs-validation"
-              action="/aggiungiCampo"
-              method="POST"
-              novalidate
-            >
-              <div class="row g-3">
-                <!-- Geolocalizzazione -->
-                <div class="col-12">
-                  <label for="geoButton" class="form-label text-center d-block"
-                    >Geolocalizza il terreno</label
-                  >
-                  <a
-                    href="/mappa"
-                    id="geoButton"
-                    class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
-                  >
-                    Avvia ricerca
-                  </a>
-                </div>
-
-                <!-- Coordinate nascoste -->
-                <input type="hidden" id="campo_lat" name="lat" />
-                <input type="hidden" id="campo_lon" name="lon" />
-
-                <!-- Provincia -->
-                <div class="col-md-5">
-                  <label for="select_provincia" class="form-label"
-                    >Provincia</label
-                  >
-                  <select
-                    class="form-select"
-                    id="select_provincia"
-                    name="provincia"
-                    required
-                  >
-                    <option value="">Scegli...</option>
-                  </select>
-                  <div class="invalid-feedback">
-                    Scegliere una provincia valida
-                  </div>
-                </div>
-
-                <!-- Comune -->
-                <div class="col-md-4">
-                  <label for="select_comune" class="form-label">Comune</label>
-                  <select
-                    class="form-select"
-                    id="select_comune"
-                    name="comune"
-                    required
-                  >
-                    <option value="">Scegli...</option>
-                  </select>
-                  <div class="invalid-feedback">Scegliere un comune valido</div>
-                </div>
-
-                <!-- CAP -->
-                <div class="col-md-3">
-                  <label for="zip" class="form-label">CAP</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="zip"
-                    name="cap"
-                    required
-                  />
-                  <div class="invalid-feedback">Codice CAP richiesto</div>
-                </div>
-              </div>
-
-              <hr class="my-4" />
-              <button class="w-100 btn btn-primary btn-lg" type="submit">
-                Continua e salva
-              </button>
-            </form>
-          </div>
-        </main>
+      <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
+      <div class="menu-item">
+        <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
       </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2025 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
-      </div>
-    </footer>
+    <div class="profile-content">
+      <main>
+        <div class="py-5 text-center">
+          <img class="d-block mx-auto mb-4"
+            src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72"
+            height="57" />
+          <h2>Aggiunta campo</h2>
+          <p class="lead">Pagina per inizializzazione del nuovo campo</p>
+        </div>
 
-    <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+        <div class="col-md-7 col-lg-8 mx-auto">
+          <h4 class="mb-3 text-center">Dati campo</h4>
+          <form class="needs-validation" action="/aggiungiCampo" method="POST" novalidate>
+            <div class="row g-3">
+              <!-- Geolocalizzazione -->
+              <div class="col-12">
+                <label for="geoButton" class="form-label text-center d-block">Geolocalizza il terreno</label>
+                <a href="/mappa" id="geoButton"
+                  class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center">
+                  Avvia ricerca
+                </a>
+              </div>
+
+              <!-- Coordinate nascoste -->
+              <input type="hidden" id="campo_lat" name="lat" />
+              <input type="hidden" id="campo_lon" name="lon" />
+
+              <!-- Provincia -->
+              <div class="col-md-5">
+                <label for="select_provincia" class="form-label">Provincia</label>
+                <select class="form-select" id="select_provincia" name="provincia" required>
+                  <option value="">Scegli...</option>
+                </select>
+                <div class="invalid-feedback">
+                  Scegliere una provincia valida
+                </div>
+              </div>
+
+              <!-- Comune -->
+              <div class="col-md-4">
+                <label for="select_comune" class="form-label">Comune</label>
+                <select class="form-select" id="select_comune" name="comune" required>
+                  <option value="">Scegli...</option>
+                </select>
+                <div class="invalid-feedback">Scegliere un comune valido</div>
+              </div>
+
+              <!-- CAP -->
+              <div class="col-md-3">
+                <label for="zip" class="form-label">CAP</label>
+                <input type="text" class="form-control" id="zip" name="cap" required />
+                <div class="invalid-feedback">Codice CAP richiesto</div>
+              </div>
+            </div>
+
+            <hr class="my-4" />
+            <button class="w-100 btn btn-primary btn-lg" type="submit">
+              Continua e salva
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2025 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Script -->
+  <script src="../static/js/aggiungi_campo.js" defer></script>
+  <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
 </html>

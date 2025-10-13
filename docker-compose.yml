@@ -25,8 +25,8 @@ services:
   mysql:
     image: mysql:latest
     environment:
-      MYSQL_ROOT_PASSWORD: 
-      MYSQL_DATABASE: irrigazione
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
 
     volumes:
       - ./mysql_data:/var/lib/mysql

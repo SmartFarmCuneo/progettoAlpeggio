@@ -32,22 +32,13 @@ app.config['MAIL_DEFAULT_SENDER'] = (
     os.environ.get("MAIL_SENDER_EMAIL", "tuoaccount@gmail.com")
 )
 
-"""# Database connection
+# Database connection
 def get_db_connection():
     return pymysql.connect(
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
-        cursorclass=pymysql.cursors.DictCursor
-    )"""
-
-def get_db_connection():
-    return pymysql.connect(
-        host='localhost',
-        user='root',
-        password='',
-        database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )
 

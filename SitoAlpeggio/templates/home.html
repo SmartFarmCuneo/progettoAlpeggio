@@ -1,77 +1,72 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agritech - Home</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="../static/css/style.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agritech - Home</title>
 
-    <!-- Leaflet -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-    />
+  <!-- CSS -->
+  <link rel="stylesheet" href="../static/css/style.css" />
 
-    <script src="../static/js/home.js" defer></script>
-  </head>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+</head>
 
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-top container">
-        <a href="/home" class="logo">Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <a href="/profilo" class="profile-link">{{user['username']}}</a>
-            <form method="POST" action="/logout">
-              <button type="submit" class="logout-btn">Logout</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </nav>
-
-    <!-- MAIN -->
-    <div class="container main-content">
-      <div class="sidebar">
-        <div class="menu-item active"><a href="/">Home</a></div>
-        <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
-        <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
-        <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
-        <div class="menu-item">
-          <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
-        </div>
-      </div>
-
-      <div class="profile-content">
-        <h1>I Tuoi Campi</h1>
-        <div id="campi" class="campi-container">
-          <p>Caricamento in corso...</p>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/home" class="logo">Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <a href="/profilo" class="profile-link">{{user['username']}}</a>
+          <form method="POST" action="/logout">
+            <button type="submit" class="logout-btn">Logout</button>
+          </form>
         </div>
       </div>
     </div>
+  </nav>
 
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
+  <!-- MAIN -->
+  <div class="container main-content">
+    <div class="sidebar">
+      <div class="menu-item active"><a href="/">Home</a></div>
+      <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+      <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
+      <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
+      <div class="menu-item">
+        <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
       </div>
-    </footer>
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  </body>
+    <div class="profile-content">
+      <h1>I Tuoi Campi</h1>
+      <div id="campi" class="campi-container">
+        <p>Caricamento in corso...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+  <!-- Script -->
+  <script src="../static/js/home.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+
 </html>

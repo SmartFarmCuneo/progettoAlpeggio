@@ -1,97 +1,85 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="auto">
-  <head>
-    <script src="../static/assets/js/color-modes.js"></script>
 
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="" />
-    <meta
-      name="author"
-      content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
-    />
-    <meta name="generator" content="Hugo 0.122.0" />
-    <title>Agritech - Visualizza Campi</title>
+<head>
+  <script src="../static/assets/js/color-modes.js"></script>
 
-    <link
-      rel="canonical"
-      href="https://getbootstrap.com/docs/5.3/examples/jumbotron/"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"
-    />
-    <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="../static/css/style.css" rel="stylesheet" />
-    <script src="../static/js/visualizza_campi.js" defer></script>
-  </head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="" />
+  <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors" />
+  <meta name="generator" content="Hugo 0.122.0" />
+  <title>Agritech - Visualizza Campi</title>
 
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-top container">
-        <a href="/home" class="logo">Agritech</a>
-        <div class="user-nav">
-          <div class="user-info">
-            <img
-              src="../static/image/profilo.png"
-              alt="Profilo"
-              class="user-avatar-img"
-            />
-            <a href="/profilo" class="profile-link">{{user['username']}}</a>
-          </div>
+  <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/jumbotron/" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+
+  <!-- CSS -->
+  <link href="../static/assets/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="../static/css/style.css" rel="stylesheet" />
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/home" class="logo">Agritech</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <a href="/profilo" class="profile-link">{{user['username']}}</a>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <!-- MAIN -->
-    <div class="container main-content">
-      <div class="sidebar">
-        <div class="menu-item"><a href="/home">Home</a></div>
-        <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
-        <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
-        <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
-        <div class="menu-item active">
-          <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
-        </div>
-      </div>
-
-      <div class="profile-content">
-        <main>
-          <div class="py-5 text-center">
-            <img
-              class="d-block mx-auto mb-4"
-              src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png"
-              alt=""
-              width="72"
-              height="57"
-            />
-            <h2>Visualizza i campi registrati</h2>
-            <p class="lead">Panoramica completa dei tuoi terreni agricoli</p>
-          </div>
-
-          <form method="post" action="/visualizzaCampi">
-            <div class="campi"></div>
-          </form>
-        </main>
+  <!-- MAIN -->
+  <div class="container main-content">
+    <div class="sidebar">
+      <div class="menu-item"><a href="/home">Home</a></div>
+      <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+      <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
+      <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
+      <div class="menu-item active">
+        <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
       </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer id="contact">
-      <div class="container">
-        <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
-        <ul class="footer-links">
-          <li><a href="/privacy">Privacy Policy</a></li>
-          <li><a href="/terms">Termini di Servizio</a></li>
-          <li><a href="/supporto">Supporto</a></li>
-          <li><a href="/contatti">Contatti</a></li>
-        </ul>
-      </div>
-    </footer>
+    <div class="profile-content">
+      <main>
+        <div class="py-5 text-center">
+          <img class="d-block mx-auto mb-4"
+            src="../static/image/Farm-Logo-Graphics-49002256-1-1-580x363-removebg-preview.png" alt="" width="72"
+            height="57" />
+          <h2>Visualizza i campi registrati</h2>
+          <p class="lead">Panoramica completa dei tuoi terreni agricoli</p>
+        </div>
 
-    {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+        <form method="post" action="/visualizzaCampi">
+          <div class="campi"></div>
+        </form>
+      </main>
+    </div>
+  </div>
 
-    <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>  
-  </body>
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agritech. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+  <!-- Script -->
+  <script src="../static/js/visualizza_campi.js" defer></script>
+  <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
 </html>
