@@ -19,13 +19,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div id="mini-map" style="height:100%;"></div>
               </div>
               <div class="azione-buttons">
-                <button id="gestisci-campo-btn" class="azione-button">Gestisci Campo</button>
+                <button id="iniSens-campo-btn" class="azione-button">Gestisci Campo</button>
                 <div class="dropdown-container">
                   <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
                   <div id="dropdown-menu" class="dropdown-menu hidden">
                     <a href="/assoc_gest_sens" class="dropdown-item">Associa - gestisci sensori</a>
-                    <a href="/ini_irr" class="dropdown-item">Avvia irrigazione</a>
-                    <a href="#" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
+                    <a href="/ini_irr" class="dropdown-item" id='ini-sens-btn'>Avvia irrigazione</a>
+                    <a href="/reg_irr" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
                   </div>
                 </div>
               </div>
@@ -57,11 +57,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     // Inizializza il menu a tendina
                     inizializzaDropdown();
                     
-                    // Inizializza il pulsante gestisci campo
-                    inizializzaGestisciCampo();
+                    // Inizializza il pulsante iniSens campo
+                    inizializzainiSensCampo();
                     
                     // Inizializza il link registro irrigazioni
                     inizializzaRegistroIrrigazioni();
+
+                    inizializzaSensori();
                 } else {
                     containerCampi.innerHTML = `
             <div class="nessun-campo">
@@ -72,11 +74,24 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    function inizializzaGestisciCampo() {
-        const gestisciBtn = document.getElementById("gestisci-campo-btn");
+    function inizializzaSensori() {
+        const iniSensBtn = document.getElementById("ini-sens-btn");
         
-        if (gestisciBtn) {
-            gestisciBtn.addEventListener("click", function(e) {
+        if (iniSensBtn) {
+            iniSensBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                if (campoIdSelezionato) {
+                    window.location.href = `/ini_irr?campo_id=${campoIdSelezionato}`;
+                } 
+            });
+        }
+    }
+
+    function inizializzainiSensCampo() {
+        const iniSensBtn = document.getElementById("iniSens-campo-btn");
+        
+        if (iniSensBtn) {
+            iniSensBtn.addEventListener("click", function(e) {
                 e.preventDefault();
                 
                 if (campoIdSelezionato) {

@@ -33,12 +33,21 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 )
 
 # Database connection
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
+        cursorclass=pymysql.cursors.DictCursor
+    )"""
+
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        user='root',
+        password='',
+        database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )
 
@@ -151,7 +160,7 @@ mail = Mail(app)
 
 
 def send_reset_email(user_email, code):
-    msg = Message("🌱 Agritech - Reset Password", recipients=[user_email])
+    msg = Message("Agritech - Reset Password", recipients=[user_email])
 
     msg.html = render_template_string("""
     <!DOCTYPE html>
@@ -964,7 +973,8 @@ def associaSensori():
 
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
-    return render_template('inizializzazione_irr.html')
+    campo_id = request.args.get('campo_id')
+    return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
@@ -972,7 +982,8 @@ def avviaIrrigazione():
 
 @app.route('/reg_irr', methods=['GET', 'POST'])
 def registroIrrigazione():
-    return render_template('storici.html')
+    campo_id = request.args.get('campo_id')
+    return render_template('storici.html', campo_id=campo_id)
 
 ####################################################################################
 
