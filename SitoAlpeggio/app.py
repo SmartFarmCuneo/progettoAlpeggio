@@ -33,14 +33,20 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 )
 
 # Database connection
-"""def get_db_connection():
+
+
+def get_db_connection():
     return pymysql.connect(
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
+
+
+"""
+se non hai il .env quella sopra funziona lo stesso
 
 def get_db_connection():
     return pymysql.connect(
@@ -50,6 +56,7 @@ def get_db_connection():
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )
+"""
 
 ###############################################################################
 
@@ -697,7 +704,7 @@ def gestioneCampo(current_user):
                         UPDATE fields 
                         SET provincia = %s, comune = %s, CAP = %s
                         WHERE id_t = %s
-                    """, ( provincia, comune, cap, campo_id))
+                    """, (provincia, comune, cap, campo_id))
                     conn.commit()
 
                     return redirect(url_for('gestioneCampo'))
@@ -943,6 +950,7 @@ def get_comune():
 
 ############################# Avvio del drone#######################################
 
+
 ############################# PROVA ################################################
 """def avvioDrone(campo):
     home1_path = os.path.join(os.getcwd(), 'home1.py')
@@ -961,24 +969,29 @@ def get_comune():
 
 ############################ GESTIONE SENSORI #####################################
 
+
 @app.route('/sensori', methods=['GET', 'POST'])
 def sensori():
     return render_template('assoc_gest_sens.html')
 
 ############################ AZIONI IRRIGAZIONE #########################################
 
+
 @app.route('/assoc_gest_sens', methods=['GET', 'POST'])
 def associaSensori():
     return render_template('assoc_gest_sens.html')
+
 
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
+
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
     return render_template('avvia_irrigazione.html')
+
 
 @app.route('/reg_irr', methods=['GET', 'POST'])
 def registroIrrigazione():
@@ -986,6 +999,7 @@ def registroIrrigazione():
     return render_template('storici.html', campo_id=campo_id)
 
 ####################################################################################
+
 
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
@@ -1011,7 +1025,7 @@ def index():
             jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
             return redirect(url_for('home'))
         except Exception:
-            pass  
+            pass
     return render_template("index.html")  # pagina pubblica iniziale
 
 

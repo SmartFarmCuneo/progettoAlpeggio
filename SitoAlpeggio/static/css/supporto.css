@@ -1,0 +1,50 @@
+/* ============================================
+   SUPPORTO E FAQ
+   ============================================= */
+
+.faq-item {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.faq-question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 10px 0;
+    transition: color 0.3s ease;
+    color: white;
+}
+
+.faq-question:hover {
+    color: var(--primary);
+}
+
+.arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.arrow.open {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.faq-answer p {
+    margin: 0;
+    padding: 5px 0 10px;
+    font-size: medium;
+    color: white;
+}

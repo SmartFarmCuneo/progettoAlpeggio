@@ -1,0 +1,150 @@
+/* ============================================
+   HOME CAMPI
+   ============================================= */
+
+.campi-container {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.campi-lista {
+    width: 300px;
+    background-color: var(--bg-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.campi-lista h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 0.5rem;
+}
+
+.campo-button {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    background-color: transparent;
+    color: var(--text-body);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.campo-button:hover {
+    background: rgba(72, 187, 120, 0.1);
+    color: var(--primary);
+    transform: translateX(3px);
+}
+
+.campo-button.selected {
+    background: rgba(72, 187, 120, 0.15);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.campo-dettagli {
+    flex: 1;
+    background-color: var(--bg-light);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.campo-nome {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.mini-mappa-container {
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.azione-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.azione-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    border: none;
+    background-color: var(--primary);
+    color: var(--bg-dark);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.azione-button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.nessun-campo {
+    padding: 2rem;
+    text-align: center;
+    font-size: 1rem;
+    background-color: var(--bg-light);
+    border-radius: 12px;
+    color: var(--text-body);
+}
+
+.coordinate-list {
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    color: var(--text-body);
+}
+
+.campo-card {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.campo-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.campo-card h2 {
+    color: var(--primary);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.campo-card p {
+    color: var(--text-body);
+    margin-bottom: 1rem;
+}
+
+.campo-card h5 {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+

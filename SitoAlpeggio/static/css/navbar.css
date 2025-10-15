@@ -1,0 +1,245 @@
+/* =============================================
+   NAVBAR
+   ============================================= */
+.navbar {
+    background: linear-gradient(135deg, var(--bg-light), var(--bg-dark));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    animation: fadeDown 0.8s ease;
+}
+
+.navbar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+    margin-right: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    color: var(--primary-hover);
+    transform: scale(1.05);
+}
+
+.profile-link {
+    font-weight: 600;
+    color: white;
+    text-decoration: none;
+    margin-right: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+/* =============================================
+   AUTH BUTTONS RESPONSIVE
+   ============================================= */
+.desktop-auth {
+    display: flex;
+    gap: 1rem;
+}
+
+.mobile-auth {
+    display: none;
+    /* nascosta su desktop */
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.mobile-auth .auth-btn {
+    width: 80%;
+    margin: 0 auto;
+}
+
+
+.auth-btn {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.sign-in {
+    color: white;
+    border-color: var(--primary);
+    background: transparent;
+}
+
+.sign-in:hover {
+    background: var(--primary);
+    color: var(--bg-dark);
+    transform: translateY(-2px);
+}
+
+.sign-up {
+    color: var(--bg-dark);
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.sign-up:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.navbar-menu {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    width: max-content;
+}
+
+.nav-link {
+    position: relative;
+}
+
+.nav-link a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.nav-link a:hover {
+    color: var(--primary);
+    background: rgba(72, 187, 120, 0.1);
+    transform: translateY(-2px);
+}
+
+.nav-link::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* =============================================
+   HAMBURGER MENU FIXED (centrato perfettamente)
+   ============================================= */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.hamburger span {
+    width: 26px;
+    height: 3px;
+    background: white;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.hamburger.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.hamburger:hover span {
+    background: var(--primary);
+}
+
+
+/* =============================================
+   HEADER (per pagine profilo)
+   ============================================= */
+header {
+    background: linear-gradient(135deg, var(--bg-light), var(--bg-dark));
+    color: white;
+    padding: 8px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    animation: fadeDown 0.8s ease;
+    border-bottom: 1px solid var(--border);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* =============================================
+   USER INFO HEADER
+   ============================================= */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+.user-avatar-img {
+    width: 50px;
+    height: 80px;
+    object-fit: cover;
+}
+
+.logout-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: transparent;
+    border: 2px solid var(--primary);
+    border-radius: 25px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: var(--primary);
+    color: var(--bg-dark);
+    transform: translateY(-2px);
+}

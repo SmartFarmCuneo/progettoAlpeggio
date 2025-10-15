@@ -5,12 +5,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agritech - Avvia irrigazione</title>
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="../static/css/style.css" />
-
+  
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <link rel="stylesheet" href="../static/css/navbar.css" />
+  <link rel="stylesheet" href="../static/css/footer.css" />
+  <link rel="stylesheet" href="../static/css/media.css" />
+  <link rel="stylesheet" href="../static/css/animazioni.css" />
+  <link rel="stylesheet" href="../static/css/irrigazione.css" />
+
 </head>
 
 <body>
@@ -31,7 +37,7 @@
   </nav>
 
   <!-- CONTENUTO PRINCIPALE -->
-  <main>
+  <div class="main-container">
     <!-- SEZIONE SINISTRA - Stati (40%) -->
     <div class="left-section">
       <div class="status-grid">
@@ -77,7 +83,7 @@
           <p id="campo-info">Visualizza i dettagli del campo sulla mappa</p>
         </div>-->
 
-      <div class="map-wrapper">
+      <div class="map-container">
         <div id="mini-map"></div>
       </div>
     </div>
@@ -115,7 +121,7 @@
         </div>
       </div>
     </div>
-  </main>
+  </div>
 
   <!-- FOOTER -->
   <footer id="contact">

@@ -1,0 +1,130 @@
+/* ============================================
+   PRIVACY E COOKIE POLICY
+   ============================================= */
+
+.privacy-main {
+    margin-top: 2rem;
+    padding: 3rem 2rem;
+    background: var(--bg-light);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    color: white;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1s ease forwards 0.3s;
+}
+
+.privacy-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary);
+}
+
+.privacy-section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1.5rem 0;
+    color: var(--primary);
+    position: relative;
+}
+
+.privacy-section-title::before {
+    content: "";
+    position: absolute;
+    left: -1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.privacy-subtitle {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.8rem 0;
+    color: var(--primary-hover);
+}
+
+.privacy-update {
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.privacy-section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: rgba(26, 32, 44, 0.3);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    transition: all 0.3s ease;
+}
+
+.privacy-section:hover {
+    background: rgba(26, 32, 44, 0.5);
+    transform: translateX(5px);
+}
+
+.privacy-list {
+    color: var(--text-body);
+    line-height: 1.7;
+    margin: 1rem 0 1rem 2rem;
+}
+
+.privacy-warning {
+    background: rgba(237, 137, 54, 0.1);
+    border: 1px solid var(--warning);
+    border-left: 4px solid var(--warning);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.privacy-warning h4 {
+    color: var(--warning);
+    margin-top: 0;
+}
+
+.privacy-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    background: rgba(26, 32, 44, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.privacy-table th,
+.privacy-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.privacy-table th {
+    background: var(--primary);
+    color: var(--bg-dark);
+    font-weight: 600;
+}
+
+.privacy-table tr:hover {
+    background: rgba(45, 55, 72, 0.7);
+}
+
+.storici-table-responsive {
+    overflow-x: auto;
+}
+
+.link-style {
+    color: white;
+    text-decoration: none;
+}
+
+.link-style:hover {
+    color: var(--primary);
+}

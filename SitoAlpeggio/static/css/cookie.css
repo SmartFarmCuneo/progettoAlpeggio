@@ -1,0 +1,54 @@
+/* =============================================
+   COOKIE CONSENT BANNER
+   ============================================= */
+
+.cookie-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    max-width: 920px;
+    width: calc(100% - 40px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    z-index: 2000;
+}
+
+.cookie-content p {
+    color: var(--text-body);
+    font-size: 0.95rem;
+    margin-bottom: 0.6rem;
+    line-height: 1.4;
+}
+
+.cookie-buttons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.cookie-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    border: 2px solid var(--primary);
+    cursor: pointer;
+    font-weight: 600;
+    background: transparent;
+    color: white;
+}
+
+.cookie-btn.accept {
+    background: var(--primary);
+    color: var(--bg-dark);
+}
+
+.cookie-manage-link {
+    color: var(--text-body);
+    text-decoration: underline;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+}

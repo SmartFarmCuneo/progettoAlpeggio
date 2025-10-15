@@ -1,0 +1,89 @@
+/* =============================================
+   TERMINI E CONDIZIONI
+   ============================================= */
+
+.tos-main {
+    margin-top: 2rem;
+    padding: 3rem 2rem;
+    background: var(--bg-light);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    color: white;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1s ease forwards 0.3s;
+}
+
+.tos-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary);
+}
+
+.tos-section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1.5rem 0;
+    color: var(--primary);
+    position: relative;
+}
+
+.tos-section-title::before {
+    content: "";
+    position: absolute;
+    left: -1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.tos-update {
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.tos-intro {
+    margin-bottom: 1rem;
+    color: var(--text-body);
+    line-height: 1.7;
+    font-size: 1.05rem;
+}
+
+.tos-section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: rgba(26, 32, 44, 0.3);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    transition: all 0.3s ease;
+}
+
+.tos-section:hover {
+    background: rgba(26, 32, 44, 0.5);
+    transform: translateX(5px);
+}
+
+.tos-list {
+    color: var(--text-body);
+    line-height: 1.7;
+    margin: 1rem 0 1rem 2rem;
+}
+
+.tos-list a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.tos-list a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
