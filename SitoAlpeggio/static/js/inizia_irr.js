@@ -98,8 +98,12 @@ startBtn.addEventListener('click', () => {
         const sensorsArray = Array.from(selectedSensors);
         sessionStorage.setItem('selectedSensors', JSON.stringify(sensorsArray));
 
-        // Reindirizza alla pagina di monitoraggio
-        window.location.href = '/avvia_irr'; // Modifica con il tuo route
+        // Ottieni campo_id dall'URL corrente
+        const urlParams = new URLSearchParams(window.location.search);
+        const campoId = urlParams.get('campo_id');
+
+        // Reindirizza alla pagina di monitoraggio con campo_id
+        window.location.href = `/avvia_irr?campo_id=${campoId}`;
     }
 });
 

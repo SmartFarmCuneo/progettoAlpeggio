@@ -1,7 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Ottieni campo_id dall'URL corrente
+    const urlParams = new URLSearchParams(window.location.search);
+    const campoIdSelezionato = urlParams.get('campo_id');
+
     const containerCampi = document.getElementById("campi");
     let campoSelezionato = null;
-    let campoIdSelezionato = null;
 
     function caricaCampi() {
         fetch("/api/campi-utente")
@@ -17,17 +20,6 @@ document.addEventListener("DOMContentLoaded", function () {
               <div class="campo-nome">Seleziona un campo</div>
               <div class="mini-mappa-container">
                 <div id="mini-map" style="height:100%;"></div>
-              </div>
-              <div class="azione-buttons">
-                <button id="gestisci-campo-btn" class="azione-button">Gestisci Campo</button>
-                <div class="dropdown-container">
-                  <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
-                  <div id="dropdown-menu" class="dropdown-menu hidden">
-                    <a href="/assoc_gest_sens" class="dropdown-item">Associa - gestisci sensori</a>
-                    <a href="/ini_irr" class="dropdown-item">Avvia irrigazione</a>
-                    <a href="#" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
-                  </div>
-                </div>
               </div>
             </div>
           `;
@@ -51,17 +43,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         listaPulsanti.appendChild(button);
                     });
 
-                    // Seleziona automaticamente il primo campo
-                    selezionaCampo(listaPulsanti.firstChild, dettagliArea);
-
-                    // Inizializza il menu a tendina
-                    inizializzaDropdown();
-
-                    // Inizializza il pulsante gestisci campo
-                    inizializzaGestisciCampo();
-
-                    // Inizializza il link registro irrigazioni
-                    inizializzaRegistroIrrigazioni();
+                    // Dopo aver caricato tutti i campi, seleziona automaticamente quello dall'URL
+                    selezionaCampoAutomatico(dettagliArea);
                 } else {
                     containerCampi.innerHTML = `
             <div class="nessun-campo">
@@ -72,81 +55,12 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    function inizializzaGestisciCampo() {
-        const gestisciBtn = document.getElementById("gestisci-campo-btn");
-
-        if (gestisciBtn) {
-            gestisciBtn.addEventListener("click", function (e) {
-                e.preventDefault();
-
-                if (campoIdSelezionato) {
-                    window.location.href = `/gestioneCampo?campo_id=${campoIdSelezionato}`;
-                } else {
-                    alert("Seleziona un campo prima di procedere con la gestione.");
-                }
-            });
-        }
-    }
-
-    function inizializzaRegistroIrrigazioni() {
-        const registroIrrLink = document.getElementById("registro-irrigazioni-link");
-
-        if (registroIrrLink) {
-            registroIrrLink.addEventListener("click", function (e) {
-                e.preventDefault();
-
-                if (campoIdSelezionato) {
-                    console.log("Campo ID selezionato:", campoIdSelezionato);
-                    window.location.href = `/reg_irr?campo_id=${campoIdSelezionato}`;
-                } else {
-                    alert("Seleziona un campo prima di procedere.");
-                }
-            });
-        }
-    }
-
-    function inizializzaDropdown() {
-        const avviaBtn = document.getElementById("avvia-operazioni-btn");
-        const dropdownMenu = document.getElementById("dropdown-menu");
-
-        if (avviaBtn && dropdownMenu) {
-            avviaBtn.addEventListener("click", function (e) {
-                e.preventDefault();
-
-                const rect = avviaBtn.getBoundingClientRect();
-                const windowHeight = window.innerHeight;
-                const menuHeight = 150;
-                const spaceBelow = windowHeight - rect.bottom;
-                const spaceAbove = rect.top;
-
-                dropdownMenu.classList.remove("dropdown-up", "dropdown-down");
-
-                if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
-                    dropdownMenu.classList.add("dropdown-up");
-                } else {
-                    dropdownMenu.classList.add("dropdown-down");
-                }
-
-                dropdownMenu.classList.toggle("hidden");
-                avviaBtn.classList.toggle("active");
-            });
-
-            document.addEventListener("click", function (e) {
-                if (!e.target.closest(".dropdown-container")) {
-                    dropdownMenu.classList.add("hidden");
-                    avviaBtn.classList.remove("active");
-                }
-            });
-        }
-    }
-
     function selezionaCampo(button, dettagliArea) {
         document
             .querySelectorAll(".campo-button")
             .forEach((btn) => btn.classList.remove("selected"));
         button.classList.add("selected");
         campoSelezionato = button.dataset.campo;
-        campoIdSelezionato = button.dataset.campoId;
         dettagliArea.querySelector(".campo-nome").textContent =
             campoSelezionato;
 
@@ -195,6 +109,35 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // Funzione per selezionare automaticamente il campo dall'URL
+    async function selezionaCampoAutomatico(dettagliArea) {
+        try {
+            // Chiama l'API per ottenere le coordinate dalla sessione
+            const response = await fetch('/api/get_session_coordinate');
+            const coordinateData = await response.json();
+            
+            if (campoIdSelezionato) {
+                // Trova il bottone del campo con l'ID corrispondente
+                const campoButton = document.querySelector(`[data-campo-id="${campoIdSelezionato}"]`);
+                
+                if (campoButton) {
+                    // Se ci sono coordinate dalla sessione, usale
+                    if (coordinateData && coordinateData.coordinate) {
+                        campoButton.dataset.coordinate = coordinateData.coordinate;
+                    }
+                    
+                    // Seleziona automaticamente il campo
+                    selezionaCampo(campoButton, dettagliArea);
+                } else {
+                    console.warn(`Campo con ID ${campoIdSelezionato} non trovato`);
+                }
+            }
+        } catch (error) {
+            console.error('Errore nel caricamento delle coordinate:', error);
+        }
+    }
+
+    // Carica i campi dall'API
     caricaCampi();
 });
 
@@ -205,11 +148,3 @@ document.querySelectorAll('.status-card').forEach(card => {
         this.classList.add('active');
     });
 });
-
-// Inizializzazione mappa
-if (typeof L !== 'undefined') {
-    const miniMap = L.map('mini-map').setView([41.9028, 12.4964], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(miniMap);
-}

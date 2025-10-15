@@ -35,18 +35,18 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 # Database connection
 
 
-def get_db_connection():
-    return pymysql.connect(
+"""def get_db_connection():
+    return pymysql.connect(s
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
 
-"""
-se non hai il .env quella sopra funziona lo stesso
+
+#se non hai il .env quella sopra funziona lo stesso
 
 def get_db_connection():
     return pymysql.connect(
@@ -56,7 +56,7 @@ def get_db_connection():
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )
-"""
+
 
 ###############################################################################
 
@@ -990,7 +990,10 @@ def inizializzaIrrigazione():
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
-    return render_template('avvia_irrigazione.html')
+    campo_id = request.args.get('campo_id')
+    print(f"id: {f"campo{campo_id}"}")
+
+    return render_template('avvia_irrigazione.html', campo_id=campo_id)
 
 
 @app.route('/reg_irr', methods=['GET', 'POST'])
