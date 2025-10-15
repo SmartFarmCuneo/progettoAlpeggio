@@ -35,19 +35,19 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 # Database connection
 
 
-"""def get_db_connection():
-    return pymysql.connect(s
+def get_db_connection():
+    return pymysql.connect(
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 
 
 
 #se non hai il .env quella sopra funziona lo stesso
-
+"""
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
@@ -55,7 +55,7 @@ def get_db_connection():
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
 
 ###############################################################################
