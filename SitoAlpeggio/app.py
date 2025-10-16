@@ -35,19 +35,19 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 # Database connection
 
 
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host=os.environ.get("DB_HOST", "localhost"),
         user=os.environ.get("DB_USER", "root"),
         password=os.environ.get("DB_PASSWORD", ""),
         database=os.environ.get("DB_NAME", "irrigazione"),
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
 
 
 #se non hai il .env quella sopra funziona lo stesso
-"""
+
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
@@ -55,7 +55,7 @@ def get_db_connection():
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 
 
 ###############################################################################
@@ -946,6 +946,30 @@ def get_comune():
         comuni = [c for c in comuni if c['sigla_provincia'] == provincia]
 
     return jsonify({"comuni": comuni})
+
+#API PER SENSORI -- DA TESTARE
+@app.route("/api/get_sensor", methods=["GET"])
+def get_sensor(current_user):
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM users WHERE username = %s", (current_user,)) 
+        id_user = cursor.fetchone()
+    
+    print(f"User ID: {id_user}")
+
+    #controllare se l'utente ha dei sensori associati oppure no
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT s.* FROM sensor s assoc_users_sens aus, WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens", (id_user,)) 
+        risultato = cursor.fetchall()
+        info = ""
+        for i in range(0, len(risultato)):
+            info += str(risultato[i]) + "/"
+        return info
+    
+    print(f"Info: {info}")
+
 ########################################################################################
 
 ############################# Avvio del drone#######################################
@@ -985,13 +1009,28 @@ def associaSensori():
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
+
+
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
-def avviaIrrigazione():
+@token_required
+def avviaIrrigazione(current_user):
     campo_id = request.args.get('campo_id')
-    print(f"id: {f"campo{campo_id}"}")
+    print(f"id: campo{campo_id}")  # id corretto sul DB
+
+    # avvio della irrigazione
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO `data`(`id_u`, `id_t`, `data_inizio_irr`, `data_fine_irr`) "
+        "VALUES (%s, %s, NOW(), NULL)",
+        (session['id'], campo_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
 
     return render_template('avvia_irrigazione.html', campo_id=campo_id)
 
