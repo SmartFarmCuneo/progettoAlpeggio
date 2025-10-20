@@ -34,28 +34,25 @@ app.config['MAIL_DEFAULT_SENDER'] = (
 
 # Database connection
 
-
-"""def get_db_connection():
+def get_db_connection():
     return pymysql.connect(
-        host=os.environ.get("DB_HOST", "localhost"),
-        user=os.environ.get("DB_USER", "root"),
-        password=os.environ.get("DB_PASSWORD", ""),
-        database=os.environ.get("DB_NAME", "irrigazione"),
+        host=os.environ.get("DB_HOST", 'localhost'),
+        user=os.environ.get("DB_USER", 'root'),
+        password=os.environ.get("DB_PASSWORD", ''),
+        database=os.environ.get("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
-    )"""
-
-
+    )
 
 #se non hai il .env quella sopra funziona lo stesso
 
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
 
 ###############################################################################
@@ -167,7 +164,7 @@ mail = Mail(app)
 
 
 def send_reset_email(user_email, code):
-    msg = Message("Agritech - Reset Password", recipients=[user_email])
+    msg = Message("Agrinnov - Reset Password", recipients=[user_email])
 
     msg.html = render_template_string("""
     <!DOCTYPE html>
@@ -236,7 +233,7 @@ def send_reset_email(user_email, code):
     <body>
       <div class="container">
         <div class="header">
-          <img src="https://i.ibb.co/3sWD5Vj/Farm-Logo.png" alt="Agritech Logo">
+            <img rel="icon" href="../static/image/logo.png" />
         </div>
         <div class="content">
           <h1>Richiesta reset password</h1>
@@ -246,7 +243,7 @@ def send_reset_email(user_email, code):
           <p>Se non hai richiesto tu il reset, ignora questa email.</p>
         </div>
         <div class="footer">
-          &copy; 2024 Agritech - Innovazione per l'agricoltura del futuro
+          &copy; 2024 Agrinnov - Innovazione per l'agricoltura del futuro
         </div>
       </div>
     </body>
