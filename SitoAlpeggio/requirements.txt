@@ -3,6 +3,5 @@ PyMySQL
 PyJWT
 Flask-Mail
 requests
-python-dotenv
 cryptography
 stripe
