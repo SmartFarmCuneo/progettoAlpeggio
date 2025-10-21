@@ -1,0 +1,58 @@
+<!-- payment_success.html -->
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../static/image/logo.png" />
+    <title>Agrinnov - Checkout</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/navbar.css" />
+    <link rel="stylesheet" href="../static/css/footer.css" />
+    <link rel="stylesheet" href="../static/css/media.css" />
+    <link rel="stylesheet" href="../static/css/animazioni.css" />
+    
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+        <div class="navbar-top container">
+            <a href="/home" class="logo">Agrinnov</a>
+            <div class="user-nav">
+                <div class="user-info">
+                    <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+                    <a href="/profilo" class="profile-link">{{user['username']}}</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container" style="text-align: center; padding: 50px 20px;">
+        <div class="success-message"
+            style="background: #2d3748; padding: 40px; border-radius: 12px; margin: 50px auto; max-width: 600px;">
+            <div style="font-size: 64px; color: #48bb78; margin-bottom: 20px;">✅</div>
+            <h1 style="color: #48bb78; margin-bottom: 20px;">Pagamento Completato!</h1>
+            <p style="color: #cbd5e0; font-size: 18px; margin-bottom: 30px;">
+                Grazie per aver scelto il piano <strong style="color: #48bb78;">{{ plan|title }}</strong>!
+            </p>
+            <p style="color: #cbd5e0; margin-bottom: 30px;">
+                Il tuo abbonamento è ora attivo e puoi accedere a tutte le funzionalità del tuo piano.
+            </p>
+            <div style="margin: 30px 0;">
+                <a href="/home" class="subscribe-btn"
+                    style="text-decoration: none; display: inline-block; margin: 10px;">
+                    Vai alla Dashboard
+                </a>
+                <a href="/pagamenti" class="subscribe-btn secondary"
+                    style="text-decoration: none; display: inline-block; margin: 10px;">
+                    Gestisci Abbonamento
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

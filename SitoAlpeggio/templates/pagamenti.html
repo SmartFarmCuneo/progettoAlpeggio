@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <img rel="icon" href="../static/image/logo.png" />
+  <link rel="icon" href="../static/image/logo.png" />
   <title>Agrinnov - Abbonamenti</title>
 
   <!-- CSS -->
@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/pagamenti.css" />
-  
 </head>
 
 <body>
@@ -24,7 +23,7 @@
       <div class="user-nav">
         <div class="user-info">
           <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
-          <span>{{user['username']}}</span>
+          <span id="username">Utente</span>
           <form action="/logout" method="POST">
             <button class="logout-btn">Logout</button>
           </form>
@@ -59,111 +58,36 @@
           </p>
         </div>
 
-        <div class="subscription-plans">
-          <!-- Piano Free -->
-          <div class="plan-card">
-            <div class="plan-title">Free</div>
-            <div class="plan-price"><span class="currency">€</span>0</div>
-            <div class="plan-period">al mese</div>
-
-            <ul class="plan-features">
-              <li>Aggiunta fino a 10 campi</li>
-              <li>Dati meteorologici base</li>
-              <li>3 tipi di sensori</li>
-              <li>Supporto email</li>
-              <li>Report mensili</li>
-              <li class="unavailable">Analisi predittive AI</li>
-              <li class="unavailable">Supporto prioritario</li>
-              <li class="unavailable">API personalizzate</li>
-            </ul>
-
-            <button class="subscribe-btn secondary" onclick="selectPlan('free')">
-              Scegli Free
-            </button>
-          </div>
-
-          <!-- Piano Basic -->
-          <div class="plan-card">
-            <div class="plan-title">Basic</div>
-            <div class="plan-price"><span class="currency">€</span>19</div>
-            <div class="plan-period">al mese</div>
-
-            <ul class="plan-features">
-              <li>Monitoraggio fino a 5 ettari</li>
-              <li>Dati meteorologici base</li>
-              <li>3 tipi di sensori</li>
-              <li>Supporto email</li>
-              <li>Report mensili</li>
-              <li class="unavailable">Analisi predittive AI</li>
-              <li class="unavailable">Supporto prioritario</li>
-              <li class="unavailable">API personalizzate</li>
-            </ul>
-
-            <button class="subscribe-btn secondary" onclick="selectPlan('basic')">
-              Scegli Basic
-            </button>
-          </div>
-
-          <!-- Piano Professional (Consigliato) -->
-          <div class="plan-card recommended">
-            <div class="plan-title">Professional</div>
-            <div class="plan-price"><span class="currency">€</span>49</div>
-            <div class="plan-period">al mese</div>
-
-            <ul class="plan-features">
-              <li>Monitoraggio fino a 25 ettari</li>
-              <li>Dati meteorologici avanzati</li>
-              <li>8 tipi di sensori</li>
-              <li>Supporto email e telefono</li>
-              <li>Report settimanali</li>
-              <li>Analisi predittive AI</li>
-              <li>Allerte automatiche</li>
-              <li class="unavailable">API personalizzate</li>
-            </ul>
-
-            <button class="subscribe-btn" onclick="selectPlan('professional')">
-              Scegli Professional
-            </button>
-          </div>
-
-          <!-- Piano Enterprise -->
-          <div class="plan-card">
-            <div class="plan-title">Enterprise</div>
-            <div class="plan-price"><span class="currency">€</span>99</div>
-            <div class="plan-period">al mese</div>
-
-            <ul class="plan-features">
-              <li>Monitoraggio illimitato</li>
-              <li>Dati meteorologici premium</li>
-              <li>Tutti i tipi di sensori</li>
-              <li>Supporto prioritario 24/7</li>
-              <li>Report personalizzati</li>
-              <li>Analisi predittive AI avanzate</li>
-              <li>Allerte in tempo reale</li>
-              <li>API personalizzate</li>
-            </ul>
-
-            <button class="subscribe-btn" onclick="selectPlan('enterprise')">
-              Scegli Enterprise
-            </button>
-          </div>
+        <!-- Sezione piani (caricata dinamicamente da JS) -->
+        <div class="subscription-plans" id="plans-container">
+          <p style="text-align:center; color:white;">Caricamento piani in corso...</p>
         </div>
 
         <div class="billing-info">
           <h3>💳 Metodi di Pagamento Accettati</h3>
           <p>
-            Carte di credito, PayPal, Bonifico bancario • Fatturazione
-            elettronica disponibile
+            Carte di credito, PayPal, Bonifico bancario • Fatturazione elettronica disponibile
           </p>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Loading overlay -->
+  <div id="loading-overlay"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="color: white; text-align: center;">
+      <div class="spinner"
+        style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 20px;">
+      </div>
+      <p>Elaborazione pagamento in corso...</p>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer id="contact">
     <div class="container">
-      <p>&copy; 2024 Agrinnov. Innovazione per l'agricoltura del futuro.</p>
+      <p>&copy; 2025 Agrinnov. Innovazione per l'agricoltura del futuro.</p>
       <ul class="footer-links">
         <li><a href="/privacy">Privacy Policy</a></li>
         <li><a href="/terms">Termini di Servizio</a></li>
@@ -172,10 +96,10 @@
       </ul>
     </div>
   </footer>
-  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
-  <!-- Script -->
+  <!-- Stripe -->
+  <span id="stripe-public-key" data-key="{{ stripe_public_key }}" hidden></span>
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="../static/js/pagamenti.js" defer></script>
 </body>
-
 </html>

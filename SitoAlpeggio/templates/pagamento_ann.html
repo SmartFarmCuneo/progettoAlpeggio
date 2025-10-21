@@ -1,0 +1,58 @@
+<!-- payment_cancel.html -->
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../static/image/logo.png" />
+    <title>Agrinnov - Checkout</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/navbar.css" />
+    <link rel="stylesheet" href="../static/css/footer.css" />
+    <link rel="stylesheet" href="../static/css/media.css" />
+    <link rel="stylesheet" href="../static/css/animazioni.css" />
+    
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+        <div class="navbar-top container">
+            <a href="/home" class="logo">Agrinnov</a>
+            <div class="user-nav">
+                <div class="user-info">
+                    <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+                    <a href="/profilo" class="profile-link">{{user['username']}}</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container" style="text-align: center; padding: 50px 20px;">
+        <div class="cancel-message"
+            style="background: #2d3748; padding: 40px; border-radius: 12px; margin: 50px auto; max-width: 600px;">
+            <div style="font-size: 64px; color: #f56565; margin-bottom: 20px;">❌</div>
+            <h1 style="color: #f56565; margin-bottom: 20px;">Pagamento Annullato</h1>
+            <p style="color: #cbd5e0; font-size: 18px; margin-bottom: 30px;">
+                Il pagamento è stato annullato. Nessun addebito è stato effettuato.
+            </p>
+            <p style="color: #cbd5e0; margin-bottom: 30px;">
+                Puoi riprovare in qualsiasi momento scegliendo un piano di abbonamento.
+            </p>
+            <div style="margin: 30px 0;">
+                <a href="/pagamenti" class="subscribe-btn"
+                    style="text-decoration: none; display: inline-block; margin: 10px;">
+                    Scegli un Piano
+                </a>
+                <a href="/home" class="subscribe-btn secondary"
+                    style="text-decoration: none; display: inline-block; margin: 10px;">
+                    Torna alla Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

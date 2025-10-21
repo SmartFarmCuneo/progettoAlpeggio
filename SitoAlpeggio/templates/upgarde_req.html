@@ -1,0 +1,81 @@
+<!-- upgrade_required.html -->
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="../static/image/logo.png" />
+    <title>Agrinnov - Upgrade</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/navbar.css" />
+    <link rel="stylesheet" href="../static/css/footer.css" />
+    <link rel="stylesheet" href="../static/css/media.css" />
+    <link rel="stylesheet" href="../static/css/animazioni.css" />
+    
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar" role="navigation">
+        <div class="navbar-top container">
+            <a href="/home" class="logo">Agrinnov</a>
+            <div class="user-nav">
+                <div class="user-info">
+                    <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+                    <a href="/profilo" class="profile-link">{{user['username']}}</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="text-align: center; padding: 50px 20px;">
+        <div class="upgrade-message"
+            style="background: #2d3748; padding: 40px; border-radius: 12px; margin: 50px auto; max-width: 700px;">
+            <div style="font-size: 64px; color: #f6ad55; margin-bottom: 20px;">⬆️</div>
+            <h1 style="color: #f6ad55; margin-bottom: 20px;">Upgrade Richiesto</h1>
+            <p style="color: #cbd5e0; font-size: 18px; margin-bottom: 20px;">
+                La funzionalità che stai cercando di utilizzare non è disponibile nel tuo piano attuale.
+            </p>
+            <p style="color: #cbd5e0; margin-bottom: 30px;">
+                Piano attuale: <strong style="color: #48bb78;">{{ current_plan|title }}</strong>
+            </p>
+
+            <div style="background: #1a202c; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #48bb78; margin-bottom: 15px;">Funzionalità richiesta:</h3>
+                <p style="color: #cbd5e0;">
+                    {% if feature == 'has_ai_analysis' %}
+                    <strong>Analisi Predittive AI</strong> - Disponibile nei piani Professional ed Enterprise
+                    {% elif feature == 'has_priority_support' %}
+                    <strong>Supporto Prioritario 24/7</strong> - Disponibile nel piano Enterprise
+                    {% elif feature == 'has_custom_api' %}
+                    <strong>API Personalizzate</strong> - Disponibile nel piano Enterprise
+                    {% else %}
+                    <strong>Funzionalità Premium</strong>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div style="margin: 30px 0;">
+                <a href="/pagamenti" class="subscribe-btn"
+                    style="text-decoration: none; display: inline-block; margin: 10px;">
+                    Scegli un Piano
+                </a>
+                <a href="/home" class="subscribe-btn secondary"
+                    style="text-decoration: none; display: inline-block; margin: 10px;">
+                    Torna alla Dashboard
+                </a>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #4a5568;">
+                <p style="color: #a0aec0; font-size: 14px;">
+                    Hai domande sui piani? <a href="/supporto" style="color: #48bb78;">Contatta il supporto</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
