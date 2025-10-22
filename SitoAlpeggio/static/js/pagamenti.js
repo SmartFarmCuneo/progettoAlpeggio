@@ -4,50 +4,49 @@ document.addEventListener("DOMContentLoaded", async function () {
   const stripePublicKey = document.getElementById("stripe-public-key").getAttribute("data-key");
   const stripe = Stripe(stripePublicKey);
 
-  // Funzione per mostrare loading
   const showLoading = (show) => {
     loadingOverlay.style.display = show ? "flex" : "none";
   };
 
-  // Piano gratuito
-  const freeCard = `
-    <div class="plan-card current">
-      <div class="plan-title">Free</div>
-      <div class="plan-price"><span class="currency">€</span>0</div>
-      <div class="plan-period">al mese</div>
-      <ul class="plan-features">
-        <li>Aggiunta fino a 10 campi</li>
-        <li>Dati meteorologici base</li>
-        <li>3 tipi di sensori</li>
-        <li>Supporto email</li>
-        <li>Report mensili</li>
-      </ul>
-      <button class="subscribe-btn secondary" onclick="selectFreePlan()">Piano Attuale</button>
-    </div>
-  `;
-
   try {
-    // Recupera i piani dal backend
-    const res = await fetch("/api/plans");
-    const plans = await res.json();
+    // 🔹 Recupera piani + piano attuale
+    // --> aggiunto credentials: 'same-origin' per essere sicuri che il cookie 'token' venga inviato
+    const res = await fetch("/api/plans", { credentials: 'same-origin' });
+    const data = await res.json();
 
-    // Pulisci contenitore
+    const plans = data.plans;
+    const currentPlan = data.current_plan || "free";
+
     plansContainer.innerHTML = "";
-    plansContainer.insertAdjacentHTML("beforeend", freeCard);
 
-    // Crea dinamicamente i piani
-    Object.entries(plans).forEach(([planId, plan]) => {
+    // 🔹 Ordine definito
+    const planOrder = ["free", "basic", "professional", "enterprise"];
+
+    // 🔹 Genera dinamicamente le card
+    planOrder.forEach(planKey => {
+      const plan = plans[planKey];
+      if (!plan) return;
+
+      // confronto case-insensitive e tolerance whitespace
+      const isCurrent = planKey.toLowerCase() === (String(currentPlan).trim().toLowerCase());
+
       const card = document.createElement("div");
-      card.className = "plan-card";
+      card.className = `plan-card ${isCurrent ? "current" : ""}`;
       card.innerHTML = `
-        <div class="plan-title">${plan.name}</div>
+        <div class="plan-title">
+          ${plan.name}
+          ${isCurrent ? '<span class="plan-badge">Attuale ✅</span>' : ''}
+        </div>
         <div class="plan-price"><span class="currency">€</span>${plan.price}</div>
         <div class="plan-period">al mese</div>
         <ul class="plan-features">
           ${plan.features.map(f => `<li>${f}</li>`).join("")}
         </ul>
-        <button class="subscribe-btn" onclick="selectPlan('${planId}')">
-          Scegli ${plan.name}
+        <button class="subscribe-btn ${isCurrent ? "secondary" : ""}"
+          ${isCurrent
+            ? 'onclick="selectCurrentPlan()"'
+            : `onclick="selectPlan('${planKey}')"`}>
+          ${isCurrent ? "Piano Attuale" : "Scegli " + plan.name}
         </button>
       `;
       plansContainer.appendChild(card);
@@ -57,12 +56,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     plansContainer.innerHTML = "<p>Errore nel caricamento dei piani.</p>";
   }
 
-  // Funzione per piani a pagamento
+  // 🔹 Piano già attivo
+  window.selectCurrentPlan = function () {
+    alert("Stai già utilizzando questo piano!");
+  };
+
+  // 🔹 Checkout Stripe
   window.selectPlan = async function (planId) {
     showLoading(true);
     try {
       const response = await fetch("/create-checkout-session", {
         method: "POST",
+        credentials: 'same-origin',              // <-- anche qui invia cookie
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan_id: planId })
       });
@@ -81,16 +86,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   };
 
-  // Piano gratuito
-  window.selectFreePlan = function () {
-    alert("Stai già utilizzando il piano gratuito!");
-  };
-
-  // Portale clienti Stripe
+  // 🔹 Portale clienti Stripe
   window.manageSubscription = async function () {
     showLoading(true);
     try {
-      const res = await fetch("/create-customer-portal-session", { method: "POST" });
+      const res = await fetch("/create-customer-portal-session", { method: "POST", credentials: 'same-origin' });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
       else alert("Errore: " + (data.error || "Impossibile accedere al portale."));

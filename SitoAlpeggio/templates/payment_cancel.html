@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="../static/css/footer.css" />
     <link rel="stylesheet" href="../static/css/media.css" />
     <link rel="stylesheet" href="../static/css/animazioni.css" />
-    
+
 </head>
 
 <body>
@@ -30,26 +30,35 @@
             </div>
         </div>
     </nav>
-    <div class="container" style="text-align: center; padding: 50px 20px;">
-        <div class="cancel-message"
-            style="background: #2d3748; padding: 40px; border-radius: 12px; margin: 50px auto; max-width: 600px;">
-            <div style="font-size: 64px; color: #f56565; margin-bottom: 20px;">❌</div>
-            <h1 style="color: #f56565; margin-bottom: 20px;">Pagamento Annullato</h1>
-            <p style="color: #cbd5e0; font-size: 18px; margin-bottom: 30px;">
-                Il pagamento è stato annullato. Nessun addebito è stato effettuato.
-            </p>
-            <p style="color: #cbd5e0; margin-bottom: 30px;">
-                Puoi riprovare in qualsiasi momento scegliendo un piano di abbonamento.
-            </p>
-            <div style="margin: 30px 0;">
-                <a href="/pagamenti" class="subscribe-btn"
-                    style="text-decoration: none; display: inline-block; margin: 10px;">
-                    Scegli un Piano
-                </a>
-                <a href="/home" class="subscribe-btn secondary"
-                    style="text-decoration: none; display: inline-block; margin: 10px;">
-                    Torna alla Dashboard
-                </a>
+    <div class="container main-content">
+        <div class="sidebar">
+            <div class="menu-item"><a href="/home">Home</a></div>
+            <div class="menu-item"><a href="/storici">Storico Controlli</a></div>
+            <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
+            <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
+            <div class="menu-item">
+                <a href="/visualizzaCampi">Visualizza i tuoi campi</a>
+            </div>
+        </div>
+
+        <div class="container" style="text-align: center; padding: 10px 10px;">
+            <div class="cancel-message"
+                style="background: var(--bg-light); padding: 40px; border-radius: 12px; margin: 50px auto; max-width: 600px;">
+                <div style="font-size: 64px; color: var(--danger); margin-bottom: 20px;">❌</div>
+                <h1 style="color: var(--danger); margin-bottom: 20px;">Pagamento Annullato</h1>
+                <p style="color: #cbd5e0; font-size: 18px; margin-bottom: 30px;">
+                    Il pagamento è stato annullato. Nessun addebito è stato effettuato.
+                </p>
+                <p style="color: #cbd5e0; margin-bottom: 30px;">
+                    Puoi riprovare in qualsiasi momento scegliendo un piano di abbonamento.
+                </p>
+                <div style="margin: 30px 0;">
+                    <a href="/home" id="ricerca" style="margin: 10px; text-decoration: none;">Vai alla Dashboard</a>
+                    <a href="/pagamenti" id="ricerca"
+                        style="background-color: var(--bg-dark); border: 1px solid var(--primary); margin: 10px; text-decoration: none;">
+                        Gestisci Abbonamento
+                    </a>
+                </div>
             </div>
         </div>
     </div>

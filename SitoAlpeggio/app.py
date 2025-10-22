@@ -1,3 +1,4 @@
+# (aggiornato) flask_app.py
 from flask import Flask, render_template, redirect, url_for, request, make_response
 from flask import session, jsonify, render_template_string, current_app
 from functools import wraps
@@ -168,6 +169,19 @@ def get_user_data(username):
 
 # Definizione piani di abbonamento
 SUBSCRIPTION_PLANS = {
+    'free': {
+        'name': 'Free',
+        'price': 0,
+        'currency': 'eur',
+        'interval': 'month',
+        'features': [
+            'Aggiunta fino a 10 campi',
+            'Dati meteorologici base',
+            '3 tipi di sensori',
+            'Supporto email',
+            'Report mensili'
+        ]
+    },
     'basic': {
         'name': 'Basic',
         'price': 19,
@@ -266,27 +280,76 @@ def can_user_add_field(username):
 
 
 def get_user_subscription_info(username):
-    """Restituisce informazioni complete sull'abbonamento dell'utente"""
+    """Restituisce informazioni complete sull'abbonamento dell'utente (approccio più robusto e debug)"""
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT u.subscription_plan, u.subscription_status, 
-                       u.subscription_start_date, u.subscription_end_date,
-                       u.stripe_customer_id,
-                       p.max_fields, p.max_sensors, p.has_ai_analysis,
-                       p.has_priority_support, p.has_custom_api,
-                       (SELECT COUNT(*) FROM fields f WHERE f.id_user = u.id_u) as current_fields
-                FROM users u 
-                LEFT JOIN plan_limits p ON p.plan_name = COALESCE(u.subscription_plan, 'free')
-                WHERE u.username = %s
-            """, (username,))
-            return cursor.fetchone()
+            # 1) Leggiamo direttamente la riga utente
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            if not user:
+                # nessun utente trovato
+                print(f"[get_user_subscription_info] user='{username}' non trovato nel DB")
+                return None
+
+            # 2) Normalizziamo il valore del piano per evitare mismatch (trim + lower + fallback 'free')
+            raw_plan = user.get("subscription_plan") or "free"
+            try:
+                normalized_plan = str(raw_plan).strip().lower()
+            except Exception:
+                normalized_plan = "free"
+
+            # 3) Recuperiamo i limiti del piano in maniera case-insensitive / trim
+            try:
+                cursor.execute(
+                    "SELECT max_fields, max_sensors, has_ai_analysis, has_priority_support, has_custom_api "
+                    "FROM plan_limits WHERE LOWER(TRIM(plan_name)) = %s",
+                    (normalized_plan,)
+                )
+                plan = cursor.fetchone()
+            except Exception as e:
+                print(f"[get_user_subscription_info] errore recupero plan_limits per '{normalized_plan}': {e}")
+                plan = None
+
+            # 4) Calcoliamo il numero corrente di campi dell'utente
+            try:
+                cursor.execute("SELECT COUNT(*) AS cnt FROM fields WHERE id_user = %s", (user['id_u'],))
+                cnt_row = cursor.fetchone()
+                current_fields = cnt_row['cnt'] if cnt_row else 0
+            except Exception as e:
+                print(f"[get_user_subscription_info] errore conteggio fields per id_user={user.get('id_u')}: {e}")
+                current_fields = 0
+
+            # 5) Costruiamo il risultato coerente
+            result = {
+                'subscription_plan': normalized_plan,
+                'subscription_status': user.get('subscription_status'),
+                'subscription_start_date': user.get('subscription_start_date'),
+                'subscription_end_date': user.get('subscription_end_date'),
+                'stripe_customer_id': user.get('stripe_customer_id'),
+                'max_fields': plan.get('max_fields') if plan else None,
+                'max_sensors': plan.get('max_sensors') if plan else None,
+                'has_ai_analysis': bool(plan.get('has_ai_analysis')) if plan else False,
+                'has_priority_support': bool(plan.get('has_priority_support')) if plan else False,
+                'has_custom_api': bool(plan.get('has_custom_api')) if plan else False,
+                'current_fields': current_fields
+            }
+
+            # log utile per debug
+            print(f"[get_user_subscription_info] user='{username}' raw_plan='{raw_plan}' normalized='{normalized_plan}' result_keys={list(result.keys())}")
+
+            return result
+
     except Exception as e:
-        print(f"Errore nel recupero info abbonamento: {e}")
+        import traceback
+        print("[get_user_subscription_info] eccezione:", e)
+        traceback.print_exc()
         return None
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def plan_feature_required(feature):
@@ -959,10 +1022,31 @@ def pagamenti(current_user):
                            subscription_info=subscription_info)
 
 
-@app.route('/api/plans', methods=['GET'])
-def api_get_plans():
-    """Ritorna i piani di abbonamento in formato JSON"""
-    return jsonify(SUBSCRIPTION_PLANS)
+@app.route("/api/plans", methods=["GET"])
+@token_required
+def api_get_plans(current_user):
+    user_info = get_user_subscription_info(current_user)
+    # Normalizza il piano (rimuovi spazi e rendilo lowercase) per evitare mismatch di case
+    raw_plan = None
+    if user_info:
+        raw_plan = user_info.get("subscription_plan")
+    # safety: se None -> 'free'
+    if not raw_plan:
+        current_plan = "free"
+    else:
+        try:
+            current_plan = str(raw_plan).strip().lower()
+        except Exception:
+            current_plan = "free"
+
+    # debug log (puoi togliere in produzione)
+    print(f"[DEBUG] /api/plans user={current_user} raw_plan={raw_plan} normalized={current_plan}")
+
+    # ritorna tutto, incluso free
+    return jsonify({
+        "current_plan": current_plan,
+        "plans": SUBSCRIPTION_PLANS
+    })
 
 
 @app.route('/create-checkout-session', methods=['POST'])
@@ -1025,7 +1109,7 @@ def create_checkout_session(current_user):
     except Exception as e:
         print(f"Errore creazione sessione checkout: {e}")
         return jsonify({'error': str(e)}), 500
-    
+
 
 @app.route('/payment-success')
 @token_required
@@ -1034,7 +1118,6 @@ def payment_success(current_user):
     session_id = request.args.get('session_id')
 
     if not session_id:
-        print("❌ ERRORE: Nessun session_id fornito")
         return redirect(url_for('pagamenti'))
 
     try:
@@ -1042,26 +1125,27 @@ def payment_success(current_user):
         checkout_session = stripe.checkout.Session.retrieve(session_id)
 
         if checkout_session.payment_status == 'paid':
-            
+
             # Recupera la subscription
             if not checkout_session.subscription:
                 return redirect(url_for('pagamenti'))
-                
-            subscription = stripe.Subscription.retrieve(checkout_session.subscription)
-            
+
+            subscription = stripe.Subscription.retrieve(
+                checkout_session.subscription)
+
             # Accedi correttamente a current_period_end
             period_end = subscription.get('current_period_end')
             if not period_end:
                 # Fallback: usa la data della sessione
                 period_end = checkout_session.get('expires_at')
-            
+
             # Aggiorna il database
             conn = get_db_connection()
             try:
                 with conn.cursor() as cursor:
                     plan_name = checkout_session.metadata.get('plan')
                     customer_id = checkout_session.customer
-                    
+
                     cursor.execute("""
                         UPDATE users 
                         SET subscription_plan = %s, 
@@ -1071,21 +1155,18 @@ def payment_success(current_user):
                             subscription_end_date = FROM_UNIXTIME(%s)
                         WHERE username = %s
                     """, (plan_name, customer_id, period_end, current_user))
-                    
+
                     rows_affected = cursor.rowcount
-                    
-                    if rows_affected == 0:
-                        print(f"ATTENZIONE: Nessuna riga aggiornata per username: {current_user}")
-                    
+
                     conn.commit()
 
                     # Salva nella cronologia pagamenti
-                    cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
+                    cursor.execute(
+                        "SELECT id_u FROM users WHERE username = %s", (current_user,))
                     user = cursor.fetchone()
-                    
+
                     if user:
                         user_id = user['id_u']
-                        print(f"💾 Salvataggio cronologia pagamenti per user_id: {user_id}")
                         
                         save_payment_history(
                             user_id,
@@ -1095,44 +1176,30 @@ def payment_success(current_user):
                             plan_name,
                             'paid'
                         )
-                    else:
-                        print(f"⚠️ ATTENZIONE: User non trovato per username: {current_user}")
-                        
+                    
             except Exception as db_error:
-                print(f"❌ ERRORE DATABASE: {db_error}")
                 import traceback
                 traceback.print_exc()
             finally:
                 conn.close()
-                print("🔒 Connessione database chiusa")
 
             plan = checkout_session.metadata.get('plan', 'unknown')
             return render_template('payment_success.html', plan=plan)
-            
+
         else:
-            print(f"⚠️ Payment status non 'paid': {checkout_session.payment_status}")
-            print(f"   Redirect a pagamenti")
             return redirect(url_for('pagamenti'))
 
     except stripe.StripeError as e:
-        print(f"❌ ERRORE STRIPE:")
-        print(f"   Messaggio: {str(e)}")
-        print(f"   Tipo: {type(e).__name__}")
         import traceback
         traceback.print_exc()
         return redirect(url_for('pagamenti'))
-        
+
     except Exception as e:
-        print(f"❌ ERRORE GENERICO:")
-        print(f"   Messaggio: {str(e)}")
-        print(f"   Tipo: {type(e).__name__}")
         import traceback
         print("Stack trace completo:")
         traceback.print_exc()
         return redirect(url_for('pagamenti'))
 
-    print("⚠️ Fine funzione raggiunta senza render - redirect a pagamenti")
-    return redirect(url_for('pagamenti'))
 
 
 @app.route('/payment-cancel')
