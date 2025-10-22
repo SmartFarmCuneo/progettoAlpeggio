@@ -957,12 +957,13 @@ def pagamenti(current_user):
     return render_template('pagamenti.html',
                            stripe_public_key=app.config['STRIPE_PUBLIC_KEY'],
                            subscription_info=subscription_info)
-    
-    
+
+
 @app.route('/api/plans', methods=['GET'])
 def api_get_plans():
     """Ritorna i piani di abbonamento in formato JSON"""
     return jsonify(SUBSCRIPTION_PLANS)
+
 
 @app.route('/create-checkout-session', methods=['POST'])
 @token_required
@@ -1015,7 +1016,8 @@ def create_checkout_session(current_user):
                 'user_id': user['id_u'],
                 'username': current_user,
                 'plan': plan_id
-            }
+            },
+            # automatic_tax={'enabled': True}
         )
 
         return jsonify({'checkout_url': checkout_session.url})
@@ -1023,7 +1025,7 @@ def create_checkout_session(current_user):
     except Exception as e:
         print(f"Errore creazione sessione checkout: {e}")
         return jsonify({'error': str(e)}), 500
-
+    
 
 @app.route('/payment-success')
 @token_required
@@ -1031,19 +1033,35 @@ def payment_success(current_user):
     """Pagina di conferma pagamento riuscito"""
     session_id = request.args.get('session_id')
 
-    if session_id:
-        try:
-            # Recupera la sessione da Stripe
-            checkout_session = stripe.checkout.Session.retrieve(session_id)
+    if not session_id:
+        print("❌ ERRORE: Nessun session_id fornito")
+        return redirect(url_for('pagamenti'))
 
-            if checkout_session.payment_status == 'paid':
-                # Recupera la subscription
-                subscription = stripe.Subscription.retrieve(
-                    checkout_session.subscription)
+    try:
+        # Recupera la sessione da Stripe
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
 
-                # Aggiorna il database con l'abbonamento
-                conn = get_db_connection()
+        if checkout_session.payment_status == 'paid':
+            
+            # Recupera la subscription
+            if not checkout_session.subscription:
+                return redirect(url_for('pagamenti'))
+                
+            subscription = stripe.Subscription.retrieve(checkout_session.subscription)
+            
+            # Accedi correttamente a current_period_end
+            period_end = subscription.get('current_period_end')
+            if not period_end:
+                # Fallback: usa la data della sessione
+                period_end = checkout_session.get('expires_at')
+            
+            # Aggiorna il database
+            conn = get_db_connection()
+            try:
                 with conn.cursor() as cursor:
+                    plan_name = checkout_session.metadata.get('plan')
+                    customer_id = checkout_session.customer
+                    
                     cursor.execute("""
                         UPDATE users 
                         SET subscription_plan = %s, 
@@ -1052,35 +1070,68 @@ def payment_success(current_user):
                             subscription_start_date = NOW(),
                             subscription_end_date = FROM_UNIXTIME(%s)
                         WHERE username = %s
-                    """, (
-                        checkout_session.metadata.get('plan'),
-                        checkout_session.customer,
-                        subscription.current_period_end,
-                        current_user
-                    ))
+                    """, (plan_name, customer_id, period_end, current_user))
+                    
+                    rows_affected = cursor.rowcount
+                    
+                    if rows_affected == 0:
+                        print(f"ATTENZIONE: Nessuna riga aggiornata per username: {current_user}")
+                    
                     conn.commit()
 
                     # Salva nella cronologia pagamenti
-                    cursor.execute(
-                        "SELECT id_u FROM users WHERE username = %s", (current_user,))
+                    cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
                     user = cursor.fetchone()
+                    
                     if user:
+                        user_id = user['id_u']
+                        print(f"💾 Salvataggio cronologia pagamenti per user_id: {user_id}")
+                        
                         save_payment_history(
-                            user['id_u'],
+                            user_id,
                             checkout_session.payment_intent,
                             checkout_session.amount_total / 100,
                             checkout_session.currency.upper(),
-                            checkout_session.metadata.get('plan'),
+                            plan_name,
                             'paid'
                         )
+                    else:
+                        print(f"⚠️ ATTENZIONE: User non trovato per username: {current_user}")
+                        
+            except Exception as db_error:
+                print(f"❌ ERRORE DATABASE: {db_error}")
+                import traceback
+                traceback.print_exc()
+            finally:
                 conn.close()
+                print("🔒 Connessione database chiusa")
 
-                return render_template('payment_success.html',
-                                       plan=checkout_session.metadata.get('plan'))
+            plan = checkout_session.metadata.get('plan', 'unknown')
+            return render_template('payment_success.html', plan=plan)
+            
+        else:
+            print(f"⚠️ Payment status non 'paid': {checkout_session.payment_status}")
+            print(f"   Redirect a pagamenti")
+            return redirect(url_for('pagamenti'))
 
-        except Exception as e:
-            print(f"Errore nel recupero della sessione: {e}")
+    except stripe.StripeError as e:
+        print(f"❌ ERRORE STRIPE:")
+        print(f"   Messaggio: {str(e)}")
+        print(f"   Tipo: {type(e).__name__}")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for('pagamenti'))
+        
+    except Exception as e:
+        print(f"❌ ERRORE GENERICO:")
+        print(f"   Messaggio: {str(e)}")
+        print(f"   Tipo: {type(e).__name__}")
+        import traceback
+        print("Stack trace completo:")
+        traceback.print_exc()
+        return redirect(url_for('pagamenti'))
 
+    print("⚠️ Fine funzione raggiunta senza render - redirect a pagamenti")
     return redirect(url_for('pagamenti'))
 
 
@@ -1485,6 +1536,7 @@ def get_sensor(current_user):
 
 ############################# DRONE #######################################
 
+
 """def avvioDrone(campo):
     home1_path = os.path.join(os.getcwd(), 'home1.py')
     try:
@@ -1498,7 +1550,7 @@ def get_sensor(current_user):
         print("Errore durante l'esecuzione di home1.py:", e)
         print("Stdout:", e.stdout)
         print("Stderr:", e.stderr)"""
-        
+
 ###################################################################################
 
 ############################ GESTIONE SENSORI #####################################
