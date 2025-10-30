@@ -14,18 +14,28 @@
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/terms.css" />
+  <link rel="stylesheet" href="../static/css/index.css" />
 
 </head>
 
 <body>
   <!-- NAVBAR -->
-  <nav class="navbar">
+  <nav class="navbar" role="navigation">
     <div class="navbar-top container">
       <a href="/" class="logo">Agrinnov</a>
+
+      <!-- Bottone hamburger -->
+      <button class="hamburger" id="hamburger" aria-label="Apri menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
-    <div class="navbar-menu container">
+
+    <!-- Menu principale -->
+    <div class="navbar-menu container" id="navbarMenu">
       <ul class="nav-links">
-        <li class="nav-link"><a href="/">Home</a></li>
+        <li class="nav-link"><a href="/#home">Home</a></li>
         <li class="nav-link"><a href="/#services">Servizi</a></li>
         <li class="nav-link"><a href="/#about">Chi Siamo</a></li>
         <li class="nav-link"><a href="/#products">Prodotti</a></li>
@@ -216,6 +226,9 @@
     </div>
   </footer>
   {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+  <!-- Script -->
+  <script src="../static/js/index.js" defer></script>
 </body>
 
 </html>

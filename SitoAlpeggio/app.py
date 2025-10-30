@@ -632,7 +632,6 @@ def token_required(f):
 
 ########################### RESET PASSWORD #####################################
 
-
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     message = ""

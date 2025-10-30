@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/supporto.css" />
   <link rel="stylesheet" href="../static/css/privacy.css" />
+  <link rel="stylesheet" href="../static/css/index.css" />
 
 </head>
 
@@ -23,11 +24,19 @@
   <nav class="navbar" role="navigation">
     <div class="navbar-top container">
       <a href="/" class="logo">Agrinnov</a>
+
+      <!-- Bottone hamburger -->
+      <button class="hamburger" id="hamburger" aria-label="Apri menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
 
-    <div class="navbar-menu container">
+    <!-- Menu principale -->
+    <div class="navbar-menu container" id="navbarMenu">
       <ul class="nav-links">
-        <li class="nav-link"><a href="/">Home</a></li>
+        <li class="nav-link"><a href="/#home">Home</a></li>
         <li class="nav-link"><a href="/#services">Servizi</a></li>
         <li class="nav-link"><a href="/#about">Chi Siamo</a></li>
         <li class="nav-link"><a href="/#products">Prodotti</a></li>
@@ -115,6 +124,7 @@
 
   <!-- Script -->
   <script src="../static/js/supporto.js" defer></script>
+  <script src="../static/js/index.js" defer></script>
 </body>
 
 </html>
