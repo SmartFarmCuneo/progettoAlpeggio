@@ -15,6 +15,7 @@ import random
 import math
 import re
 import stripe
+import sys
 from email.mime.text import MIMEText
 from flask_mail import Message, Mail
 
@@ -45,26 +46,26 @@ stripe.api_key = app.config['STRIPE_SECRET_KEY']
 # Database connection
 
 
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
         user=os.getenv("DB_USER", 'root'),
         password=os.getenv("DB_PASSWORD", ''),
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
 # se non hai il .env quella sopra funziona lo stesso
 
 
-"""def get_db_connection():
+def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 
 
 ###############################################################################
@@ -1600,22 +1601,22 @@ def get_sensor(current_user):
 
 ########################################################################################
 
-############################# DRONE #######################################
+############################# INIZIALIZZAZZIONE SERIALE #######################################
 
 
-"""def avvioDrone(campo):
-    home1_path = os.path.join(os.getcwd(), 'home1.py')
+def initSerial():
+    path = os.path.join(os.getcwd(), 'data_analysis_win.py')
+    
     try:
-        result = subprocess.run(['python', home1_path, str(
-            campo)], capture_output=True, text=True, check=True)
-        output = result.stdout.strip() if result.stdout else "(Nessun output ricevuto)"
-        print("Output ricevuto:", output)
-        if output == "sono connesso":
-            print("Messaggio ricevuto correttamente!")
-    except subprocess.CalledProcessError as e:
-        print("Errore durante l'esecuzione di home1.py:", e)
-        print("Stdout:", e.stdout)
-        print("Stderr:", e.stderr)"""
+        # Lancia il secondo script in una nuova console su Windows
+        subprocess.Popen(
+            [sys.executable, path],
+            creationflags=subprocess.CREATE_NEW_CONSOLE
+        )
+        print("Secondo script lanciato in nuova console. Entrambi girano.")
+    except Exception as e:
+        print("Errore durante l'esecuzione di data_analysis_win.py:", e)
+
 
 ###################################################################################
 
@@ -1637,6 +1638,8 @@ def associaSensori():
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
+    #ricerca del dispositivo
+    initSerial()
 
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
