@@ -843,6 +843,11 @@ def get_session_coordinate():
 def mappa(current_user):
     return render_template('mappa.html')
 
+@app.route('/gestione', methods=['GET', 'POST'])
+@token_required
+def gestione(current_user):
+    return render_template('gestione_sensori.html')
+
 
 @app.route("/api/campi-utente")
 @token_required
