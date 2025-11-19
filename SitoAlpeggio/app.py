@@ -843,11 +843,6 @@ def get_session_coordinate():
 def mappa(current_user):
     return render_template('mappa.html')
 
-@app.route('/gestione', methods=['GET', 'POST'])
-@token_required
-def gestione(current_user):
-    return render_template('gestione_sensori.html')
-
 
 @app.route("/api/campi-utente")
 @token_required
@@ -1478,7 +1473,7 @@ def supporto():
 
 #############################################################
 
-#################### GESTIONE DINAMICA DEI CAMPI E API###############################
+#################### GESTIONE DINAMICA DEI CAMPI e SENSORI - API ###############################
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -1579,30 +1574,39 @@ def get_comune():
 
     return jsonify({"comuni": comuni})
 
-# API PER SENSORI -- DA TESTARE
-
-
-@app.route("/api/get_sensor", methods=["GET"])
 def get_sensor(current_user):
+    print("inizio")
     conn = get_db_connection()
+
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT id FROM users WHERE username = %s", (current_user,))
-        id_user = cursor.fetchone()
+            "SELECT id_u FROM users WHERE username = %s", (current_user,))
+        result = cursor.fetchone()        
+        id_user = result['id_u']
 
     print(f"User ID: {id_user}")
 
-    # controllare se l'utente ha dei sensori associati oppure no
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT s.* FROM sensor s assoc_users_sens aus, WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens", (id_user,))
+            "SELECT s.posizione, s.Node_Id, s.stato_sens FROM sensor s, assoc_users_sens aus WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens", 
+            (id_user,))
         risultato = cursor.fetchall()
         info = ""
-        for i in range(0, len(risultato)):
-            info += str(risultato[i]) + "/"
-        return info
+        for i in range(len(risultato)):
+            info += str(risultato[i]["posizione"]) + "/" + str(risultato[i]["Node_Id"]) + "/" + str(risultato[i]["stato_sens"]) + "|"
+        print(f"Info: {info}")
+        if info == '':
+            return "nessuna info"
+        else:
+            return info
 
-    print(f"Info: {info}")
+# API PER SENSORI NELL'INIZIALIZZAZIONE
+@app.route("/api/get_sensor")
+@token_required
+def api_get_sensor(current_user):
+    print("chiamata")
+    info = get_sensor(current_user)
+    return jsonify(info)
 
 ########################################################################################
 
