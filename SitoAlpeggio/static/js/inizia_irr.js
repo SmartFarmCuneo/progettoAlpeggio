@@ -10,12 +10,12 @@ document.addEventListener("DOMContentLoaded", function () {
             .then((res) => res.json())
             .then((data) => {
                 console.log("Dati ricevuti dall'API:", data);
-                
+
                 if (data && data !== "nessuna info") {
                     // Parsing dei dati ricevuti
                     sensorsData = parseSensoriData(data);
                     console.log("Sensori parsati:", sensorsData);
-                    
+
                     if (sensorsData.length > 0) {
                         renderSensors();
                     } else {
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Funzione per convertire lo stato del sensore
     function getStatusInfo(statoSens) {
-        switch(statoSens) {
+        switch (statoSens) {
             case 'C':
                 return { status: 'disponibile', label: 'Disponibile' };
             case 'O':
@@ -49,21 +49,21 @@ document.addEventListener("DOMContentLoaded", function () {
     // Funzione per parsare i dati ricevuti dall'API
     function parseSensoriData(dataString) {
         const sensori = [];
-        
+
         // Rimuovi l'ultimo "|" se presente e dividi per "|"
         const sensoriArray = dataString.trim().split('|').filter(s => s.trim() !== '');
-        
+
         sensoriArray.forEach((sensoreStr, index) => {
             // Dividi per "/" per ottenere posizione, Node_Id e stato_sens
             const parti = sensoreStr.split('/');
-            
+
             if (parti.length >= 3) {
                 const posizione = parti[0].trim();
                 const nodeId = parti[1].trim();
                 const statoSens = parti[2].trim();
-                
+
                 const statusInfo = getStatusInfo(statoSens);
-                
+
                 sensori.push({
                     id: nodeId,
                     name: `Sensore ${nodeId}`,
@@ -74,19 +74,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
         });
-        
+
         return sensori;
     }
 
     // Genera le card dei sensori
     function renderSensors() {
         sensorsGrid.innerHTML = '';
-        
+
         if (!sensorsData || sensorsData.length === 0) {
             sensorsGrid.innerHTML = '<p style="text-align: center; color: #666;">Nessun sensore disponibile</p>';
             return;
         }
-        
+
         sensorsData.forEach(sensor => {
             const card = document.createElement('div');
             card.className = 'sensor-card';
@@ -158,16 +158,24 @@ document.addEventListener("DOMContentLoaded", function () {
     // Avvia irrigazione
     startBtn.addEventListener('click', () => {
         if (selectedSensors.size > 0) {
-            // Salva i sensori selezionati
             const sensorsArray = Array.from(selectedSensors);
-            sessionStorage.setItem('selectedSensors', JSON.stringify(sensorsArray));
+            const campoId = new URLSearchParams(window.location.search).get('campo_id');
 
-            // Ottieni campo_id dall'URL corrente
-            const urlParams = new URLSearchParams(window.location.search);
-            const campoId = urlParams.get('campo_id');
-
-            // Reindirizza alla pagina di monitoraggio con campo_id
-            window.location.href = `/avvia_irr?campo_id=${campoId}`;
+            fetch('/ini_irr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    campo_id: campoId,
+                    selectedSensors: sensorsArray
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Risposta dal server:", data);
+                    // Reindirizza alla pagina di monitoraggio
+                    window.location.href = `/avvia_irr?campo_id=${campoId}`;
+                })
+                .catch(err => console.error(err));
         }
     });
 
