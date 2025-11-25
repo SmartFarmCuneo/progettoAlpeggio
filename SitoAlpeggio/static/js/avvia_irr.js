@@ -139,6 +139,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Carica i campi dall'API
     caricaCampi();
+    
+    // Carica i sensori in attesa
+    caricaSensoriInAttesa();
 });
 
 // Gestione click sulle card di stato
@@ -148,3 +151,46 @@ document.querySelectorAll('.status-card').forEach(card => {
         this.classList.add('active');
     });
 });
+
+// Funzione per caricare i sensori in attesa dall'API
+function caricaSensoriInAttesa() {
+    fetch("/api/get_sensor_selected")
+        .then((res) => res.json())
+        .then((sensorIds) => {
+            // Trova il container dei sensori in attesa
+            const cardAttesa = document.querySelector('.status-card[data-status="attesa"]');
+            if (!cardAttesa) {
+                console.error('Card "In Attesa" non trovata');
+                return;
+            }
+
+            const sensorsListAttesa = cardAttesa.querySelector('.sensors-list');
+            if (!sensorsListAttesa) {
+                console.error('Lista sensori in attesa non trovata');
+                return;
+            }
+
+            // Pulisci il contenuto esistente
+            sensorsListAttesa.innerHTML = '';
+
+            // Aggiungi i sensori dalla risposta
+            if (Array.isArray(sensorIds) && sensorIds.length > 0) {
+                sensorIds.forEach(sensorId => {
+                    const sensorDiv = document.createElement('div');
+                    sensorDiv.className = 'sensor-item';
+                    sensorDiv.textContent = sensorId;
+                    sensorsListAttesa.appendChild(sensorDiv);
+                });
+            } else {
+                // Nessun sensore in attesa
+                const noSensorDiv = document.createElement('div');
+                noSensorDiv.className = 'sensor-item';
+                noSensorDiv.textContent = 'Nessun sensore in attesa';
+                noSensorDiv.style.opacity = '0.6';
+                sensorsListAttesa.appendChild(noSensorDiv);
+            }
+        })
+        .catch((error) => {
+            console.error('Errore nel caricamento dei sensori in attesa:', error);
+        });
+}

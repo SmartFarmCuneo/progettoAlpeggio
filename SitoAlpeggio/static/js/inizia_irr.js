@@ -171,6 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log("Prova")
                     console.log("Risposta dal server:", data);
                     // Reindirizza alla pagina di monitoraggio
                     window.location.href = `/avvia_irr?campo_id=${campoId}`;

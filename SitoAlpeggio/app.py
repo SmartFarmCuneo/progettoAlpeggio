@@ -1604,8 +1604,43 @@ def get_sensor(current_user):
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
-    print("chiamata")
     info = get_sensor(current_user)
+    return jsonify(info)
+
+def get_sensor_selected(): 
+    print("ID SESSION DATA: " + str(session['id_data']))
+    """
+    select Node_id
+    from assoc_sens_data
+    where id_data = session['id_data']
+    """
+    return selected_sensors # DA CAMBIARE MEGLIO FARE QUERY FILTRANDO PER LA RICERCA AVVIATA
+def get_sensor_acitive(): 
+    pass
+
+# API PER SENSORI SCELTI 
+@app.route("/api/get_sensor_selected")
+def api_get_sensor_selected():
+    print("sensor selected")
+    info = get_sensor_selected()
+    return jsonify(info)
+
+# API PER SENSORI ATTIVI NELL'IRRIGAZIONE
+@app.route("/api/get_sensor/active")
+def api_get_sensor_acitive():
+    info = get_sensor_selected()
+    return jsonify(info)
+
+# API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
+@app.route("/api/get_sensor/concluded")
+def api_get_sensor_concluded():
+    info = get_sensor_selected()
+    return jsonify(info)
+
+# API PER SENSORI SOSPESI NELL'IRRIGAZIONE
+@app.route("/api/get_sensor/suspended")
+def api_get_sensor_suspended():
+    info = get_sensor_selected()
     return jsonify(info)
 
 ########################################################################################
@@ -1694,6 +1729,7 @@ def avviaIrrigazione(current_user):
     )
     conn.commit()
     last_id = cursor.lastrowid #estraggo l'id della registrazione dell'irrigazione appena inserita
+    session["id_data"] = last_id
     #print("ID appena inserito:", last_id)
     cursor.close()
     conn.close()
