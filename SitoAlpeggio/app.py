@@ -57,7 +57,6 @@ def get_db_connection():
 
 # se non hai il .env quella sopra funziona lo stesso
 
-
 """
 def get_db_connection():
     return pymysql.connect(
@@ -66,8 +65,7 @@ def get_db_connection():
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )
-"""
+    )"""
 
 
 ###############################################################################
@@ -1765,8 +1763,6 @@ def gestione_sensori(current_user):
     return render_template('gestione_sensori.html', user=user, sensori=sensori)
 
 # API PER SENSORI NELL'INIZIALIZZAZIONE
-
-
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
@@ -1774,13 +1770,21 @@ def api_get_sensor(current_user):
     return jsonify(info)
 
 def get_sensor_selected(): 
-    print("ID SESSION DATA: " + str(session['id_data']))
-    """
-    select Node_id
-    from assoc_sens_data
-    where id_data = session['id_data']
-    """
-    return selected_sensors # DA CAMBIARE MEGLIO FARE QUERY FILTRANDO PER LA RICERCA AVVIATA
+    #print("ID SESSION DATA: " + str(session['id_data']))
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT a.Node_id FROM assoc_sens_data a "
+        "JOIN sensor s ON a.id_sens = s.id_sens AND a.Node_id = s.Node_id "
+        "WHERE a.id_data = %s AND s.stato_sens = 'O'", 
+        (session['id_data'],) 
+    )
+    row = cursor.fetchall() 
+    sens = [item['Node_id'] for item in row]
+    cursor.close()
+    conn.close()
+    return sens 
+
 def get_sensor_acitive(): 
     pass
 
@@ -1839,7 +1843,7 @@ def sensori():
 
 ############################ AZIONI IRRIGAZIONE #########################################
 
-global selected_sensors
+global selected_sensors ############# DA TOGLIERE ###################
 
 @app.route('/assoc_gestione_sensori', methods=['GET', 'POST'])
 def associaSensori():
