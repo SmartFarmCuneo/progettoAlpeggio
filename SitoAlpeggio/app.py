@@ -46,18 +46,19 @@ stripe.api_key = app.config['STRIPE_SECRET_KEY']
 # Database connection
 
 
-"""def get_db_connection():
+def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
         user=os.getenv("DB_USER", 'root'),
         password=os.getenv("DB_PASSWORD", ''),
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 
 # se non hai il .env quella sopra funziona lo stesso
 
 
+"""
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
@@ -66,6 +67,7 @@ def get_db_connection():
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )
+"""
 
 
 ###############################################################################
@@ -286,11 +288,13 @@ def get_user_subscription_info(username):
     try:
         with conn.cursor() as cursor:
             # 1) Leggiamo direttamente la riga utente
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            cursor.execute(
+                "SELECT * FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
             if not user:
                 # nessun utente trovato
-                print(f"[get_user_subscription_info] user='{username}' non trovato nel DB")
+                print(
+                    f"[get_user_subscription_info] user='{username}' non trovato nel DB")
                 return None
 
             # 2) Normalizziamo il valore del piano per evitare mismatch (trim + lower + fallback 'free')
@@ -309,16 +313,19 @@ def get_user_subscription_info(username):
                 )
                 plan = cursor.fetchone()
             except Exception as e:
-                print(f"[get_user_subscription_info] errore recupero plan_limits per '{normalized_plan}': {e}")
+                print(
+                    f"[get_user_subscription_info] errore recupero plan_limits per '{normalized_plan}': {e}")
                 plan = None
 
             # 4) Calcoliamo il numero corrente di campi dell'utente
             try:
-                cursor.execute("SELECT COUNT(*) AS cnt FROM fields WHERE id_user = %s", (user['id_u'],))
+                cursor.execute(
+                    "SELECT COUNT(*) AS cnt FROM fields WHERE id_user = %s", (user['id_u'],))
                 cnt_row = cursor.fetchone()
                 current_fields = cnt_row['cnt'] if cnt_row else 0
             except Exception as e:
-                print(f"[get_user_subscription_info] errore conteggio fields per id_user={user.get('id_u')}: {e}")
+                print(
+                    f"[get_user_subscription_info] errore conteggio fields per id_user={user.get('id_u')}: {e}")
                 current_fields = 0
 
             # 5) Costruiamo il risultato coerente
@@ -337,7 +344,8 @@ def get_user_subscription_info(username):
             }
 
             # log utile per debug
-            print(f"[get_user_subscription_info] user='{username}' raw_plan='{raw_plan}' normalized='{normalized_plan}' result_keys={list(result.keys())}")
+            print(
+                f"[get_user_subscription_info] user='{username}' raw_plan='{raw_plan}' normalized='{normalized_plan}' result_keys={list(result.keys())}")
 
             return result
 
@@ -632,6 +640,7 @@ def token_required(f):
 ################################################################################
 
 ########################### RESET PASSWORD #####################################
+
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
@@ -1040,7 +1049,8 @@ def api_get_plans(current_user):
             current_plan = "free"
 
     # debug log (puoi togliere in produzione)
-    print(f"[DEBUG] /api/plans user={current_user} raw_plan={raw_plan} normalized={current_plan}")
+    print(
+        f"[DEBUG] /api/plans user={current_user} raw_plan={raw_plan} normalized={current_plan}")
 
     # ritorna tutto, incluso free
     return jsonify({
@@ -1167,7 +1177,7 @@ def payment_success(current_user):
 
                     if user:
                         user_id = user['id_u']
-                        
+
                         save_payment_history(
                             user_id,
                             checkout_session.payment_intent,
@@ -1176,7 +1186,7 @@ def payment_success(current_user):
                             plan_name,
                             'paid'
                         )
-                    
+
             except Exception as db_error:
                 import traceback
                 traceback.print_exc()
@@ -1199,7 +1209,6 @@ def payment_success(current_user):
         print("Stack trace completo:")
         traceback.print_exc()
         return redirect(url_for('pagamenti'))
-
 
 
 @app.route('/payment-cancel')
@@ -1574,6 +1583,7 @@ def get_comune():
 
     return jsonify({"comuni": comuni})
 
+
 def get_sensor(current_user):
     print("inizio")
     conn = get_db_connection()
@@ -1581,26 +1591,182 @@ def get_sensor(current_user):
     with conn.cursor() as cursor:
         cursor.execute(
             "SELECT id_u FROM users WHERE username = %s", (current_user,))
-        result = cursor.fetchone()        
+        result = cursor.fetchone()
         id_user = result['id_u']
 
     print(f"User ID: {id_user}")
 
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT s.posizione, s.Node_Id, s.stato_sens FROM sensor s, assoc_users_sens aus WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens", 
+            "SELECT s.posizione, s.Node_Id, s.stato_sens FROM sensor s, assoc_users_sens aus WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens",
             (id_user,))
         risultato = cursor.fetchall()
         info = ""
         for i in range(len(risultato)):
-            info += str(risultato[i]["posizione"]) + "/" + str(risultato[i]["Node_Id"]) + "/" + str(risultato[i]["stato_sens"]) + "|"
+            info += str(risultato[i]["posizione"]) + "/" + str(risultato[i]
+                                                               ["Node_Id"]) + "/" + str(risultato[i]["stato_sens"]) + "|"
         print(f"Info: {info}")
         if info == '':
             return "nessuna info"
         else:
             return info
 
+
+@app.route('/gestione_sensori', methods=['POST', 'GET'])
+@token_required
+def gestione_sensori(current_user):
+    conn = get_db_connection()
+    user = None
+    sensori = []
+
+    try:
+        with conn.cursor() as cursor:
+            # Recupera i dati dell'utente
+            cursor.execute(
+                "SELECT * FROM users WHERE username = %s", (current_user,))
+            user = cursor.fetchone()
+
+            if not user:
+                return redirect(url_for('login'))
+
+            user_id = user['id_u']  # FIX: era user['id'], ora è user['id_u']
+
+            if request.method == 'POST':
+                action = request.form.get('action')
+
+                # AGGIUNGI SENSORE
+                if action == 'aggiungi':
+                    id_sensore = request.form.get('id_sensore', '').strip()
+                    nome_sensore = request.form.get('nome_sensore', '').strip()
+
+                    # Validazione input
+                    if not id_sensore or not nome_sensore:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='invalid')
+
+                    # Verifica se l'ID sensore esiste già per questo utente
+                    cursor.execute("""
+                        SELECT id_sensore FROM sensori 
+                        WHERE id_sensore = %s AND id_utente = %s
+                    """, (id_sensore, user_id))
+                    existing_sensor = cursor.fetchone()
+
+                    if existing_sensor:
+                        # Recupera i sensori prima di ritornare
+                        cursor.execute("""
+                            SELECT id_sensore, nome_sensore, data_registrazione
+                            FROM sensori
+                            WHERE id_utente = %s
+                            ORDER BY data_registrazione DESC
+                        """, (user_id,))
+                        sensori = cursor.fetchall()
+
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='duplicate')
+
+                    # Inserisci il nuovo sensore
+                    cursor.execute("""
+                        INSERT INTO sensori (id_sensore, nome_sensore, id_utente, data_registrazione)
+                        VALUES (%s, %s, %s, NOW())
+                    """, (id_sensore, nome_sensore, user_id))
+
+                    conn.commit()
+
+                    # Recupera la lista aggiornata dei sensori
+                    cursor.execute("""
+                        SELECT id_sensore, nome_sensore, data_registrazione
+                        FROM sensori
+                        WHERE id_utente = %s
+                        ORDER BY data_registrazione DESC
+                    """, (user_id,))
+                    sensori = cursor.fetchall()
+
+                    return render_template('gestione_sensori.html',
+                                           user=user,
+                                           sensori=sensori,
+                                           success='added')
+
+                # ELIMINA SENSORE
+                elif action == 'elimina':
+                    id_sensore = request.form.get('id_sensore', '').strip()
+
+                    if not id_sensore:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='invalid')
+
+                    # Elimina solo se il sensore appartiene all'utente
+                    cursor.execute("""
+                        DELETE FROM sensori 
+                        WHERE id_sensore = %s AND id_utente = %s
+                    """, (id_sensore, user_id))
+
+                    affected_rows = cursor.rowcount
+                    conn.commit()
+
+                    # Recupera la lista aggiornata dei sensori
+                    cursor.execute("""
+                        SELECT id_sensore, nome_sensore, data_registrazione
+                        FROM sensori
+                        WHERE id_utente = %s
+                        ORDER BY data_registrazione DESC
+                    """, (user_id,))
+                    sensori = cursor.fetchall()
+
+                    if affected_rows > 0:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               success='deleted')
+                    else:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='not_found')
+
+            # GET request - Recupera tutti i sensori dell'utente
+            cursor.execute("""
+                SELECT id_sensore, nome_sensore, data_registrazione
+                FROM sensori
+                WHERE id_utente = %s
+                ORDER BY data_registrazione DESC
+            """, (user_id,))
+
+            sensori = cursor.fetchall()
+
+    except Exception as e:
+        print(f"Errore nella gestione sensori: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # In caso di errore, prova comunque a recuperare i dati dell'utente
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM users WHERE username = %s", (current_user,))
+                user = cursor.fetchone()
+        except:
+            pass
+
+        return render_template('gestione_sensori.html',
+                               user=user,
+                               sensori=[],
+                               error='generic')
+
+    finally:
+        conn.close()
+
+    # Render del template con i dati
+    return render_template('gestione_sensori.html', user=user, sensori=sensori)
+
 # API PER SENSORI NELL'INIZIALIZZAZIONE
+
+
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
@@ -1615,7 +1781,7 @@ def api_get_sensor(current_user):
 
 def initSerial():
     path = os.path.join(os.getcwd(), 'data_analysis_win.py')
-    
+
     try:
         # Lancia il secondo script in una nuova console su Windows
         subprocess.Popen(
@@ -1634,20 +1800,20 @@ def initSerial():
 
 @app.route('/sensori', methods=['GET', 'POST'])
 def sensori():
-    return render_template('assoc_gest_sens.html')
+    return render_template('assoc_gestione_sensori.html')
 
 ############################ AZIONI IRRIGAZIONE #########################################
 
 
-@app.route('/assoc_gest_sens', methods=['GET', 'POST'])
+@app.route('/assoc_gestione_sensori', methods=['GET', 'POST'])
 def associaSensori():
-    return render_template('assoc_gest_sens.html')
+    return render_template('assoc_gestione_sensori.html')
 
 
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
-    #ricerca del dispositivo
+    # ricerca del dispositivo
     initSerial()
 
     return render_template('inizializzazione_irr.html', campo_id=campo_id)

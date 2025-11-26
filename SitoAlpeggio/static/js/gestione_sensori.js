@@ -1,57 +1,95 @@
-// Funzionalità JavaScript per la modifica del profilo
 document.addEventListener("DOMContentLoaded", function () {
-    const editBtn = document.getElementById("edit-btn");
-    const cancelBtn = document.getElementById("cancel-btn");
+    const addSensorBtn = document.getElementById("add-sensor-btn");
+    const modal = document.getElementById("addSensorModal");
+    const closeModal = document.querySelector(".close");
+    const cancelModalBtn = document.getElementById("cancel-modal-btn");
     const successAlert = document.getElementById("success-alert");
-    const profileForm = document.getElementById("profile-form");
-    const actionInput = document.getElementById("action-salvataggio");
-    const formInputs = document.querySelectorAll(
-        '#profile-form input:not([type="hidden"]), #profile-form select'
-    );
-    const originalValues = {};
+    const errorAlert = document.getElementById("error-alert");
+    const addSensorForm = document.getElementById("add-sensor-form");
 
-    // Salva i valori originali
-    formInputs.forEach((input) => {
-        originalValues[input.id] = input.value;
+    // Apri modal
+    addSensorBtn.addEventListener("click", function () {
+        modal.style.display = "block";
     });
 
-    // Attiva modalità modifica
-    editBtn.addEventListener("click", function () {
-        if (editBtn.value === "Modifica") {
-            editBtn.textContent = "Salva";
-            editBtn.value = "Salva";
-            editBtn.classList.add("save");
-            cancelBtn.style.display = "inline-block";
-            successAlert.style.display = "none";
-        } else {
-            // Salva le modifiche
-            actionInput.value = "Salva"; // Imposta il valore per l'azione di salvataggio
-            profileForm.submit(); // Invia il form
+    // Chiudi modal con X
+    closeModal.addEventListener("click", function () {
+        modal.style.display = "none";
+        addSensorForm.reset();
+    });
+
+    // Chiudi modal con pulsante Annulla
+    cancelModalBtn.addEventListener("click", function () {
+        modal.style.display = "none";
+        addSensorForm.reset();
+    });
+
+    // Chiudi modal cliccando fuori
+    window.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+            addSensorForm.reset();
         }
     });
 
-    // Annulla modifiche
-    cancelBtn.addEventListener("click", function () {
-        formInputs.forEach((input) => {
-            input.value = originalValues[input.id]; // Ripristina valori originali
-            input.readOnly = true;
-            if (input.tagName === "SELECT") {
-                input.disabled = true;
-            }
-        });
-
-        editBtn.textContent = "Modifica";
-        editBtn.classList.remove("save");
-        cancelBtn.style.display = "none";
-        successAlert.style.display = "none";
-    });
-
-    // Se c'è un parametro nell'URL che indica un salvataggio avvenuto, mostra il messaggio di successo
+    // Gestione messaggi di successo/errore dall'URL
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has("saved") && urlParams.get("saved") === "true") {
+
+    if (urlParams.has("success")) {
+        const successType = urlParams.get("success");
+        let message = "Operazione completata con successo!";
+
+        if (successType === "added") {
+            message = "Sensore aggiunto con successo!";
+        } else if (successType === "deleted") {
+            message = "Sensore eliminato con successo!";
+        }
+
+        successAlert.textContent = message;
         successAlert.style.display = "block";
+
         setTimeout(() => {
             successAlert.style.display = "none";
         }, 3000);
+
+        // Rimuovi il parametro dall'URL senza ricaricare la pagina
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    if (urlParams.has("error")) {
+        const errorType = urlParams.get("error");
+        let message = "Si è verificato un errore. Riprova.";
+
+        if (errorType === "duplicate") {
+            message = "Errore: ID sensore già esistente!";
+        } else if (errorType === "invalid") {
+            message = "Errore: Dati non validi!";
+        }
+
+        errorAlert.textContent = message;
+        errorAlert.style.display = "block";
+
+        setTimeout(() => {
+            errorAlert.style.display = "none";
+        }, 4000);
+
+        // Rimuovi il parametro dall'URL senza ricaricare la pagina
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Validazione form prima dell'invio
+    addSensorForm.addEventListener("submit", function (e) {
+        const idSensore = document.getElementById("id_sensore").value.trim();
+        const nomeSensore = document.getElementById("nome_sensore").value.trim();
+
+        if (!idSensore || !nomeSensore) {
+            e.preventDefault();
+            errorAlert.textContent = "Tutti i campi sono obbligatori!";
+            errorAlert.style.display = "block";
+
+            setTimeout(() => {
+                errorAlert.style.display = "none";
+            }, 3000);
+        }
+    });
 });
