@@ -1770,8 +1770,43 @@ def gestione_sensori(current_user):
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
-    print("chiamata")
     info = get_sensor(current_user)
+    return jsonify(info)
+
+def get_sensor_selected(): 
+    print("ID SESSION DATA: " + str(session['id_data']))
+    """
+    select Node_id
+    from assoc_sens_data
+    where id_data = session['id_data']
+    """
+    return selected_sensors # DA CAMBIARE MEGLIO FARE QUERY FILTRANDO PER LA RICERCA AVVIATA
+def get_sensor_acitive(): 
+    pass
+
+# API PER SENSORI SCELTI 
+@app.route("/api/get_sensor_selected")
+def api_get_sensor_selected():
+    print("sensor selected")
+    info = get_sensor_selected()
+    return jsonify(info)
+
+# API PER SENSORI ATTIVI NELL'IRRIGAZIONE
+@app.route("/api/get_sensor/active")
+def api_get_sensor_acitive():
+    info = get_sensor_selected()
+    return jsonify(info)
+
+# API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
+@app.route("/api/get_sensor/concluded")
+def api_get_sensor_concluded():
+    info = get_sensor_selected()
+    return jsonify(info)
+
+# API PER SENSORI SOSPESI NELL'IRRIGAZIONE
+@app.route("/api/get_sensor/suspended")
+def api_get_sensor_suspended():
+    info = get_sensor_selected()
     return jsonify(info)
 
 ########################################################################################
@@ -1804,26 +1839,51 @@ def sensori():
 
 ############################ AZIONI IRRIGAZIONE #########################################
 
+global selected_sensors
 
 @app.route('/assoc_gestione_sensori', methods=['GET', 'POST'])
 def associaSensori():
-    return render_template('assoc_gestione_sensori.html')
-
+    return render_template('assoc_gest_sens.html')
 
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
-    campo_id = request.args.get('campo_id')
-    # ricerca del dispositivo
-    initSerial()
+    global selected_sensors
 
+    if request.method == 'POST':
+        data = request.get_json()
+        campo_id = data.get('campo_id')
+        selected_sensors = data.get('selectedSensors', [])
+        #print("Sensori selezionati:", selected_sensors)
+
+        # aggiorna lo stato dei sensori da disponibili a operativi
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        #utilizzo l'id univoco del sensore
+        for i in selected_sensors:
+            cursor.execute(
+                "UPDATE sensor SET stato_sens = 'O' WHERE Node_ID = %s",
+                (i)
+            )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        #API per sensori selezionati
+        return jsonify({"status": "ok", "selected_sensors": selected_sensors})
+        
+    campo_id = request.args.get('campo_id')
+    #initSerial() --> init dell'exe
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 @token_required
 def avviaIrrigazione(current_user):
+    global selected_sensors
+
     campo_id = request.args.get('campo_id')
     print(f"id: campo{campo_id}")  # id corretto sul DB
+    print(f"Sensori utilizzati: {selected_sensors}")
 
     # avvio della irrigazione
     conn = get_db_connection()
@@ -1834,9 +1894,45 @@ def avviaIrrigazione(current_user):
         (session['id'], campo_id)
     )
     conn.commit()
+    last_id = cursor.lastrowid #estraggo l'id della registrazione dell'irrigazione appena inserita
+    session["id_data"] = last_id
+    #print("ID appena inserito:", last_id)
     cursor.close()
     conn.close()
 
+    #ricerco il l'ID "nostro" dei sensori confrontandolo con quello univoco del sensore
+    result_ids = []
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    for k in selected_sensors:
+        cursor.execute(
+            "SELECT id_sens FROM sensor WHERE Node_ID = %s",
+            (k,) 
+        )
+        row = cursor.fetchone() 
+        print(f"Riga: {row}")
+        if row:
+            result_ids.append(row['id_sens'])  
+    cursor.close()
+    conn.close()
+    print(f"ID sensori utilizzati: {result_ids}")
+
+    #inserisco i dati dell' avvio alla registrazione all'interno della tabella assoc_sens_data per ogni sensore selezionato
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    with conn:
+        for our_id, node_id in zip(result_ids, selected_sensors):
+            print("MIO ID:" + str(our_id))
+            print("NODE ID: " + str(node_id))
+            cursor.execute(
+                "INSERT INTO assoc_sens_data "
+                "(id_data, id_sens, date_att_sens, date_conc_sens, Node_id, idx, Bat, Humidity, Temperature, ADC) "
+                "VALUES (%s, %s, %s, NULL, %s, NULL, NULL, NULL, NULL, NULL)",
+                (last_id, our_id, datetime.datetime.now(), node_id)
+            )
+            conn.commit()
+        cursor.close()
+    
     return render_template('avvia_irrigazione.html', campo_id=campo_id)
 
 
