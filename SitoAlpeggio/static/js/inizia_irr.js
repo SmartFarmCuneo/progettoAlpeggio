@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("Dati ricevuti dall'API:", data);
 
                 if (data && data !== "nessuna info") {
-                    // Parsing dei dati ricevuti
                     sensorsData = parseSensoriData(data);
                     console.log("Sensori parsati:", sensorsData);
 
@@ -32,7 +31,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Funzione per convertire lo stato del sensore
     function getStatusInfo(statoSens) {
         switch (statoSens) {
             case 'C':
@@ -46,22 +44,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Funzione per parsare i dati ricevuti dall'API
     function parseSensoriData(dataString) {
         const sensori = [];
-
-        // Rimuovi l'ultimo "|" se presente e dividi per "|"
         const sensoriArray = dataString.trim().split('|').filter(s => s.trim() !== '');
 
         sensoriArray.forEach((sensoreStr, index) => {
-            // Dividi per "/" per ottenere posizione, Node_Id e stato_sens
             const parti = sensoreStr.split('/');
 
             if (parti.length >= 3) {
                 const posizione = parti[0].trim();
                 const nodeId = parti[1].trim();
                 const statoSens = parti[2].trim();
-
                 const statusInfo = getStatusInfo(statoSens);
 
                 sensori.push({
@@ -78,7 +71,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return sensori;
     }
 
-    // Genera le card dei sensori
     function renderSensors() {
         sensorsGrid.innerHTML = '';
 
@@ -92,7 +84,6 @@ document.addEventListener("DOMContentLoaded", function () {
             card.className = 'sensor-card';
             card.dataset.id = sensor.id;
 
-            // Disabilita sensori non disponibili
             if (sensor.status !== 'disponibile') {
                 card.style.opacity = '0.6';
                 card.style.cursor = 'not-allowed';
@@ -107,7 +98,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 </span>
               `;
 
-            // Aggiungi evento click solo se disponibile
             if (sensor.status === 'disponibile') {
                 card.addEventListener('click', () => toggleSensor(sensor.id, card));
             }
@@ -116,7 +106,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Toggle selezione sensore
     function toggleSensor(id, card) {
         if (selectedSensors.has(id)) {
             selectedSensors.delete(id);
@@ -128,13 +117,11 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI();
     }
 
-    // Aggiorna UI
     function updateUI() {
         selectedCount.textContent = selectedSensors.size;
         startBtn.disabled = selectedSensors.size === 0;
     }
 
-    // Seleziona tutti i sensori disponibili
     document.getElementById('select-all').addEventListener('click', () => {
         sensorsData.forEach(sensor => {
             if (sensor.status === 'disponibile') {
@@ -146,7 +133,6 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI();
     });
 
-    // Deseleziona tutti
     document.getElementById('deselect-all').addEventListener('click', () => {
         selectedSensors.clear();
         document.querySelectorAll('.sensor-card').forEach(card => {
@@ -155,9 +141,88 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI();
     });
 
-    // Avvia irrigazione
-    startBtn.addEventListener('click', () => {
+    // Funzione per verificare lo stato della sessione
+    function verificaSessione() {
+        return fetch('/api/get_session_data')
+            .then(response => response.json())
+            .then(data => {
+                console.log("Stato sessione:", data);
+                return data;
+            })
+            .catch(error => {
+                console.error("Errore nella verifica della sessione:", error);
+                return null;
+            });
+    }
+
+    // Funzione per mostrare il popup
+    function mostraPopup(messaggio) {
+        // Crea overlay scuro
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        `;
+
+        // Crea popup
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            text-align: center;
+        `;
+
+        popup.innerHTML = `
+            <h3 style="margin-bottom: 15px; color: #ff6b6b;">Attenzione</h3>
+            <p style="margin-bottom: 20px; color: #333;">${messaggio}</p>
+            <button id="close-popup" style="
+                background: var(--primary, #4CAF50);
+                color: white;
+                border: none;
+                padding: 10px 30px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            ">OK</button>
+        `;
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Chiudi popup al click
+        document.getElementById('close-popup').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+        });
+    }
+
+    // Avvia irrigazione con verifica
+    startBtn.addEventListener('click', async () => {
         if (selectedSensors.size > 0) {
+            // Verifica lo stato della sessione prima di procedere
+            const sessionData = await verificaSessione();
+            
+            if (sessionData === "Stop") {
+                mostraPopup("Irrigazione già avviata. Non è possibile avviare una nuova irrigazione mentre una è già in corso.");
+                return;
+            }
+            
+            if (sessionData !== "Go") {
+                mostraPopup("Errore nella verifica dello stato. Riprova più tardi.");
+                return;
+            }
+
+            // Se sessionData è "Go", procedi con l'avvio
             const sensorsArray = Array.from(selectedSensors);
             const campoId = new URLSearchParams(window.location.search).get('campo_id');
 
@@ -171,15 +236,15 @@ document.addEventListener("DOMContentLoaded", function () {
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Prova")
                     console.log("Risposta dal server:", data);
-                    // Reindirizza alla pagina di monitoraggio
                     window.location.href = `/avvia_irr?campo_id=${campoId}`;
                 })
-                .catch(err => console.error(err));
+                .catch(err => {
+                    console.error(err);
+                    mostraPopup("Errore durante l'avvio dell'irrigazione. Riprova.");
+                });
         }
     });
 
-    // Carica i sensori all'avvio
     caricaSensori();
 });

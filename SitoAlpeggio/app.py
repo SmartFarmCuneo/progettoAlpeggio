@@ -57,8 +57,7 @@ def get_db_connection():
 
 # se non hai il .env quella sopra funziona lo stesso
 
-"""
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
@@ -1769,15 +1768,14 @@ def api_get_sensor(current_user):
     info = get_sensor(current_user)
     return jsonify(info)
 
-def get_sensor_selected(): 
-    #print("ID SESSION DATA: " + str(session['id_data']))
+def get_sensor_selected(state): 
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
         "SELECT a.Node_id FROM assoc_sens_data a "
         "JOIN sensor s ON a.id_sens = s.id_sens AND a.Node_id = s.Node_id "
-        "WHERE a.id_data = %s AND s.stato_sens = 'O'", 
-        (session['id_data'],) 
+        "WHERE a.id_data = %s AND s.stato_sens = %s", 
+        (session['id_data'], state) 
     )
     row = cursor.fetchall() 
     sens = [item['Node_id'] for item in row]
@@ -1785,32 +1783,44 @@ def get_sensor_selected():
     conn.close()
     return sens 
 
-def get_sensor_acitive(): 
-    pass
-
-# API PER SENSORI SCELTI 
+def get_state_data(): 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT data_fine_irr FROM data WHERE id_ricerca = %s", 
+        (session['id_data'], )
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    print("Fine irr: " + str(row['data_fine_irr']))
+    if str(row['data_fine_irr']) == 'None': return 'Stop' 
+    else: return 'Go'
+    
+# API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
 @app.route("/api/get_sensor_selected")
 def api_get_sensor_selected():
-    print("sensor selected")
-    info = get_sensor_selected()
-    return jsonify(info)
-
-# API PER SENSORI ATTIVI NELL'IRRIGAZIONE
-@app.route("/api/get_sensor/active")
-def api_get_sensor_acitive():
-    info = get_sensor_selected()
+    info = get_sensor_selected('O')
     return jsonify(info)
 
 # API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
 @app.route("/api/get_sensor/concluded")
 def api_get_sensor_concluded():
-    info = get_sensor_selected()
+    info = get_sensor_selected('C')
     return jsonify(info)
 
 # API PER SENSORI SOSPESI NELL'IRRIGAZIONE
 @app.route("/api/get_sensor/suspended")
 def api_get_sensor_suspended():
-    info = get_sensor_selected()
+    info = get_sensor_selected('S')
+    return jsonify(info)
+
+# API PER SESSIONE DI IRRIGAZIONE
+@app.route("/api/get_session_data")
+def api_get_session_data():
+    info = get_state_data()
+    print("INFO: " + str(info))
+    print("Session: " + str(session['id_data']))
     return jsonify(info)
 
 ########################################################################################
@@ -1900,7 +1910,8 @@ def avviaIrrigazione(current_user):
     conn.commit()
     last_id = cursor.lastrowid #estraggo l'id della registrazione dell'irrigazione appena inserita
     session["id_data"] = last_id
-    #print("ID appena inserito:", last_id)
+    print("ID appena inserito:", last_id)
+    print("Sess1: "+ str(session['id_data']))
     cursor.close()
     conn.close()
 

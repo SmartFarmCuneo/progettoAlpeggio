@@ -115,17 +115,17 @@ document.addEventListener("DOMContentLoaded", function () {
             // Chiama l'API per ottenere le coordinate dalla sessione
             const response = await fetch('/api/get_session_coordinate');
             const coordinateData = await response.json();
-            
+
             if (campoIdSelezionato) {
                 // Trova il bottone del campo con l'ID corrispondente
                 const campoButton = document.querySelector(`[data-campo-id="${campoIdSelezionato}"]`);
-                
+
                 if (campoButton) {
                     // Se ci sono coordinate dalla sessione, usale
                     if (coordinateData && coordinateData.coordinate) {
                         campoButton.dataset.coordinate = coordinateData.coordinate;
                     }
-                    
+
                     // Seleziona automaticamente il campo
                     selezionaCampo(campoButton, dettagliArea);
                 } else {
@@ -137,11 +137,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Carica i campi dall'API
     caricaCampi();
-    
-    // Carica i sensori in attesa
+
     caricaSensoriInAttesa();
+    caricaSensoriConclusi();
+    caricaSensoriSospesi();
 });
 
 // Gestione click sulle card di stato
@@ -192,5 +192,82 @@ function caricaSensoriInAttesa() {
         })
         .catch((error) => {
             console.error('Errore nel caricamento dei sensori in attesa:', error);
+        });
+}
+
+function caricaSensoriConclusi() {
+    fetch("/api/get_sensor/concluded")
+        .then((res) => res.json())
+        .then((sensorIds) => {
+            const cardConclusi = document.querySelector('.status-card[data-status="conclusi"]');
+            if (!cardConclusi) {
+                console.error('Card "Conclusi" non trovata');
+                return;
+            }
+
+            const sensorsListConclusi = cardConclusi.querySelector('.sensors-list');
+            if (!sensorsListConclusi) {
+                console.error('Lista sensori conclusi non trovata');
+                return;
+            }
+
+            sensorsListConclusi.innerHTML = '';
+
+            if (Array.isArray(sensorIds) && sensorIds.length > 0) {
+                sensorIds.forEach(sensorId => {
+                    const sensorDiv = document.createElement('div');
+                    sensorDiv.className = 'sensor-item';
+                    sensorDiv.textContent = sensorId;
+                    sensorsListConclusi.appendChild(sensorDiv);
+                });
+            } else {
+                const noSensorDiv = document.createElement('div');
+                noSensorDiv.className = 'sensor-item';
+                noSensorDiv.textContent = 'Nessun sensore concluso';
+                noSensorDiv.style.opacity = '0.6';
+                sensorsListConclusi.appendChild(noSensorDiv);
+            }
+        })
+        .catch((error) => {
+            console.error('Errore nel caricamento dei sensori conclusi:', error);
+        });
+}
+
+// Funzione per caricare i sensori sospesi dall'API
+function caricaSensoriSospesi() {
+    fetch("/api/get_sensor/suspended")
+        .then((res) => res.json())
+        .then((sensorIds) => {
+            const cardSospesi = document.querySelector('.status-card[data-status="sospesi"]');
+            if (!cardSospesi) {
+                console.error('Card "Sospesi" non trovata');
+                return;
+            }
+
+            const sensorsListSospesi = cardSospesi.querySelector('.sensors-list');
+            if (!sensorsListSospesi) {
+                console.error('Lista sensori sospesi non trovata');
+                return;
+            }
+
+            sensorsListSospesi.innerHTML = '';
+
+            if (Array.isArray(sensorIds) && sensorIds.length > 0) {
+                sensorIds.forEach(sensorId => {
+                    const sensorDiv = document.createElement('div');
+                    sensorDiv.className = 'sensor-item';
+                    sensorDiv.textContent = sensorId;
+                    sensorsListSospesi.appendChild(sensorDiv);
+                });
+            } else {
+                const noSensorDiv = document.createElement('div');
+                noSensorDiv.className = 'sensor-item';
+                noSensorDiv.textContent = 'Nessun sensore sospeso';
+                noSensorDiv.style.opacity = '0.6';
+                sensorsListSospesi.appendChild(noSensorDiv);
+            }
+        })
+        .catch((error) => {
+            console.error('Errore nel caricamento dei sensori sospesi:', error);
         });
 }
