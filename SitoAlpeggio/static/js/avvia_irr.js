@@ -157,43 +157,62 @@ function caricaSensoriInAttesa() {
     fetch("/api/get_sensor_selected")
         .then((res) => res.json())
         .then((sensorIds) => {
-            // Trova il container dei sensori in attesa
             const cardAttesa = document.querySelector('.status-card[data-status="attesa"]');
-            if (!cardAttesa) {
-                console.error('Card "In Attesa" non trovata');
-                return;
-            }
-
             const sensorsListAttesa = cardAttesa.querySelector('.sensors-list');
-            if (!sensorsListAttesa) {
-                console.error('Lista sensori in attesa non trovata');
-                return;
-            }
 
-            // Pulisci il contenuto esistente
             sensorsListAttesa.innerHTML = '';
 
-            // Aggiungi i sensori dalla risposta
             if (Array.isArray(sensorIds) && sensorIds.length > 0) {
                 sensorIds.forEach(sensorId => {
-                    const sensorDiv = document.createElement('div');
-                    sensorDiv.className = 'sensor-item';
-                    sensorDiv.textContent = sensorId;
-                    sensorsListAttesa.appendChild(sensorDiv);
+
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "sensor-item sensor-row";
+                    wrapper.style.display = "flex";
+                    wrapper.style.justifyContent = "space-between";
+                    wrapper.style.alignItems = "center";
+
+                    const label = document.createElement("span");
+                    label.textContent = sensorId;
+
+                    // FORM PER INVIARE POST A /avvia_irr
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action = "/avvia_irr";
+
+                    const inputAzione = document.createElement("input");
+                    inputAzione.type = "hidden";
+                    inputAzione.name = "azione";
+                    inputAzione.value = "sospendi";
+
+                    const inputSensore = document.createElement("input");
+                    inputSensore.type = "hidden";
+                    inputSensore.name = "sensor_id";
+                    inputSensore.value = sensorId;
+
+                    const button = document.createElement("button");
+                    button.type = "submit";
+                    button.textContent = "Sospendi";
+                    button.className = "btn-sospendi";
+
+                    form.appendChild(inputAzione);
+                    form.appendChild(inputSensore);
+                    form.appendChild(button);
+
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(form);
+                    sensorsListAttesa.appendChild(wrapper);
                 });
+
             } else {
-                // Nessun sensore in attesa
-                const noSensorDiv = document.createElement('div');
-                noSensorDiv.className = 'sensor-item';
-                noSensorDiv.textContent = 'Nessun sensore in attesa';
-                noSensorDiv.style.opacity = '0.6';
-                sensorsListAttesa.appendChild(noSensorDiv);
+                const noSensor = document.createElement("div");
+                noSensor.className = "sensor-item";
+                noSensor.textContent = "Nessun sensore in attesa";
+                noSensor.style.opacity = "0.7";
+                sensorsListAttesa.appendChild(noSensor);
             }
-        })
-        .catch((error) => {
-            console.error('Errore nel caricamento dei sensori in attesa:', error);
         });
 }
+
 
 function caricaSensoriConclusi() {
     fetch("/api/get_sensor/concluded")
@@ -238,36 +257,63 @@ function caricaSensoriSospesi() {
     fetch("/api/get_sensor/suspended")
         .then((res) => res.json())
         .then((sensorIds) => {
-            const cardSospesi = document.querySelector('.status-card[data-status="sospesi"]');
-            if (!cardSospesi) {
-                console.error('Card "Sospesi" non trovata');
-                return;
-            }
 
+            const cardSospesi = document.querySelector('.status-card[data-status="sospesi"]');
             const sensorsListSospesi = cardSospesi.querySelector('.sensors-list');
-            if (!sensorsListSospesi) {
-                console.error('Lista sensori sospesi non trovata');
-                return;
-            }
 
             sensorsListSospesi.innerHTML = '';
 
             if (Array.isArray(sensorIds) && sensorIds.length > 0) {
+
                 sensorIds.forEach(sensorId => {
-                    const sensorDiv = document.createElement('div');
-                    sensorDiv.className = 'sensor-item';
-                    sensorDiv.textContent = sensorId;
-                    sensorsListSospesi.appendChild(sensorDiv);
+
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "sensor-item sensor-row";
+                    wrapper.style.display = "flex";
+                    wrapper.style.justifyContent = "space-between";
+                    wrapper.style.alignItems = "center";
+
+                    const label = document.createElement("span");
+                    label.textContent = sensorId;
+
+                    // FORM POST PER RIATTIVARE
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action = "/avvia_irr";
+
+                    const inputAzione = document.createElement("input");
+                    inputAzione.type = "hidden";
+                    inputAzione.name = "azione";
+                    inputAzione.value = "riattiva";   // <-- qui cambia
+
+                    const inputSensore = document.createElement("input");
+                    inputSensore.type = "hidden";
+                    inputSensore.name = "sensor_id";
+                    inputSensore.value = sensorId;
+
+                    const button = document.createElement("button");
+                    button.type = "submit";
+                    button.textContent = "Riattiva";   // <-- testo pulsante
+                    button.className = "btn-riattiva";
+
+                    form.appendChild(inputAzione);
+                    form.appendChild(inputSensore);
+                    form.appendChild(button);
+
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(form);
+                    sensorsListSospesi.appendChild(wrapper);
                 });
+
             } else {
-                const noSensorDiv = document.createElement('div');
-                noSensorDiv.className = 'sensor-item';
-                noSensorDiv.textContent = 'Nessun sensore sospeso';
-                noSensorDiv.style.opacity = '0.6';
-                sensorsListSospesi.appendChild(noSensorDiv);
+                const noSensor = document.createElement("div");
+                noSensor.className = "sensor-item";
+                noSensor.textContent = "Nessun sensore sospeso";
+                noSensor.style.opacity = "0.7";
+                sensorsListSospesi.appendChild(noSensor);
             }
         })
         .catch((error) => {
-            console.error('Errore nel caricamento dei sensori sospesi:', error);
+            console.error("Errore nel caricamento dei sensori sospesi:", error);
         });
 }

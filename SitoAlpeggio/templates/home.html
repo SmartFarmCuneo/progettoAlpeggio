@@ -46,7 +46,10 @@
       <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
       <div class="menu-item"><a href="/visualizzaCampi">Visualizza i tuoi campi</a></div>
       <div class="menu-item"><a href="/gestioneCampo">Gestione Sensori</a></div>
-      <div class="menu-item"><a href="/gestioneCampo">Visualizza Irrigazione Avviata</a></div>
+      <!-- Questo menu item verrà mostrato solo se la sessione è attiva -->
+      <div class="menu-item" id="visualizza-irrigazione" style="display: none;">
+        <a href="/avvia_irr">Visualizza Irrigazione Avviata</a>
+      </div>
     </div>
 
     <div class="profile-content">
@@ -71,7 +74,7 @@
   </footer>
   {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
-  <!-- Script -->
+  <script src="../static/js/verifica_session_data.js"></script>
   <script src="../static/js/home.js" defer></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>

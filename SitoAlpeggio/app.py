@@ -541,6 +541,7 @@ def login():
                 conn.close()
 
         if p_user and p_user["password_hash"] == psw:
+            #session['id_data'] = 0
             response = make_response(redirect(url_for("home")))
             if remember_me:
                 return generate_and_set_token(response, username, durata=24*7)
@@ -952,6 +953,158 @@ def gestioneCampo(current_user):
             conn.close()
 
     return redirect(url_for('gestioneCampo'))
+
+@app.route('/gestione_sensori', methods=['POST', 'GET'])
+@token_required
+def gestione_sensori(current_user):
+    conn = get_db_connection()
+    user = None
+    sensori = []
+
+    try:
+        with conn.cursor() as cursor:
+            # Recupera i dati dell'utente
+            cursor.execute(
+                "SELECT * FROM users WHERE username = %s", (current_user,))
+            user = cursor.fetchone()
+
+            if not user:
+                return redirect(url_for('login'))
+
+            user_id = user['id_u']  # FIX: era user['id'], ora è user['id_u']
+
+            if request.method == 'POST':
+                action = request.form.get('action')
+
+                # AGGIUNGI SENSORE
+                if action == 'aggiungi':
+                    id_sensore = request.form.get('id_sensore', '').strip()
+                    nome_sensore = request.form.get('nome_sensore', '').strip()
+
+                    # Validazione input
+                    if not id_sensore or not nome_sensore:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='invalid')
+
+                    # Verifica se l'ID sensore esiste già per questo utente
+                    cursor.execute("""
+                        SELECT id_sensore FROM sensori 
+                        WHERE id_sensore = %s AND id_utente = %s
+                    """, (id_sensore, user_id))
+                    existing_sensor = cursor.fetchone()
+
+                    if existing_sensor:
+                        # Recupera i sensori prima di ritornare
+                        cursor.execute("""
+                            SELECT id_sensore, nome_sensore, data_registrazione
+                            FROM sensori
+                            WHERE id_utente = %s
+                            ORDER BY data_registrazione DESC
+                        """, (user_id,))
+                        sensori = cursor.fetchall()
+
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='duplicate')
+
+                    # Inserisci il nuovo sensore
+                    cursor.execute("""
+                        INSERT INTO sensori (id_sensore, nome_sensore, id_utente, data_registrazione)
+                        VALUES (%s, %s, %s, NOW())
+                    """, (id_sensore, nome_sensore, user_id))
+
+                    conn.commit()
+
+                    # Recupera la lista aggiornata dei sensori
+                    cursor.execute("""
+                        SELECT id_sensore, nome_sensore, data_registrazione
+                        FROM sensori
+                        WHERE id_utente = %s
+                        ORDER BY data_registrazione DESC
+                    """, (user_id,))
+                    sensori = cursor.fetchall()
+
+                    return render_template('gestione_sensori.html',
+                                           user=user,
+                                           sensori=sensori,
+                                           success='added')
+
+                # ELIMINA SENSORE
+                elif action == 'elimina':
+                    id_sensore = request.form.get('id_sensore', '').strip()
+
+                    if not id_sensore:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='invalid')
+
+                    # Elimina solo se il sensore appartiene all'utente
+                    cursor.execute("""
+                        DELETE FROM sensori 
+                        WHERE id_sensore = %s AND id_utente = %s
+                    """, (id_sensore, user_id))
+
+                    affected_rows = cursor.rowcount
+                    conn.commit()
+
+                    # Recupera la lista aggiornata dei sensori
+                    cursor.execute("""
+                        SELECT id_sensore, nome_sensore, data_registrazione
+                        FROM sensori
+                        WHERE id_utente = %s
+                        ORDER BY data_registrazione DESC
+                    """, (user_id,))
+                    sensori = cursor.fetchall()
+
+                    if affected_rows > 0:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               success='deleted')
+                    else:
+                        return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               error='not_found')
+
+            # GET request - Recupera tutti i sensori dell'utente
+            cursor.execute("""
+                SELECT id_sensore, nome_sensore, data_registrazione
+                FROM sensori
+                WHERE id_utente = %s
+                ORDER BY data_registrazione DESC
+            """, (user_id,))
+
+            sensori = cursor.fetchall()
+
+    except Exception as e:
+        print(f"Errore nella gestione sensori: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # In caso di errore, prova comunque a recuperare i dati dell'utente
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM users WHERE username = %s", (current_user,))
+                user = cursor.fetchone()
+        except:
+            pass
+
+        return render_template('gestione_sensori.html',
+                               user=user,
+                               sensori=[],
+                               error='generic')
+
+    finally:
+        conn.close()
+
+    # Render del template con i dati
+    return render_template('gestione_sensori.html', user=user, sensori=sensori)
 
 
 def get_campi(current_user):
@@ -1603,159 +1756,6 @@ def get_sensor(current_user):
         else:
             return info
 
-
-@app.route('/gestione_sensori', methods=['POST', 'GET'])
-@token_required
-def gestione_sensori(current_user):
-    conn = get_db_connection()
-    user = None
-    sensori = []
-
-    try:
-        with conn.cursor() as cursor:
-            # Recupera i dati dell'utente
-            cursor.execute(
-                "SELECT * FROM users WHERE username = %s", (current_user,))
-            user = cursor.fetchone()
-
-            if not user:
-                return redirect(url_for('login'))
-
-            user_id = user['id_u']  # FIX: era user['id'], ora è user['id_u']
-
-            if request.method == 'POST':
-                action = request.form.get('action')
-
-                # AGGIUNGI SENSORE
-                if action == 'aggiungi':
-                    id_sensore = request.form.get('id_sensore', '').strip()
-                    nome_sensore = request.form.get('nome_sensore', '').strip()
-
-                    # Validazione input
-                    if not id_sensore or not nome_sensore:
-                        return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               error='invalid')
-
-                    # Verifica se l'ID sensore esiste già per questo utente
-                    cursor.execute("""
-                        SELECT id_sensore FROM sensori 
-                        WHERE id_sensore = %s AND id_utente = %s
-                    """, (id_sensore, user_id))
-                    existing_sensor = cursor.fetchone()
-
-                    if existing_sensor:
-                        # Recupera i sensori prima di ritornare
-                        cursor.execute("""
-                            SELECT id_sensore, nome_sensore, data_registrazione
-                            FROM sensori
-                            WHERE id_utente = %s
-                            ORDER BY data_registrazione DESC
-                        """, (user_id,))
-                        sensori = cursor.fetchall()
-
-                        return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               error='duplicate')
-
-                    # Inserisci il nuovo sensore
-                    cursor.execute("""
-                        INSERT INTO sensori (id_sensore, nome_sensore, id_utente, data_registrazione)
-                        VALUES (%s, %s, %s, NOW())
-                    """, (id_sensore, nome_sensore, user_id))
-
-                    conn.commit()
-
-                    # Recupera la lista aggiornata dei sensori
-                    cursor.execute("""
-                        SELECT id_sensore, nome_sensore, data_registrazione
-                        FROM sensori
-                        WHERE id_utente = %s
-                        ORDER BY data_registrazione DESC
-                    """, (user_id,))
-                    sensori = cursor.fetchall()
-
-                    return render_template('gestione_sensori.html',
-                                           user=user,
-                                           sensori=sensori,
-                                           success='added')
-
-                # ELIMINA SENSORE
-                elif action == 'elimina':
-                    id_sensore = request.form.get('id_sensore', '').strip()
-
-                    if not id_sensore:
-                        return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               error='invalid')
-
-                    # Elimina solo se il sensore appartiene all'utente
-                    cursor.execute("""
-                        DELETE FROM sensori 
-                        WHERE id_sensore = %s AND id_utente = %s
-                    """, (id_sensore, user_id))
-
-                    affected_rows = cursor.rowcount
-                    conn.commit()
-
-                    # Recupera la lista aggiornata dei sensori
-                    cursor.execute("""
-                        SELECT id_sensore, nome_sensore, data_registrazione
-                        FROM sensori
-                        WHERE id_utente = %s
-                        ORDER BY data_registrazione DESC
-                    """, (user_id,))
-                    sensori = cursor.fetchall()
-
-                    if affected_rows > 0:
-                        return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               success='deleted')
-                    else:
-                        return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               error='not_found')
-
-            # GET request - Recupera tutti i sensori dell'utente
-            cursor.execute("""
-                SELECT id_sensore, nome_sensore, data_registrazione
-                FROM sensori
-                WHERE id_utente = %s
-                ORDER BY data_registrazione DESC
-            """, (user_id,))
-
-            sensori = cursor.fetchall()
-
-    except Exception as e:
-        print(f"Errore nella gestione sensori: {e}")
-        import traceback
-        traceback.print_exc()
-
-        # In caso di errore, prova comunque a recuperare i dati dell'utente
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT * FROM users WHERE username = %s", (current_user,))
-                user = cursor.fetchone()
-        except:
-            pass
-
-        return render_template('gestione_sensori.html',
-                               user=user,
-                               sensori=[],
-                               error='generic')
-
-    finally:
-        conn.close()
-
-    # Render del template con i dati
-    return render_template('gestione_sensori.html', user=user, sensori=sensori)
-
 # API PER SENSORI NELL'INIZIALIZZAZIONE
 @app.route("/api/get_sensor")
 @token_required
@@ -1779,18 +1779,43 @@ def get_sensor_selected(state):
     return sens 
 
 def get_state_data(): 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT data_fine_irr FROM data WHERE id_ricerca = %s", 
-        (session['id_data'], )
-    )
-    row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    print("Fine irr: " + str(row['data_fine_irr']))
-    if str(row['data_fine_irr']) == 'None': return 'Stop' 
-    else: return 'Go'
+    #print("Sessione: " + str(session['id_data']))
+    if session['id_data'] != 0 and 'id_data' in session:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT data_fine_irr FROM data WHERE id_ricerca = %s", 
+            (session['id_data'], )
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        print("Fine irr: " + str(row['data_fine_irr']))
+        if str(row['data_fine_irr']) == 'None': return 'Stop' 
+        else: return 'Go' 
+    else:
+        return 'Go'
+    
+# vado a stabilire la fine della sessione di irrigazione
+# quando tutti i sensori coinvolti hanno la date_conc_sens
+# diverso da NULL
+# DA PROVARE
+def get_finish_session():
+    if 'id_data' not in session or session['id_data'] == 0:
+        return "Continue" 
+    else:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM assoc_sens_data WHERE id_data = %s AND date_conc_sens IS NULL", 
+            (session['id_data'], )
+        )
+        null_count = cursor.fetchone()[0]
+        print("NULL COUNT: " + str(null_count))
+        cursor.close()
+        conn.close()
+        
+        return "Continue" if null_count > 0 else "Concluded"
     
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
 @app.route("/api/get_sensor_selected")
@@ -1817,51 +1842,38 @@ def api_get_session_data():
     print("INFO: " + str(info))
     return jsonify(info)
 
+# API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA CONTROLLARE
+@app.route("/api/get_finish_session")
+def api_get_finish_session():
+    info = get_finish_session()
+    print("Finish session: " + str(info))
+    return jsonify(info)
+
 ########################################################################################
 
-############################# INIZIALIZZAZZIONE SERIALE #######################################
-
-
-def initSerial():
-    path = os.path.join(os.getcwd(), 'data_analysis_win.py')
-
-    try:
-        # Lancia il secondo script in una nuova console su Windows
-        subprocess.Popen(
-            [sys.executable, path],
-            creationflags=subprocess.CREATE_NEW_CONSOLE
-        )
-        print("Secondo script lanciato in nuova console. Entrambi girano.")
-    except Exception as e:
-        print("Errore durante l'esecuzione di data_analysis_win.py:", e)
-
-
-###################################################################################
-
 ############################ GESTIONE SENSORI #####################################
-
 
 @app.route('/sensori', methods=['GET', 'POST'])
 def sensori():
     return render_template('assoc_gestione_sensori.html')
 
 ############################ AZIONI IRRIGAZIONE #########################################
-
-global selected_sensors ############# DA TOGLIERE ###################
-
 @app.route('/assoc_gestione_sensori', methods=['GET', 'POST'])
 def associaSensori():
     return render_template('assoc_gest_sens.html')
 
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
-    global selected_sensors
+    #controllo per la prima volta che si entra nel sito
+    if 'id_data' not in session:
+        session['id_data'] = 0
 
     if request.method == 'POST':
         if get_state_data() == 'Go':
             data = request.get_json()
             campo_id = data.get('campo_id')
             selected_sensors = data.get('selectedSensors', [])
+            session['id_campo_selezionato'] = campo_id
             #print("Sensori selezionati:", selected_sensors)
 
             # aggiorna lo stato dei sensori da disponibili a operativi
@@ -1928,24 +1940,56 @@ def inizializzaIrrigazione():
             #API per sensori selezionati
             return jsonify({"status": "ok", "selected_sensors": selected_sensors})
         else:
-            print("SESSIONE GIà AVVIATA")
+            #print("SESSIONE GIà AVVIATA")
             return jsonify({"status": "no", "selected_sensors": None})
         
     campo_id = request.args.get('campo_id')
-    #initSerial() --> init dell'exe
+    #init_exe() --> inizializzaione dell'exe
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
+def set_state_sensor(state, sensor_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE sensor SET stato_sens = %s WHERE Node_ID = %s",
+        (state, sensor_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 @token_required
 def avviaIrrigazione(current_user):
-    global selected_sensors
+    if request.method == 'POST':
+        azione = request.form.get("azione")
+        sensor_id = request.form.get("sensor_id")
 
-    campo_id = request.args.get('campo_id')
-    #print(f"id: campo{campo_id}")  # id corretto sul DB
-    
-    return render_template('avvia_irrigazione.html', campo_id=campo_id)
+        if azione == "sospendi":
+            print(f"Sospensione richiesta per sensore {sensor_id}")
+            set_state_sensor("S", sensor_id)
+            #session.modified = True
+            return redirect("/avvia_irr")
+            
+        elif azione == 'riattiva':
+            set_state_sensor("O", sensor_id)
+            return redirect("/avvia_irr")
 
+    try:
+        response = requests.get('http://localhost:8000/api/connection_status', timeout=5)
+        if response.status_code == 200:
+            connection_status = response.json()
+            print("=" * 50)
+            print("STATO CONNESSIONE SERIALE:")
+            print(f"Connesso: {connection_status.get('connected')}")
+            print(f"Porta: {connection_status.get('port')}")
+            print(f"Errore: {connection_status.get('error')}")
+            print(f"Ultimo controllo: {connection_status.get('last_check')}")
+            print("=" * 50)
+    except requests.exceptions.RequestException as e:
+        print(f"Errore nella chiamata API: {e}")
+
+    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
 
 @app.route('/reg_irr', methods=['GET', 'POST'])
 def registroIrrigazione():
