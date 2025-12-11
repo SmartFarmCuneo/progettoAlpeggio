@@ -9,6 +9,15 @@ import threading
 import requests
 from flask import Flask, jsonify, request
 
+
+"""
+STATO CONNESSIONE SERIALE:
+Connesso: False
+Porta: None
+Errore: Nessuna porta seriale trovata.
+Ultimo controllo: 2025-12-10 19:20:51
+"""
+
 # Inizializza Flask
 app = Flask(__name__)
 
