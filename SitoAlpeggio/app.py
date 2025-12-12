@@ -1859,16 +1859,7 @@ def api_get_finish_session():
 
 ########################################################################################
 
-############################ GESTIONE SENSORI #####################################
-
-@app.route('/sensori', methods=['GET', 'POST'])
-def sensori():
-    return render_template('assoc_gestione_sensori.html')
-
 ############################ AZIONI IRRIGAZIONE #########################################
-@app.route('/assoc_gestione_sensori', methods=['GET', 'POST'])
-def associaSensori():
-    return render_template('assoc_gest_sens.html')
 
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
