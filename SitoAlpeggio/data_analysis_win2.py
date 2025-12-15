@@ -259,11 +259,13 @@ def get_sensor_data():
     Ritorna gli ultimi dati ricevuti dal sensore
     """
     if latest_sensor_data:
+        # if get_finish_session['Humidity'] > VALORE_DA_BAGNATO
         return jsonify({
             "status": "ok",
             "data": latest_sensor_data,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
         })
+        # else --> nella versione base ritorna None
     else:
         return jsonify({
             "status": "no_data",

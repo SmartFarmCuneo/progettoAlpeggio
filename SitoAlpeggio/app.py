@@ -1768,6 +1768,7 @@ def api_get_sensor(current_user):
     return jsonify(info)
 
 def get_sensor_selected(state): 
+    # ritorna i sensori selezionati in base allo stato
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -1804,26 +1805,48 @@ def get_state_data():
     else:
         return 'Go'
     
-# vado a stabilire la fine della sessione di irrigazione
-# quando tutti i sensori coinvolti hanno la date_conc_sens
-# diverso da NULL
-# DA PROVARE
+# DA TESTARE
 def get_finish_session():
+    # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL 
+    # se ritorna TRUE, si salva la data di conclusione dell'ultimo sensore come data di fine
+    # irrigazione sulla tabella "DATA"
     if 'id_data' not in session or session['id_data'] == 0:
         return "Continue" 
     else:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT COUNT(*) FROM assoc_sens_data WHERE id_data = %s AND date_conc_sens IS NULL", 
-            (session['id_data'], )
+            "SELECT count(*) FROM assoc_sens_data WHERE id_data = %s"
+            "and data_conc_sens IS NOT NULL"
+            "group by id_data",
+            (session['id_data'],) 
         )
         null_count = cursor.fetchone()[0]
         print("NULL COUNT: " + str(null_count))
         cursor.close()
         conn.close()
-        
-        return "Continue" if null_count > 0 else "Concluded"
+         
+        if null_count == 0:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+            "SELECT TOP 1 date_conc_sens FROM assoc_sens_data WHERE id_data = %s"
+            "order by date_conc_sens desc"
+            (session['id_data'],) 
+            )
+            data = cursor.fetchone()[0] 
+            
+            cursor.execute(
+                "UPDATE data SET data_fine_irr = %s"
+                "WHERE id_ricerca = %s",
+                (data, session['id_data']) 
+            )
+            conn.commit()
+            cursor.close()
+            conn.close() 
+            return True, "Concluded" 
+        else:
+            return False, "Continue"
     
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
 @app.route("/api/get_sensor_selected")
@@ -1850,10 +1873,10 @@ def api_get_session_data():
     print("INFO: " + str(info))
     return jsonify(info)
 
-# API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA CONTROLLARE
+# API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA TESTARE
 @app.route("/api/get_finish_session")
 def api_get_finish_session():
-    info = get_finish_session()
+    info = get_finish_session()[1]
     print("Finish session: " + str(info))
     return jsonify(info)
 
@@ -1937,6 +1960,10 @@ def inizializzaIrrigazione():
                     conn.commit()
                 cursor.close()
 
+            # DA TESTARE
+            #init_exe() --> inizializzaione dell'exe
+            #subprocess.Popen([r"C:\percorso\al\tuo\programma.exe"])
+
             #API per sensori selezionati
             return jsonify({"status": "ok", "selected_sensors": selected_sensors})
         else:
@@ -1944,10 +1971,10 @@ def inizializzaIrrigazione():
             return jsonify({"status": "no", "selected_sensors": None})
         
     campo_id = request.args.get('campo_id')
-    #init_exe() --> inizializzaione dell'exe
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
 def set_state_sensor(state, sensor_id):
+    # setta lo stato del sensore 
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -1958,8 +1985,9 @@ def set_state_sensor(state, sensor_id):
     cursor.close()
     conn.close()
 
-#setta ad errore la ricerca
+# DA TESTARE
 def set_error_state_data(message):
+    #setta ad errore la ricerca
     state = 'ERR'
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1973,26 +2001,23 @@ def set_error_state_data(message):
     pass
 
 # DA TESTARE
-def is_all_sensors_wet():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT count(*) FROM assoc_sens_data WHERE id_data = %s"
-        "and data_conc_sens <> NULL"
-        "group by id_data",
-        (session['id_data'],) 
-    )
-    count = cursor.fetchone() 
-    if count == 0: return True 
-    else: return False
-
-# DA FARE
-def insert_sensor_data():
+def insert_sensor_data(data):
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
-    pass
+    # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
+    if data['Node_id'] in session['selected_sensors']:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s," \
+            "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
+            (data['date_conc_sens'], data['INDEX'], data['Bat'], data['Humidity'],
+             data['Temperature'], data['ADC'], session['id_data'])
+        )
+        conn.commit()
+        cursor.close()
 
-# DA FARE
+# DA TESTARE
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 @token_required
 def avviaIrrigazione(current_user):
@@ -2041,6 +2066,7 @@ def avviaIrrigazione(current_user):
                         break
                     else:
                         # DA FARE POPUP CHE INDICA DI INSERIRE IL RICEVITORE
+                        # deve bloccare la pagina sul popup finchè non viene rilevato il dispositvo
                         print("Dispositivo non trovato nella porta seriale")
                         pass
             except requests.exceptions.RequestException as e:
@@ -2050,20 +2076,29 @@ def avviaIrrigazione(current_user):
     
         print("Pronto")
         all_sensor_wet = False
+        max_time_session = 7200 # durata massima dalla durata se non ricevo più segnali dai sensori
+        start_session_time = time.time()
+
         while all_sensor_wet == False:
-            all_sensor_wet = is_all_sensors_wet()
+            all_sensor_wet = get_finish_session()[0] # cicla finchè tutti i sensori non hanno finito
+            if time.time() - start_session_time > max_time_session:
+                print("Interruzione sessione dopo due ore dall'ultimo ricevimento")
+                set_error_state_data('Mancata conclusione di tutti i sensori nella durata della sessione')
+                break
             try:
                 response = requests.get('http://localhost:8000/api/sensor_data', timeout=5)
                 if response.status_code == 200:
                     sensor_status = response.json()
                     print("=" * 50)
                     print("DATI SENSORI:")
+                    # ricevo soltanto i dati con il sensore che rileva bagnato
                     if sensor_status.get('status') == "ok":
                         data = sensor_status.get('data', {})
                         print(f"Valorì letti: {data}")
                         print(f"Timestamp: {sensor_status.get('timestamp')}")
                         print("=" * 50)
-                        break
+                        insert_sensor_data(data)
+                        max_time_session = 7200
                     else:
                         print("Nessun dato disponibile dai sensori")
                         print(f"Timestamp: {sensor_status.get('timestamp')}")
