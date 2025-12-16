@@ -45,6 +45,8 @@ app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv(
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # Database connection
+
+
 def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
@@ -53,6 +55,7 @@ def get_db_connection():
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
     )
+
 
 # se non hai il .env quella sopra funziona lo stesso
 """def get_db_connection():
@@ -69,6 +72,8 @@ def get_db_connection():
 # -----------------------------------------------------
 # Context processor per passare il consenso a tutti i template
 # -----------------------------------------------------
+
+
 @app.context_processor
 def inject_cookie_consent():
     consent_cookie = request.cookies.get("cookie_consent")
@@ -542,7 +547,7 @@ def login():
                 conn.close()
 
         if p_user and p_user["password_hash"] == psw:
-            #session['id_data'] = 0
+            # session['id_data'] = 0
             response = make_response(redirect(url_for("home")))
             if remember_me:
                 return generate_and_set_token(response, username, durata=24*7)
@@ -722,7 +727,8 @@ def storici(current_user):
     if request.method == 'POST':
         if request.form.get('action-ricercaSt') == 'Ricerca':
             campo_selezionato = request.form["selezionato"]
-            campo_selezionato = campo_selezionato[-1] #prendo l'ultimo carattere
+            # prendo l'ultimo carattere
+            campo_selezionato = campo_selezionato[-1]
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT * FROM data WHERE id_t = %s AND id_u = %s",
@@ -958,6 +964,7 @@ def gestioneCampo(current_user):
 
     return redirect(url_for('gestioneCampo'))
 
+
 @app.route('/gestione_sensori', methods=['POST', 'GET'])
 @token_required
 def gestione_sensori(current_user):
@@ -967,7 +974,7 @@ def gestione_sensori(current_user):
 
     try:
         with conn.cursor() as cursor:
-            # Recupera i dati dell'utente
+            # 1. Recupera i dati dell'utente
             cursor.execute(
                 "SELECT * FROM users WHERE username = %s", (current_user,))
             user = cursor.fetchone()
@@ -975,37 +982,61 @@ def gestione_sensori(current_user):
             if not user:
                 return redirect(url_for('login'))
 
-            user_id = user['id_u']  # FIX: era user['id'], ora è user['id_u']
+            user_id = user['id_u']
 
             if request.method == 'POST':
                 action = request.form.get('action')
 
-                # AGGIUNGI SENSORE
+                # A) AGGIUNGI SENSORE
                 if action == 'aggiungi':
-                    id_sensore = request.form.get('id_sensore', '').strip()
-                    nome_sensore = request.form.get('nome_sensore', '').strip()
+                    node_id_input = request.form.get('id_sensore', '').strip()
 
-                    # Validazione input
-                    if not id_sensore or not nome_sensore:
+                    if not node_id_input:
+                        cursor.execute("""
+                            SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                            FROM sensor s
+                            JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                            WHERE aus.id_utente = %s
+                        """, (user_id,))
+                        sensori = cursor.fetchall()
+
                         return render_template('gestione_sensori.html',
                                                user=user,
                                                sensori=sensori,
                                                error='invalid')
 
-                    # Verifica se l'ID sensore esiste già per questo utente
-                    cursor.execute("""
-                        SELECT id_sensore FROM sensori 
-                        WHERE id_sensore = %s AND id_utente = %s
-                    """, (id_sensore, user_id))
-                    existing_sensor = cursor.fetchone()
+                    cursor.execute(
+                        "SELECT id_sens FROM sensor WHERE Node_id = %s", (node_id_input,))
+                    sensor_row = cursor.fetchone()
 
-                    if existing_sensor:
-                        # Recupera i sensori prima di ritornare
+                    id_sens_db = None
+
+                    if sensor_row:
+                        # Il sensore esiste già, prendiamo il suo ID numerico (PK)
+                        id_sens_db = sensor_row['id_sens']
+                    else:
+                        # Il sensore non esiste, lo creiamo nella tabella 'sensor'
+                        # Default: stato 'O' (Operativo) e posizione vuota
                         cursor.execute("""
-                            SELECT id_sensore, nome_sensore, data_registrazione
-                            FROM sensori
-                            WHERE id_utente = %s
-                            ORDER BY data_registrazione DESC
+                            INSERT INTO sensor (Node_id, stato_sens, posizione)
+                            VALUES (%s, 'O', '')
+                        """, (node_id_input,))
+                        conn.commit()
+                        id_sens_db = cursor.lastrowid
+
+                    # 2. Verifica se è GIÀ associato a questo utente
+                    cursor.execute("""
+                        SELECT id FROM assoc_users_sens 
+                        WHERE id_utente = %s AND id_sens = %s
+                    """, (user_id, id_sens_db))
+                    existing_assoc = cursor.fetchone()
+
+                    if existing_assoc:
+                        cursor.execute("""
+                            SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                            FROM sensor s
+                            JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                            WHERE aus.id_utente = %s
                         """, (user_id,))
                         sensori = cursor.fetchall()
 
@@ -1014,20 +1045,18 @@ def gestione_sensori(current_user):
                                                sensori=sensori,
                                                error='duplicate')
 
-                    # Inserisci il nuovo sensore
                     cursor.execute("""
-                        INSERT INTO sensori (id_sensore, nome_sensore, id_utente, data_registrazione)
-                        VALUES (%s, %s, %s, NOW())
-                    """, (id_sensore, nome_sensore, user_id))
+                        INSERT INTO assoc_users_sens (id_utente, id_sens)
+                        VALUES (%s, %s)
+                    """, (user_id, id_sens_db))
 
                     conn.commit()
 
-                    # Recupera la lista aggiornata dei sensori
                     cursor.execute("""
-                        SELECT id_sensore, nome_sensore, data_registrazione
-                        FROM sensori
-                        WHERE id_utente = %s
-                        ORDER BY data_registrazione DESC
+                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                        FROM sensor s
+                        JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                        WHERE aus.id_utente = %s
                     """, (user_id,))
                     sensori = cursor.fetchall()
 
@@ -1036,31 +1065,38 @@ def gestione_sensori(current_user):
                                            sensori=sensori,
                                            success='added')
 
-                # ELIMINA SENSORE
                 elif action == 'elimina':
-                    id_sensore = request.form.get('id_sensore', '').strip()
+                    id_sens_to_delete = request.form.get(
+                        'id_sensore', '').strip()
 
-                    if not id_sensore:
+                    if not id_sens_to_delete:
+                        cursor.execute("""
+                            SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                            FROM sensor s
+                            JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                            WHERE aus.id_utente = %s
+                        """, (user_id,))
+                        sensori = cursor.fetchall()
                         return render_template('gestione_sensori.html',
                                                user=user,
                                                sensori=sensori,
                                                error='invalid')
 
-                    # Elimina solo se il sensore appartiene all'utente
+                    # Elimina l'associazione dalla tabella assoc_users_sens
                     cursor.execute("""
-                        DELETE FROM sensori 
-                        WHERE id_sensore = %s AND id_utente = %s
-                    """, (id_sensore, user_id))
+                        DELETE FROM assoc_users_sens 
+                        WHERE id_sens = %s AND id_utente = %s
+                    """, (id_sens_to_delete, user_id))
 
                     affected_rows = cursor.rowcount
                     conn.commit()
 
-                    # Recupera la lista aggiornata dei sensori
+                    # Recupera lista aggiornata
                     cursor.execute("""
-                        SELECT id_sensore, nome_sensore, data_registrazione
-                        FROM sensori
-                        WHERE id_utente = %s
-                        ORDER BY data_registrazione DESC
+                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                        FROM sensor s
+                        JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                        WHERE aus.id_utente = %s
                     """, (user_id,))
                     sensori = cursor.fetchall()
 
@@ -1075,12 +1111,11 @@ def gestione_sensori(current_user):
                                                sensori=sensori,
                                                error='not_found')
 
-            # GET request - Recupera tutti i sensori dell'utente
             cursor.execute("""
-                SELECT id_sensore, nome_sensore, data_registrazione
-                FROM sensori
-                WHERE id_utente = %s
-                ORDER BY data_registrazione DESC
+                SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                FROM sensor s
+                JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                WHERE aus.id_utente = %s
             """, (user_id,))
 
             sensori = cursor.fetchall()
@@ -1090,7 +1125,7 @@ def gestione_sensori(current_user):
         import traceback
         traceback.print_exc()
 
-        # In caso di errore, prova comunque a recuperare i dati dell'utente
+        # Fallback recupero utente per evitare crash template
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -1107,7 +1142,6 @@ def gestione_sensori(current_user):
     finally:
         conn.close()
 
-    # Render del template con i dati
     return render_template('gestione_sensori.html', user=user, sensori=sensori)
 
 
@@ -1208,72 +1242,17 @@ def api_get_plans(current_user):
     })
 
 
-@app.route('/create-checkout-session', methods=['POST'])
-@token_required
-def create_checkout_session(current_user):
-    """Crea una sessione di checkout Stripe"""
-    try:
-        data = request.get_json()
-        plan_id = data.get('plan_id')
+from datetime import datetime
+import stripe
+from flask import jsonify, request, redirect, url_for, render_template
 
-        if plan_id not in SUBSCRIPTION_PLANS:
-            return jsonify({'error': 'Piano non valido'}), 400
-
-        plan = SUBSCRIPTION_PLANS[plan_id]
-
-        # Recupera l'utente dal database
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT * FROM users WHERE username = %s", (current_user,))
-            user = cursor.fetchone()
-        conn.close()
-
-        if not user:
-            return jsonify({'error': 'Utente non trovato'}), 404
-
-        # Crea la sessione di checkout
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': plan['currency'],
-                    'product_data': {
-                        'name': f'Abbonamento {plan["name"]} - Agrinnov',
-                        'description': f'Piano {plan["name"]} - Monitoraggio agricolo avanzato'
-                    },
-                    # Stripe usa i centesimi
-                    'unit_amount': plan['price'] * 100,
-                    'recurring': {
-                        'interval': plan['interval']
-                    }
-                },
-                'quantity': 1,
-            }],
-            mode='subscription',
-            success_url=url_for('payment_success', _external=True) +
-            '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('payment_cancel', _external=True),
-            customer_email=user['email'],
-            metadata={
-                'user_id': user['id_u'],
-                'username': current_user,
-                'plan': plan_id
-            },
-            # automatic_tax={'enabled': True}
-        )
-
-        return jsonify({'checkout_url': checkout_session.url})
-
-    except Exception as e:
-        print(f"Errore creazione sessione checkout: {e}")
-        return jsonify({'error': str(e)}), 500
-
+# Assicurati di avere queste costanti definite
+# SUBSCRIPTION_PLANS = {...}
 
 @app.route('/payment-success')
 @token_required
 def payment_success(current_user):
-    """Pagina di conferma pagamento riuscito"""
+    """Gestione successo pagamento e attivazione periodo 1 mese esatto"""
     session_id = request.args.get('session_id')
 
     if not session_id:
@@ -1284,51 +1263,44 @@ def payment_success(current_user):
         checkout_session = stripe.checkout.Session.retrieve(session_id)
 
         if checkout_session.payment_status == 'paid':
-
-            # Recupera la subscription
-            if not checkout_session.subscription:
-                return redirect(url_for('pagamenti'))
-
-            subscription = stripe.Subscription.retrieve(
-                checkout_session.subscription)
-
-            # Accedi correttamente a current_period_end
-            period_end = subscription.get('current_period_end')
-            if not period_end:
-                # Fallback: usa la data della sessione
-                period_end = checkout_session.get('expires_at')
+            
+            # Recupera ID cliente e ID abbonamento
+            customer_id = checkout_session.customer
+            subscription_id = checkout_session.subscription
+            
+            # Recupera i metadati
+            plan_name = checkout_session.metadata.get('plan')
 
             # Aggiorna il database
             conn = get_db_connection()
             try:
                 with conn.cursor() as cursor:
-                    plan_name = checkout_session.metadata.get('plan')
-                    customer_id = checkout_session.customer
-
+                    # Logica richiesta: 
+                    # 1. Imposta lo stato su 'active'
+                    # 2. Salva stripe_subscription_id (fondamentale per cancellare dopo)
+                    # 3. Imposta start_date a ADESSO (NOW())
+                    # 4. Imposta end_date a ADESSO + 1 MESE esatto
+                    
                     cursor.execute("""
                         UPDATE users 
                         SET subscription_plan = %s, 
                             subscription_status = 'active',
                             stripe_customer_id = %s,
+                            stripe_subscription_id = %s,
                             subscription_start_date = NOW(),
-                            subscription_end_date = FROM_UNIXTIME(%s)
+                            subscription_end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH)
                         WHERE username = %s
-                    """, (plan_name, customer_id, period_end, current_user))
-
-                    rows_affected = cursor.rowcount
+                    """, (plan_name, customer_id, subscription_id, current_user))
 
                     conn.commit()
 
-                    # Salva nella cronologia pagamenti
-                    cursor.execute(
-                        "SELECT id_u FROM users WHERE username = %s", (current_user,))
-                    user = cursor.fetchone()
+                    # Salva nella cronologia pagamenti (opzionale ma consigliato)
+                    cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
+                    user_data = cursor.fetchone()
 
-                    if user:
-                        user_id = user['id_u']
-
+                    if user_data:
                         save_payment_history(
-                            user_id,
+                            user_data['id_u'],
                             checkout_session.payment_intent,
                             checkout_session.amount_total / 100,
                             checkout_session.currency.upper(),
@@ -1337,35 +1309,92 @@ def payment_success(current_user):
                         )
 
             except Exception as db_error:
-                import traceback
-                traceback.print_exc()
+                print(f"Errore DB in success: {db_error}")
             finally:
                 conn.close()
 
-            plan = checkout_session.metadata.get('plan', 'unknown')
-            return render_template('payment_success.html', plan=plan)
+            return render_template('payment_success.html', plan=plan_name)
 
         else:
+            # Pagamento non riuscito o in attesa
             return redirect(url_for('pagamenti'))
 
     except stripe.StripeError as e:
-        import traceback
-        traceback.print_exc()
+        print(f"Errore Stripe: {e}")
+        return redirect(url_for('pagamenti'))
+    except Exception as e:
+        print(f"Errore Generico: {e}")
         return redirect(url_for('pagamenti'))
 
+
+@app.route('/cancel-subscription', methods=['POST'])
+@token_required
+def cancel_subscription(current_user):
+    """
+    Gestisce l'annullamento dell'abbonamento.
+    Blocca i pagamenti su Stripe e aggiorna il DB.
+    """
+    try:
+        conn = get_db_connection()
+        user = None
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT stripe_subscription_id, subscription_status 
+                FROM users WHERE username = %s
+            """, (current_user,))
+            user = cursor.fetchone()
+        
+        if not user or not user['stripe_subscription_id']:
+            conn.close()
+            return jsonify({'error': 'Nessun abbonamento attivo trovato'}), 404
+
+        sub_id = user['stripe_subscription_id']
+
+        try:
+            # 1. Cancella l'abbonamento su Stripe
+            
+            # Opzione A: Cancellazione immediata
+            # stripe.Subscription.delete(sub_id)
+            
+            # Opzione B: Cancella alla fine del periodo pagato
+            stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
+            
+            # 2. Aggiorna il database locale
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE users 
+                    SET subscription_status = 'canceled',
+                        subscription_plan = NULL,
+                        stripe_subscription_id = NULL
+                    WHERE username = %s
+                """, (current_user,))
+                conn.commit()
+            
+            return jsonify({'message': 'Abbonamento annullato con successo. Non ti verranno addebitati altri costi.'})
+
+        except stripe.error.InvalidRequestError:
+            # Succede se l'abbonamento è già cancellato su Stripe ma non sul DB
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE users SET subscription_status = 'canceled' WHERE username = %s", (current_user,))
+                conn.commit()
+            return jsonify({'message': 'Abbonamento già annullato.'})
+
     except Exception as e:
-        import traceback
-        print("Stack trace completo:")
-        traceback.print_exc()
-        return redirect(url_for('pagamenti'))
+        print(f"Errore cancellazione: {e}")
+        return jsonify({'error': 'Si è verificato un errore durante la cancellazione'}), 500
+    finally:
+        if 'conn' in locals() and conn.open:
+            conn.close()
 
 
 @app.route('/payment-cancel')
 @token_required
 def payment_cancel(current_user):
-    """Pagina di annullamento pagamento"""
+    """
+    Gestisce il caso in cui l'utente annulla il checkout 
+    PRIMA di pagare (pulsante 'Indietro' su Stripe).
+    """
     return render_template('payment_cancel.html')
-
 
 @app.route('/create-customer-portal-session', methods=['POST'])
 @token_required
@@ -1502,40 +1531,6 @@ def api_subscription_status(current_user):
         'subscription_start': str(info['subscription_start_date']) if info['subscription_start_date'] else None,
         'subscription_end': str(info['subscription_end_date']) if info['subscription_end_date'] else None
     })
-
-
-@app.route('/cancel-subscription', methods=['POST'])
-@token_required
-def cancel_subscription(current_user):
-    """Cancella l'abbonamento dell'utente"""
-    try:
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT stripe_customer_id 
-                FROM users 
-                WHERE username = %s AND stripe_customer_id IS NOT NULL
-            """, (current_user,))
-            user = cursor.fetchone()
-        conn.close()
-
-        if not user or not user['stripe_customer_id']:
-            return jsonify({'error': 'Nessun abbonamento attivo'}), 400
-
-        # Recupera tutte le subscription del cliente
-        subscriptions = stripe.Subscription.list(
-            customer=user['stripe_customer_id'])
-
-        # Cancella tutte le subscription attive
-        for subscription in subscriptions.data:
-            if subscription.status == 'active':
-                stripe.Subscription.delete(subscription.id)
-
-        return jsonify({'success': True, 'message': 'Abbonamento cancellato'})
-
-    except Exception as e:
-        print(f"Errore cancellazione abbonamento: {e}")
-        return jsonify({'error': str(e)}), 500
 
 ############################# FUNZIONALITÀ PREMIUM #############################
 
@@ -1761,57 +1756,66 @@ def get_sensor(current_user):
             return info
 
 # API PER SENSORI NELL'INIZIALIZZAZIONE
+
+
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
     info = get_sensor(current_user)
     return jsonify(info)
 
-def get_sensor_selected(state): 
+
+def get_sensor_selected(state):
     # ritorna i sensori selezionati in base allo stato
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
         "SELECT a.Node_id FROM assoc_sens_data a "
         "JOIN sensor s ON a.id_sens = s.id_sens AND a.Node_id = s.Node_id "
-        "WHERE a.id_data = %s AND s.stato_sens = %s", 
-        (session['id_data'], state) 
+        "WHERE a.id_data = %s AND s.stato_sens = %s",
+        (session['id_data'], state)
     )
-    row = cursor.fetchall() 
+    row = cursor.fetchall()
     sens = [item['Node_id'] for item in row]
     cursor.close()
     conn.close()
-    return sens 
+    return sens
 
-#da CONTROLLARE
-def get_state_data(): 
-    #print("Sessione: " + str(session['id_data']))
+# da CONTROLLARE
+
+
+def get_state_data():
+    # print("Sessione: " + str(session['id_data']))
     if 'id_data' in session:
         if session['id_data'] != 0:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT data_fine_irr FROM data WHERE id_ricerca = %s", 
+                "SELECT data_fine_irr FROM data WHERE id_ricerca = %s",
                 (session['id_data'], )
             )
             row = cursor.fetchone()
             cursor.close()
             conn.close()
             print("Fine irr: " + str(row['data_fine_irr']))
-            if str(row['data_fine_irr']) == 'None': return 'Stop' 
-            else: return 'Go' 
+            if str(row['data_fine_irr']) == 'None':
+                return 'Stop'
+            else:
+                return 'Go'
         else:
             return 'Go'
     else:
         return 'Go'
-    
+
 # DA TESTARE
+
+
 def get_finish_session():
-    # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL 
+    # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL
     # se ritorna TRUE, si salva la data di conclusione dell'ultimo sensore come data di fine
     # irrigazione sulla tabella "DATA"
     if 'id_data' not in session or session['id_data'] == 0:
-        return "Continue" 
+        return "Continue"
     else:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1819,54 +1823,62 @@ def get_finish_session():
             "SELECT count(*) FROM assoc_sens_data WHERE id_data = %s"
             "and data_conc_sens IS NOT NULL"
             "group by id_data",
-            (session['id_data'],) 
+            (session['id_data'],)
         )
         null_count = cursor.fetchone()[0]
         print("NULL COUNT: " + str(null_count))
         cursor.close()
         conn.close()
-         
+
         if null_count == 0:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute(
-            "SELECT TOP 1 date_conc_sens FROM assoc_sens_data WHERE id_data = %s"
-            "order by date_conc_sens desc"
-            (session['id_data'],) 
+                "SELECT TOP 1 date_conc_sens FROM assoc_sens_data WHERE id_data = %s"
+                "order by date_conc_sens desc"
+                (session['id_data'],)
             )
-            data = cursor.fetchone()[0] 
-            
+            data = cursor.fetchone()[0]
+
             cursor.execute(
                 "UPDATE data SET data_fine_irr = %s"
                 "WHERE id_ricerca = %s",
-                (data, session['id_data']) 
+                (data, session['id_data'])
             )
             conn.commit()
             cursor.close()
-            conn.close() 
-            return True, "Concluded" 
+            conn.close()
+            return True, "Concluded"
         else:
             return False, "Continue"
-    
+
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
+
+
 @app.route("/api/get_sensor_selected")
 def api_get_sensor_selected():
     info = get_sensor_selected('O')
     return jsonify(info)
 
 # API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
+
+
 @app.route("/api/get_sensor/concluded")
 def api_get_sensor_concluded():
     info = get_sensor_selected('C')
     return jsonify(info)
 
 # API PER SENSORI SOSPESI NELL'IRRIGAZIONE
+
+
 @app.route("/api/get_sensor/suspended")
 def api_get_sensor_suspended():
     info = get_sensor_selected('S')
     return jsonify(info)
 
 # API PER SESSIONE DI IRRIGAZIONE
+
+
 @app.route("/api/get_session_data")
 def api_get_session_data():
     info = get_state_data()
@@ -1874,6 +1886,8 @@ def api_get_session_data():
     return jsonify(info)
 
 # API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA TESTARE
+
+
 @app.route("/api/get_finish_session")
 def api_get_finish_session():
     info = get_finish_session()[1]
@@ -1884,9 +1898,10 @@ def api_get_finish_session():
 
 ############################ AZIONI IRRIGAZIONE #########################################
 
+
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
-    #controllo per la prima volta che si entra nel sito
+    # controllo per la prima volta che si entra nel sito
     if 'id_data' not in session:
         session['id_data'] = 0
 
@@ -1896,13 +1911,13 @@ def inizializzaIrrigazione():
             campo_id = data.get('campo_id')
             selected_sensors = data.get('selectedSensors', [])
             session['id_campo_selezionato'] = campo_id
-            #print("Sensori selezionati:", selected_sensors)
-            session['selected_sensors'] = selected_sensors 
+            # print("Sensori selezionati:", selected_sensors)
+            session['selected_sensors'] = selected_sensors
 
             # aggiorna lo stato dei sensori da disponibili a operativi
             conn = get_db_connection()
             cursor = conn.cursor()
-            #utilizzo l'id univoco del sensore
+            # utilizzo l'id univoco del sensore
             for i in selected_sensors:
                 cursor.execute(
                     "UPDATE sensor SET stato_sens = 'O' WHERE Node_ID = %s",
@@ -1921,30 +1936,31 @@ def inizializzaIrrigazione():
                 (session['id'], campo_id)
             )
             conn.commit()
-            last_id = cursor.lastrowid #estraggo l'id della registrazione dell'irrigazione appena inserita
+            # estraggo l'id della registrazione dell'irrigazione appena inserita
+            last_id = cursor.lastrowid
             session["id_data"] = last_id
-            print("Sess1: "+ str(session['id_data']))
+            print("Sess1: " + str(session['id_data']))
             cursor.close()
             conn.close()
 
-            #ricerco il l'ID "nostro" dei sensori confrontandolo con quello univoco del sensore
+            # ricerco il l'ID "nostro" dei sensori confrontandolo con quello univoco del sensore
             result_ids = []
             conn = get_db_connection()
             cursor = conn.cursor()
             for k in selected_sensors:
                 cursor.execute(
                     "SELECT id_sens FROM sensor WHERE Node_ID = %s",
-                    (k,) 
+                    (k,)
                 )
-                row = cursor.fetchone() 
+                row = cursor.fetchone()
                 print(f"Riga: {row}")
                 if row:
-                    result_ids.append(row['id_sens'])  
+                    result_ids.append(row['id_sens'])
             cursor.close()
             conn.close()
             print(f"ID sensori utilizzati: {result_ids}")
 
-            #inserisco i dati dell' avvio alla registrazione all'interno della tabella assoc_sens_data per ogni sensore selezionato
+            # inserisco i dati dell' avvio alla registrazione all'interno della tabella assoc_sens_data per ogni sensore selezionato
             conn = get_db_connection()
             cursor = conn.cursor()
             with conn:
@@ -1961,20 +1977,21 @@ def inizializzaIrrigazione():
                 cursor.close()
 
             # DA TESTARE
-            #init_exe() --> inizializzaione dell'exe
-            #subprocess.Popen([r"C:\percorso\al\tuo\programma.exe"])
+            # init_exe() --> inizializzaione dell'exe
+            # subprocess.Popen([r"C:\percorso\al\tuo\programma.exe"])
 
-            #API per sensori selezionati
+            # API per sensori selezionati
             return jsonify({"status": "ok", "selected_sensors": selected_sensors})
         else:
-            #print("SESSIONE GIà AVVIATA")
+            # print("SESSIONE GIà AVVIATA")
             return jsonify({"status": "no", "selected_sensors": None})
-        
+
     campo_id = request.args.get('campo_id')
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
+
 def set_state_sensor(state, sensor_id):
-    # setta lo stato del sensore 
+    # setta lo stato del sensore
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -1986,8 +2003,10 @@ def set_state_sensor(state, sensor_id):
     conn.close()
 
 # DA TESTARE
+
+
 def set_error_state_data(message):
-    #setta ad errore la ricerca
+    # setta ad errore la ricerca
     state = 'ERR'
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2001,6 +2020,8 @@ def set_error_state_data(message):
     pass
 
 # DA TESTARE
+
+
 def insert_sensor_data(data):
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
@@ -2009,7 +2030,7 @@ def insert_sensor_data(data):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s," \
+            "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s,"
             "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
             (data['date_conc_sens'], data['INDEX'], data['Bat'], data['Humidity'],
              data['Temperature'], data['ADC'], session['id_data'])
@@ -2018,6 +2039,8 @@ def insert_sensor_data(data):
         cursor.close()
 
 # DA TESTARE
+
+
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 @token_required
 def avviaIrrigazione(current_user):
@@ -2028,29 +2051,31 @@ def avviaIrrigazione(current_user):
         if azione == "sospendi":
             print(f"Sospensione richiesta per sensore {sensor_id}")
             set_state_sensor("S", sensor_id)
-            #session.modified = True
+            # session.modified = True
             return redirect("/avvia_irr")
-            
+
         elif azione == 'riattiva':
             set_state_sensor("O", sensor_id)
             return redirect("/avvia_irr")
 
-    max_wait_time = 300  
-    start_time = time.time() 
+    max_wait_time = 300
+    start_time = time.time()
 
-    # controllo per la prima volta che si entra nel sito 
-    # ricerco il receiver dal serial       
+    # controllo per la prima volta che si entra nel sito
+    # ricerco il receiver dal serial
     if 'serial_active' not in session:
         session['serial_active'] = False
     else:
-        while session['serial_active'] == False: #ricerco finchè non trovo il dispositivo nel seriale
+        # ricerco finchè non trovo il dispositivo nel seriale
+        while session['serial_active'] == False:
             # se non trova il dispositivo entro tot tempo la ricerca va in errore
             if time.time() - start_time > max_wait_time:
                 print("Timeout: dispositivo non trovato entro 5 minuti.")
                 set_error_state_data('Dispositivo non rilevato entro 5 minuti')
                 break
             try:
-                response = requests.get('http://localhost:8000/api/connection_status', timeout=5)
+                response = requests.get(
+                    'http://localhost:8000/api/connection_status', timeout=5)
                 if response.status_code == 200:
                     connection_status = response.json()
                     print("=" * 50)
@@ -2058,7 +2083,8 @@ def avviaIrrigazione(current_user):
                     print(f"Connesso: {connection_status.get('connected')}")
                     print(f"Porta: {connection_status.get('port')}")
                     print(f"Errore: {connection_status.get('error')}")
-                    print(f"Ultimo controllo: {connection_status.get('last_check')}")
+                    print(
+                        f"Ultimo controllo: {connection_status.get('last_check')}")
                     print("=" * 50)
 
                     if connection_status.get('connected') != False:
@@ -2073,20 +2099,24 @@ def avviaIrrigazione(current_user):
                 print(f"Errore nella chiamata API: {e}")
                 set_error_state_data('Mancata esecuzione del programma')
             time.sleep(2)
-    
+
         print("Pronto")
         all_sensor_wet = False
-        max_time_session = 7200 # durata massima dalla durata se non ricevo più segnali dai sensori
+        # durata massima dalla durata se non ricevo più segnali dai sensori
+        max_time_session = 7200
         start_session_time = time.time()
 
         while all_sensor_wet == False:
-            all_sensor_wet = get_finish_session()[0] # cicla finchè tutti i sensori non hanno finito
+            # cicla finchè tutti i sensori non hanno finito
+            all_sensor_wet = get_finish_session()[0]
             if time.time() - start_session_time > max_time_session:
                 print("Interruzione sessione dopo due ore dall'ultimo ricevimento")
-                set_error_state_data('Mancata conclusione di tutti i sensori nella durata della sessione')
+                set_error_state_data(
+                    'Mancata conclusione di tutti i sensori nella durata della sessione')
                 break
             try:
-                response = requests.get('http://localhost:8000/api/sensor_data', timeout=5)
+                response = requests.get(
+                    'http://localhost:8000/api/sensor_data', timeout=5)
                 if response.status_code == 200:
                     sensor_status = response.json()
                     print("=" * 50)
@@ -2109,6 +2139,7 @@ def avviaIrrigazione(current_user):
         time.sleep(2)
 
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
+
 
 @app.route('/reg_irr', methods=['GET', 'POST'])
 def registroIrrigazione():
