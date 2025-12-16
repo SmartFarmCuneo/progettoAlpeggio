@@ -17,6 +17,7 @@ import re
 import stripe
 import sys
 import time
+from datetime import datetime
 from email.mime.text import MIMEText
 from flask_mail import Message, Mail
 
@@ -1242,13 +1243,6 @@ def api_get_plans(current_user):
     })
 
 
-from datetime import datetime
-import stripe
-from flask import jsonify, request, redirect, url_for, render_template
-
-# Assicurati di avere queste costanti definite
-# SUBSCRIPTION_PLANS = {...}
-
 @app.route('/payment-success')
 @token_required
 def payment_success(current_user):
@@ -1263,11 +1257,11 @@ def payment_success(current_user):
         checkout_session = stripe.checkout.Session.retrieve(session_id)
 
         if checkout_session.payment_status == 'paid':
-            
+
             # Recupera ID cliente e ID abbonamento
             customer_id = checkout_session.customer
             subscription_id = checkout_session.subscription
-            
+
             # Recupera i metadati
             plan_name = checkout_session.metadata.get('plan')
 
@@ -1275,12 +1269,12 @@ def payment_success(current_user):
             conn = get_db_connection()
             try:
                 with conn.cursor() as cursor:
-                    # Logica richiesta: 
+                    # Logica richiesta:
                     # 1. Imposta lo stato su 'active'
                     # 2. Salva stripe_subscription_id (fondamentale per cancellare dopo)
                     # 3. Imposta start_date a ADESSO (NOW())
                     # 4. Imposta end_date a ADESSO + 1 MESE esatto
-                    
+
                     cursor.execute("""
                         UPDATE users 
                         SET subscription_plan = %s, 
@@ -1295,7 +1289,8 @@ def payment_success(current_user):
                     conn.commit()
 
                     # Salva nella cronologia pagamenti (opzionale ma consigliato)
-                    cursor.execute("SELECT id_u FROM users WHERE username = %s", (current_user,))
+                    cursor.execute(
+                        "SELECT id_u FROM users WHERE username = %s", (current_user,))
                     user_data = cursor.fetchone()
 
                     if user_data:
@@ -1343,7 +1338,7 @@ def cancel_subscription(current_user):
                 FROM users WHERE username = %s
             """, (current_user,))
             user = cursor.fetchone()
-        
+
         if not user or not user['stripe_subscription_id']:
             conn.close()
             return jsonify({'error': 'Nessun abbonamento attivo trovato'}), 404
@@ -1352,13 +1347,13 @@ def cancel_subscription(current_user):
 
         try:
             # 1. Cancella l'abbonamento su Stripe
-            
+
             # Opzione A: Cancellazione immediata
             # stripe.Subscription.delete(sub_id)
-            
+
             # Opzione B: Cancella alla fine del periodo pagato
             stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
-            
+
             # 2. Aggiorna il database locale
             with conn.cursor() as cursor:
                 cursor.execute("""
@@ -1369,13 +1364,14 @@ def cancel_subscription(current_user):
                     WHERE username = %s
                 """, (current_user,))
                 conn.commit()
-            
+
             return jsonify({'message': 'Abbonamento annullato con successo. Non ti verranno addebitati altri costi.'})
 
         except stripe.error.InvalidRequestError:
             # Succede se l'abbonamento è già cancellato su Stripe ma non sul DB
             with conn.cursor() as cursor:
-                cursor.execute("UPDATE users SET subscription_status = 'canceled' WHERE username = %s", (current_user,))
+                cursor.execute(
+                    "UPDATE users SET subscription_status = 'canceled' WHERE username = %s", (current_user,))
                 conn.commit()
             return jsonify({'message': 'Abbonamento già annullato.'})
 
@@ -1395,6 +1391,7 @@ def payment_cancel(current_user):
     PRIMA di pagare (pulsante 'Indietro' su Stripe).
     """
     return render_template('payment_cancel.html')
+
 
 @app.route('/create-customer-portal-session', methods=['POST'])
 @token_required
