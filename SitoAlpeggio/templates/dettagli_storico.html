@@ -1,0 +1,130 @@
+<!DOCTYPE html> 
+<html lang="it"> 
+<head> 
+  <meta charset="UTF-8"> 
+  <title>Dettagli Storico</title> 
+ 
+  <link rel="stylesheet" href="../static/assets/dist/css/bootstrap.min.css"> 
+  <link rel="stylesheet" href="../static/css/style.css"> 
+ 
+  <style> 
+    /* Rende lo sfondo del modal trasparente */
+    .modal-backdrop {
+      background-color: transparent !important;
+    }
+    
+    .modal-dialog {
+      max-width: fit-content;
+      margin: 1.75rem auto;
+    }
+    
+    .modal-content {
+      width: auto;
+      min-width: 800px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    
+    .dettagli-title { 
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    } 
+    
+    .table-responsive {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    
+    .table thead th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .table td, .table th {
+      font-size: 0.9rem;
+      padding: 0.5rem;
+    }
+    
+    .modal-footer {
+      justify-content: center;
+    }
+  </style> 
+</head> 
+ 
+<body> 
+
+<!-- Modal -->
+<div class="modal fade" id="dettagliModal" tabindex="-1" aria-labelledby="dettagliModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title dettagli-title" id="dettagliModalLabel">Dettagli Storico Sensore</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped table-hover mb-0"> 
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>ID Data</th>
+                <th>ID Sensore</th>
+                <th>Data Attivazione</th>
+                <th>Data Conclusione</th>
+                <th>Node ID</th>
+                <th>Index</th>
+                <th>Batteria</th>
+                <th>Umidità</th>
+                <th>Temperatura</th>
+                <th>ADC</th>
+              </tr>
+            </thead>
+            <tbody> 
+              {% for dettaglio in dettagli %}
+              <tr>
+                <td>{{ dettaglio.id }}</td>
+                <td>{{ dettaglio.id_data }}</td>
+                <td>{{ dettaglio.id_sens }}</td>
+                <td>{{ dettaglio.date_att_sens }}</td>
+                <td>{{ dettaglio.date_conc_sens }}</td>
+                <td>{{ dettaglio.Node_id }}</td>
+                <td>{{ dettaglio.idx }}</td>
+                <td>{{ dettaglio.Bat }}</td>
+                <td>{{ dettaglio.Humidity }}</td>
+                <td>{{ dettaglio.Temperature }}</td>
+                <td>{{ dettaglio.ADC }}</td>
+              </tr>
+              {% endfor %}
+            </tbody> 
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Chiudi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script per aprire automaticamente il modal -->
+<script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Apre automaticamente il modal al caricamento della pagina
+  document.addEventListener('DOMContentLoaded', function() {
+    var myModal = new bootstrap.Modal(document.getElementById('dettagliModal'));
+    myModal.show();
+    
+    // Reindirizza alla pagina storico quando il modal viene chiuso
+    document.getElementById('dettagliModal').addEventListener('hidden.bs.modal', function () {
+      window.location.href = '/storici';
+    });
+  });
+</script>
+
+</body> 
+</html>

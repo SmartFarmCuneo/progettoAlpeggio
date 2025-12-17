@@ -20,6 +20,22 @@
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
 
+  <style>
+    .stato-box {
+      width: 40px;
+      height: 40px;
+      margin: auto;
+      border-radius: 4px;
+    }
+
+    .stato-verde {
+      background-color: #28a745;
+    }
+
+    .stato-rosso {
+      background-color: #dc3545;
+    }
+  </style>
 </head>
 
 <body>
@@ -55,9 +71,7 @@
 
     <div class="profile-content">
       <div class="py-5 text-center">
-        <img class="d-block mx-auto mb-4"
-          src="../static/image/logo.png" alt="" width="72"
-          height="57" />
+        <img class="d-block mx-auto mb-4" src="../static/image/logo.png" alt="" width="72" height="57" />
         <h2>Storico ricerche</h2>
         <p class="lead">Pagina per lo storico delle ricerche</p>
       </div>
@@ -70,6 +84,7 @@
             </select>
             <input type="submit" id="ricerca" value="Ricerca" name="action-ricercaSt" />
           </div>
+        </form>
 
           <!-- Modulo nascosto all'inizio -->
           <div id="formSection" class="mt-4">
@@ -78,15 +93,30 @@
               <table class="table table-striped table-hover">
                 <thead class="table-dark">
                   <tr>
-                    <th>Id ricerca</th>
-                    <th>Data ricerca</th>
+                    <th>Indice</th>
+                    <th>Data inizio irrigaziones</th>
+                    <th>Data fine irrigazione</th>
+                    <th>Stato irrigazione</th>
+                    <th>Maggiori Dettagli</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for row in info %}
                   <tr>
-                    <td>{{ row.id_ricerca }}</td>
-                    <td>{{ row.data_ricerca }}</td>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ row.data_inizio_irr }}</td>
+                    <td>{{ row.data_fine_irr }}</td>
+                    <td>
+                      <div class="stato-box {% if row.error_data %}stato-rosso{% else %}stato-verde{% endif %}"></div>
+                    </td>
+                    <td>
+                      <form method="POST">
+                        <input type="hidden" name="id_ricerca" value="{{ row.id_ricerca }}">
+                        <button type="submit" name="action-dettagli" value="dettagli" class="btn btn-sm btn-primary">
+                          DETTAGLI
+                        </button>
+                      </form>
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -94,7 +124,6 @@
             </div>
           </div>
         </div>
-      </form>
     </div>
   </div>
 

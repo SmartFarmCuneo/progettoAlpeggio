@@ -3,7 +3,7 @@ from flask import Flask, render_template, redirect, url_for, request, make_respo
 from flask import session, jsonify, render_template_string, current_app
 from functools import wraps
 import pymysql
-import datetime
+#import datetime
 import jwt
 import hashlib
 import requests
@@ -17,7 +17,7 @@ import re
 import stripe
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from flask_mail import Message, Mail
 
@@ -46,8 +46,6 @@ app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv(
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # Database connection
-
-
 def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
@@ -56,7 +54,6 @@ def get_db_connection():
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
     )
-
 
 # se non hai il .env quella sopra funziona lo stesso
 """def get_db_connection():
@@ -605,21 +602,17 @@ def registrati():
 ##################################################################################
 
 ################################ Cookie-Token ####################################
-
-
 def generate_token(username):
     payload = {
         "user": username,
-        "exp": datetime.datetime.now() + datetime.timedelta(hours=1)
+        "exp": datetime.now() + timedelta(hours=1)
     }
     return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
-
 
 def generate_and_set_token(response, username, durata=1):
     token = generate_token(username)
     response.set_cookie("token", token, max_age=3600, httponly=True)
     return response
-
 
 def token_required(f):
     @wraps(f)
@@ -640,8 +633,6 @@ def token_required(f):
 ################################################################################
 
 ########################### RESET PASSWORD #####################################
-
-
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     message = ""
@@ -668,7 +659,6 @@ def forgot_password():
 
     return render_template("forgot_password.html", message=message)
 
-
 @app.route("/verify_code", methods=["GET", "POST"])
 def verify_code():
     error = ""
@@ -680,7 +670,6 @@ def verify_code():
             error = "Codice errato."
 
     return render_template("verify_code.html", error=error)
-
 
 @app.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
@@ -717,8 +706,7 @@ def reset_password():
 
 
 ################# FUNZIONI BARRA SINISTRA ####################
-
-# DA FARE
+# DA MIGLIORARE -- SOLO VERSIONE BASE
 @app.route('/storici', methods=['GET', 'POST'])
 @token_required
 def storici(current_user):
@@ -736,7 +724,28 @@ def storici(current_user):
                     (session[f"campo{campo_selezionato}"], session["id"])
                 )
                 risultato = cursor.fetchall()
+            
+        elif request.form.get('action-dettagli') == 'dettagli':
+            id_ricerca = request.form.get('id_ricerca')
+            print("ID RICERCA:", id_ricerca)
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM assoc_sens_data WHERE id_data = %s",
+                    (id_ricerca, )
+                )
+                dettaglio = cursor.fetchall()
+
+            return render_template(
+                'dettagli_storico.html',
+                dettagli=dettaglio
+            )
+
     return render_template('storici.html', info=risultato, campo=campo_selezionato)
+
+@app.route('/dettagli_storici', methods=['GET', 'POST'])
+@token_required
+def dettagli_storici(current_user):
+    pass
 
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
@@ -1805,12 +1814,11 @@ def get_state_data():
         return 'Go'
 
 # DA TESTARE
-
-
 def get_finish_session():
     # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL
-    # se ritorna TRUE, si salva la data di conclusione dell'ultimo sensore come data di fine
+    # se ritorna come conteggio 0, si salva la data di conclusione dell'ultimo sensore come data di fine
     # irrigazione sulla tabella "DATA"
+    # (VERSIONE BASE) imposta tutti i sensori coinvolti a disponibili
     if 'id_data' not in session or session['id_data'] == 0:
         return "Continue"
     else:
@@ -1845,37 +1853,33 @@ def get_finish_session():
             conn.commit()
             cursor.close()
             conn.close()
+            # settaggio stato concluso dei sensori 
+            for sensor in session['selected_sensors']:
+                set_state_sensor("C", sensor)
+
             return True, "Concluded"
         else:
             return False, "Continue"
 
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
-
-
 @app.route("/api/get_sensor_selected")
 def api_get_sensor_selected():
     info = get_sensor_selected('O')
     return jsonify(info)
 
 # API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
-
-
 @app.route("/api/get_sensor/concluded")
 def api_get_sensor_concluded():
     info = get_sensor_selected('C')
     return jsonify(info)
 
 # API PER SENSORI SOSPESI NELL'IRRIGAZIONE
-
-
 @app.route("/api/get_sensor/suspended")
 def api_get_sensor_suspended():
     info = get_sensor_selected('S')
     return jsonify(info)
 
 # API PER SESSIONE DI IRRIGAZIONE
-
-
 @app.route("/api/get_session_data")
 def api_get_session_data():
     info = get_state_data()
@@ -1883,8 +1887,6 @@ def api_get_session_data():
     return jsonify(info)
 
 # API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA TESTARE
-
-
 @app.route("/api/get_finish_session")
 def api_get_finish_session():
     info = get_finish_session()[1]
@@ -1968,7 +1970,7 @@ def inizializzaIrrigazione():
                         "INSERT INTO assoc_sens_data "
                         "(id_data, id_sens, date_att_sens, date_conc_sens, Node_id, idx, Bat, Humidity, Temperature, ADC) "
                         "VALUES (%s, %s, %s, NULL, %s, NULL, NULL, NULL, NULL, NULL)",
-                        (last_id, our_id, datetime.datetime.now(), node_id)
+                        (last_id, our_id, datetime.now(), node_id)
                     )
                     conn.commit()
                 cursor.close()
@@ -2000,8 +2002,6 @@ def set_state_sensor(state, sensor_id):
     conn.close()
 
 # DA TESTARE
-
-
 def set_error_state_data(message):
     # setta ad errore la ricerca
     state = 'ERR'
@@ -2017,8 +2017,6 @@ def set_error_state_data(message):
     pass
 
 # DA TESTARE
-
-
 def insert_sensor_data(data):
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
@@ -2036,8 +2034,6 @@ def insert_sensor_data(data):
         cursor.close()
 
 # DA TESTARE
-
-
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 @token_required
 def avviaIrrigazione(current_user):
@@ -2137,15 +2133,12 @@ def avviaIrrigazione(current_user):
 
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
 
-
 @app.route('/reg_irr', methods=['GET', 'POST'])
 def registroIrrigazione():
     campo_id = request.args.get('campo_id')
     return render_template('storici.html', campo_id=campo_id)
 
 ####################################################################################
-
-
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2161,7 +2154,6 @@ def associazioneSessionCampi(current_user):
         for i, e in enumerate(id_array):
             session[f"campo{i+1}"] = e
 
-
 @app.route('/', methods=['GET'])
 def index():
     token = request.cookies.get("token")
@@ -2172,7 +2164,6 @@ def index():
         except Exception:
             pass
     return render_template("index.html")  # pagina pubblica iniziale
-
 
 @app.route('/home', methods=['GET', 'POST'])
 @token_required
@@ -2205,13 +2196,11 @@ def home(current_user):
     campo_corrente = session.get('campo_corrente', None)
     return render_template('home.html', campo_corrente=campo_corrente)
 
-
 @app.route('/logout', methods=['POST'])
 def logout():
     response = make_response(redirect(url_for('index')))
     response.delete_cookie('token')
     return response
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
