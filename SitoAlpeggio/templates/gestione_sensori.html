@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/sensori.css" />
-  
+
 </head>
 
 <body>
@@ -70,20 +70,52 @@
 
         <div class="profile-section">
           <h2 class="section-title">I Miei Sensori</h2>
-          
+          {% set stati = {
+          'O': 'Operativo',
+          'C': 'Disponibile',
+          'S': 'Sospeso'
+          } %}
+
           {% if sensori and sensori|length > 0 %}
           <div class="sensors-grid">
             {% for sensore in sensori %}
             <div class="sensor-card">
-              <h3>{{ sensore['nome_sensore'] }}</h3>
-              <p><strong>ID Sensore:</strong> <span class="sensor-id">{{ sensore['id_sensore'] }}</span></p>
-              <p><strong>Data Registrazione:</strong> {{ sensore['data_registrazione'].strftime('%d/%m/%Y') if sensore['data_registrazione'] else 'N/A' }}</p>
+              <!--<h3>{{ sensore['nome_sensore'] }}</h3>-->
+              <p><strong>ID Sensore:</strong> <span class="sensor-id">{{ sensore['id_sens'] }}</span></p>
+              <p><strong>Node ID:</strong> <span class="sensor-id">{{ sensore['Node_id'] }}</span></p>
+              <!--<p><strong>Data Registrazione:</strong> {{ sensore['data_registrazione'].strftime('%d/%m/%Y') if sensore['data_registrazione'] else 'N/A' }}</p>-->
+              <p><strong>Posizione Sensore:</strong> <span class="sensor-id">{{ sensore['posizione'] }}</span></p>
+              <p><strong>Stato Sensore:</strong><span class="sensor-id">{{ sensore['stato_sens'] }} ({{
+                  stati.get(sensore['stato_sens'], 'Stato sconosciuto') }})</span></p>
               <div class="sensor-actions">
-                <form method="POST" action="/gestione_sensori" style="display: inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo sensore?');">
+
+                <!-- Pulsante ELIMINA -->
+                <form method="POST" action="/gestione_sensori" style="display: inline;"
+                  onsubmit="return confirm('Sei sicuro di voler eliminare questo sensore?');">
                   <input type="hidden" name="action" value="elimina">
-                  <input type="hidden" name="id_sensore" value="{{ sensore['id_sensore'] }}">
+                  <input type="hidden" name="id_sensore" value="{{ sensore['Node_id'] }}">
                   <button type="submit" class="cancel-btn">Elimina</button>
                 </form>
+
+                <!-- Pulsante SOSPENDI -->
+                {% if sensore['stato_sens'] == 'O' or sensore['stato_sens'] == 'C' %}
+                <form method="POST" action="/gestione_sensori" style="display: inline;"
+                  onsubmit="return confirm('Vuoi sospendere questo sensore?');">
+                  <input type="hidden" name="action" value="sospendi">
+                  <input type="hidden" name="id_sensore" value="{{ sensore['Node_id'] }}">
+                  <button type="submit" class="warning-btn">Sospendi</button>
+                </form>
+                {% endif %}
+
+                <!-- Pulsante RIATTIVA -->
+                {% if sensore['stato_sens'] == 'S' %}
+                <form method="POST" action="/gestione_sensori" style="display: inline;"
+                  onsubmit="return confirm('Vuoi riattivare questo sensore?');">
+                  <input type="hidden" name="action" value="riattiva">
+                  <input type="hidden" name="id_sensore" value="{{ sensore['Node_id'] }}">
+                  <button type="submit" class="success-btn">Riattiva</button>
+                </form>
+                {% endif %}
               </div>
             </div>
             {% endfor %}
@@ -109,18 +141,18 @@
       <form id="add-sensor-form" method="POST" action="/gestione_sensori">
         <div class="modal-body">
           <input type="hidden" name="action" value="aggiungi">
-          
+
           <div class="form-group">
             <label class="form-label" for="id_sensore">ID Sensore *</label>
-            <input type="text" id="id_sensore" name="id_sensore" class="form-control" 
-                   placeholder="Es: SENS001" required />
+            <input type="text" id="id_sensore" name="id_sensore" class="form-control" placeholder="Es: SENS001"
+              required />
             <small style="color: var(--text-body); font-size: 0.85em;">Inserisci l'ID univoco del sensore</small>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="nome_sensore">Nome Sensore *</label>
-            <input type="text" id="nome_sensore" name="nome_sensore" class="form-control" 
-                   placeholder="Es: Sensore Campo Nord" required />
+            <input type="text" id="nome_sensore" name="nome_sensore" class="form-control"
+              placeholder="Es: Sensore Campo Nord" required />
             <small style="color: var(--text-body); font-size: 0.85em;">Scegli un nome descrittivo per il sensore</small>
           </div>
         </div>

@@ -3,7 +3,6 @@ from flask import Flask, render_template, redirect, url_for, request, make_respo
 from flask import session, jsonify, render_template_string, current_app
 from functools import wraps
 import pymysql
-#import datetime
 import jwt
 import hashlib
 import requests
@@ -64,7 +63,6 @@ def get_db_connection():
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
     )"""
-
 ###############################################################################
 
 # -----------------------------------------------------
@@ -102,7 +100,7 @@ def set_consent():
         "necessary": bool(data.get("necessary", False)),
         "analytics": bool(data.get("analytics", False)),
         "ads": bool(data.get("ads", False)),
-        "timestamp": datetime.datetime.now().isoformat() + "Z"
+        "timestamp": datetime.now().isoformat() + "Z"
     }
 
     resp = make_response(jsonify({"status": "ok", "consent": consent}))
@@ -974,14 +972,12 @@ def gestioneCampo(current_user):
 
     return redirect(url_for('gestioneCampo'))
 
-
 @app.route('/gestione_sensori', methods=['POST', 'GET'])
 @token_required
 def gestione_sensori(current_user):
     conn = get_db_connection()
     user = None
     sensori = []
-
     try:
         with conn.cursor() as cursor:
             # 1. Recupera i dati dell'utente
@@ -1002,14 +998,7 @@ def gestione_sensori(current_user):
                     node_id_input = request.form.get('id_sensore', '').strip()
 
                     if not node_id_input:
-                        cursor.execute("""
-                            SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
-                            FROM sensor s
-                            JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
-                            WHERE aus.id_utente = %s
-                        """, (user_id,))
-                        sensori = cursor.fetchall()
-
+                        sensori = get_sensor2(user_id)
                         return render_template('gestione_sensori.html',
                                                user=user,
                                                sensori=sensori,
@@ -1029,7 +1018,7 @@ def gestione_sensori(current_user):
                         # Default: stato 'O' (Operativo) e posizione vuota
                         cursor.execute("""
                             INSERT INTO sensor (Node_id, stato_sens, posizione)
-                            VALUES (%s, 'O', '')
+                            VALUES (%s, 'C', '')
                         """, (node_id_input,))
                         conn.commit()
                         id_sens_db = cursor.lastrowid
@@ -1042,14 +1031,7 @@ def gestione_sensori(current_user):
                     existing_assoc = cursor.fetchone()
 
                     if existing_assoc:
-                        cursor.execute("""
-                            SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
-                            FROM sensor s
-                            JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
-                            WHERE aus.id_utente = %s
-                        """, (user_id,))
-                        sensori = cursor.fetchall()
-
+                        sensori = get_sensor2(user_id)
                         return render_template('gestione_sensori.html',
                                                user=user,
                                                sensori=sensori,
@@ -1062,14 +1044,7 @@ def gestione_sensori(current_user):
 
                     conn.commit()
 
-                    cursor.execute("""
-                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
-                        FROM sensor s
-                        JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
-                        WHERE aus.id_utente = %s
-                    """, (user_id,))
-                    sensori = cursor.fetchall()
-
+                    sensori = get_sensor2(user_id)
                     return render_template('gestione_sensori.html',
                                            user=user,
                                            sensori=sensori,
@@ -1080,13 +1055,7 @@ def gestione_sensori(current_user):
                         'id_sensore', '').strip()
 
                     if not id_sens_to_delete:
-                        cursor.execute("""
-                            SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
-                            FROM sensor s
-                            JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
-                            WHERE aus.id_utente = %s
-                        """, (user_id,))
-                        sensori = cursor.fetchall()
+                        sensori = get_sensor2(user_id)
                         return render_template('gestione_sensori.html',
                                                user=user,
                                                sensori=sensori,
@@ -1095,21 +1064,14 @@ def gestione_sensori(current_user):
                     # Elimina l'associazione dalla tabella assoc_users_sens
                     cursor.execute("""
                         DELETE FROM assoc_users_sens 
-                        WHERE id_sens = %s AND id_utente = %s
+                        WHERE Node_id = %s AND id_utente = %s
                     """, (id_sens_to_delete, user_id))
 
                     affected_rows = cursor.rowcount
                     conn.commit()
 
                     # Recupera lista aggiornata
-                    cursor.execute("""
-                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
-                        FROM sensor s
-                        JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
-                        WHERE aus.id_utente = %s
-                    """, (user_id,))
-                    sensori = cursor.fetchall()
-
+                    sensori = get_sensor2(user_id)
                     if affected_rows > 0:
                         return render_template('gestione_sensori.html',
                                                user=user,
@@ -1120,22 +1082,33 @@ def gestione_sensori(current_user):
                                                user=user,
                                                sensori=sensori,
                                                error='not_found')
+                    
+                elif action == 'sospendi':
+                    id_sens_to_suspend = request.form.get('id_sensore', '').strip()
+                    set_state_sensor('S', id_sens_to_suspend)
+                    #print("Prova")
+                    #print(get_sensor(current_user))
+                    sensori = get_sensor2(user_id)
+                    return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               success='suspend')
 
-            cursor.execute("""
-                SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
-                FROM sensor s
-                JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
-                WHERE aus.id_utente = %s
-            """, (user_id,))
-
-            sensori = cursor.fetchall()
-
+                elif action == 'riattiva':
+                    id_sens_to_activate = request.form.get('id_sensore', '').strip()
+                    set_state_sensor('C', id_sens_to_activate)
+                    sensori = get_sensor2(user_id)
+                    return render_template('gestione_sensori.html',
+                                               user=user,
+                                               sensori=sensori,
+                                               success='activate')
+            sensori = get_sensor2(user_id)
+            #print("sensori corretti: " + str(sensori))
     except Exception as e:
         print(f"Errore nella gestione sensori: {e}")
         import traceback
         traceback.print_exc()
 
-        # Fallback recupero utente per evitare crash template
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -1148,12 +1121,25 @@ def gestione_sensori(current_user):
                                user=user,
                                sensori=[],
                                error='generic')
-
     finally:
         conn.close()
-
     return render_template('gestione_sensori.html', user=user, sensori=sensori)
 
+def get_sensor2(user_id):
+    #DA RICONTROLLARE SIMILE AL get_sensor()
+    # ritorna i sensori dell'utente
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                        FROM sensor s
+                        JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
+                        WHERE aus.id_utente = %s
+                    """, (user_id,))
+    sensori = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return sensori
 
 def get_campi(current_user):
     """Restituisce il numero di campi dell'utente"""
@@ -1311,25 +1297,20 @@ def payment_success(current_user):
                             plan_name,
                             'paid'
                         )
-
             except Exception as db_error:
                 print(f"Errore DB in success: {db_error}")
             finally:
                 conn.close()
-
             return render_template('payment_success.html', plan=plan_name)
-
         else:
             # Pagamento non riuscito o in attesa
             return redirect(url_for('pagamenti'))
-
     except stripe.StripeError as e:
         print(f"Errore Stripe: {e}")
         return redirect(url_for('pagamenti'))
     except Exception as e:
         print(f"Errore Generico: {e}")
         return redirect(url_for('pagamenti'))
-
 
 @app.route('/cancel-subscription', methods=['POST'])
 @token_required
@@ -1391,7 +1372,6 @@ def cancel_subscription(current_user):
         if 'conn' in locals() and conn.open:
             conn.close()
 
-
 @app.route('/payment-cancel')
 @token_required
 def payment_cancel(current_user):
@@ -1400,7 +1380,6 @@ def payment_cancel(current_user):
     PRIMA di pagare (pulsante 'Indietro' su Stripe).
     """
     return render_template('payment_cancel.html')
-
 
 @app.route('/create-customer-portal-session', methods=['POST'])
 @token_required
@@ -1431,7 +1410,6 @@ def create_customer_portal_session(current_user):
     except Exception as e:
         print(f"Errore creazione portale clienti: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
@@ -1516,7 +1494,6 @@ def stripe_webhook():
 
     return 'Success', 200
 
-
 @app.route('/api/subscription-status')
 @token_required
 def api_subscription_status(current_user):
@@ -1539,15 +1516,12 @@ def api_subscription_status(current_user):
     })
 
 ############################# FUNZIONALITÀ PREMIUM #############################
-
-
 @app.route('/ai-analysis')
 @token_required
 @plan_feature_required('has_ai_analysis')
 def ai_analysis(current_user):
     """Funzionalità di analisi AI (Professional ed Enterprise)"""
     return render_template('ai_analysis.html')
-
 
 @app.route('/priority-support')
 @token_required
@@ -1556,7 +1530,6 @@ def priority_support(current_user):
     """Supporto prioritario (solo Enterprise)"""
     return render_template('priority_support.html')
 
-
 @app.route('/custom-api')
 @token_required
 @plan_feature_required('has_custom_api')
@@ -1564,10 +1537,7 @@ def custom_api(current_user):
     """API personalizzate (solo Enterprise)"""
     return render_template('custom_api.html')
 
-
 ################### PROFILO #################################
-
-
 @app.route('/profilo', methods=['POST', 'GET'])
 @token_required
 def profilo(current_user):
@@ -1610,21 +1580,17 @@ def profilo(current_user):
     # Render del template con i dati aggiornati
     return render_template('profilo.html', user=user)
 
-
 @app.route('/privacy', methods=['GET', 'POST'])
 def privacy():
     return render_template('privacy.html')
-
 
 @app.route('/terms', methods=['GET', 'POST'])
 def terms():
     return render_template('terms.html')
 
-
 @app.route('/contatti', methods=['GET', 'POST'])
 def contatti():
     return render_template('contatti.html')
-
 
 @app.route("/supporto")
 def supporto():
@@ -1633,8 +1599,6 @@ def supporto():
 #############################################################
 
 #################### GESTIONE DINAMICA DEI CAMPI e SENSORI - API ###############################
-
-
 def haversine(lat1, lon1, lat2, lon2):
     # distanza in km tra due coordinate
     R = 6371
@@ -1645,7 +1609,6 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(dphi/2)**2 + math.cos(phi1) * \
         math.cos(phi2) * math.sin(dlambda/2)**2
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
 
 @app.route("/api/get_location_by_coords", methods=["GET"])
 def get_location_by_coords():
@@ -1660,7 +1623,6 @@ def get_location_by_coords():
     if not comuni:
         return jsonify({"error": "Nessun comune trovato"}), 404
 
-    # Trova il comune più vicino
     nearest = min(
         comuni,
         key=lambda c: haversine(lat, lon, float(c["lat"]), float(c["lon"]))
@@ -1674,7 +1636,6 @@ def get_location_by_coords():
     }
     return jsonify(result)
 
-
 def get_campi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1683,14 +1644,6 @@ def get_campi(current_user):
     num_campi = cursor.fetchone()['COUNT(*)']
     conn.close()
     return num_campi
-
-
-@app.route("/api/numCampi")
-@token_required
-def api_num_campi(current_user):
-    campi = get_campi(current_user)
-    return jsonify(campi)
-
 
 def get_info_campi(current_user):
     conn = get_db_connection()
@@ -1703,14 +1656,18 @@ def get_info_campi(current_user):
             info += str(risultato[i]["coordinate"]) + "/" + str(risultato[i]
                                                                 ["comune"]) + "|"
         return info
-
+    
+@app.route("/api/numCampi")
+@token_required
+def api_num_campi(current_user):
+    campi = get_campi(current_user)
+    return jsonify(campi)
 
 @app.route("/api/infoCampi")
 @token_required
 def api_info_campi(current_user):
     info = get_info_campi(current_user)
     return jsonify(info)
-
 
 @app.route("/api/get_provincia")
 def get_provincia():
@@ -1719,23 +1676,18 @@ def get_provincia():
         data = json.load(file)
     return jsonify({"province": data.get("province", [])})
 
-
 @app.route("/api/get_comune", methods=["GET"])
 def get_comune():
     file_path = os.path.join(JSON_DIR, "gi_comuni_cap.json")
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
-
     comuni = data.get("dati", [])
     provincia = request.args.get("provincia")
     if provincia:
         comuni = [c for c in comuni if c['sigla_provincia'] == provincia]
-
     return jsonify({"comuni": comuni})
 
-
 def get_sensor(current_user):
-    print("inizio")
     conn = get_db_connection()
 
     with conn.cursor() as cursor:
@@ -1743,8 +1695,6 @@ def get_sensor(current_user):
             "SELECT id_u FROM users WHERE username = %s", (current_user,))
         result = cursor.fetchone()
         id_user = result['id_u']
-
-    print(f"User ID: {id_user}")
 
     with conn.cursor() as cursor:
         cursor.execute(
@@ -1760,16 +1710,6 @@ def get_sensor(current_user):
             return "nessuna info"
         else:
             return info
-
-# API PER SENSORI NELL'INIZIALIZZAZIONE
-
-
-@app.route("/api/get_sensor")
-@token_required
-def api_get_sensor(current_user):
-    info = get_sensor(current_user)
-    return jsonify(info)
-
 
 def get_sensor_selected(state):
     # ritorna i sensori selezionati in base allo stato
@@ -1787,10 +1727,9 @@ def get_sensor_selected(state):
     conn.close()
     return sens
 
-# da CONTROLLARE
-
-
+# DA CONTROLLARE
 def get_state_data():
+    # ritorna se è possbile continare la sessione o no 
     # print("Sessione: " + str(session['id_data']))
     if 'id_data' in session:
         if session['id_data'] != 0:
@@ -1804,7 +1743,7 @@ def get_state_data():
             cursor.close()
             conn.close()
             print("Fine irr: " + str(row['data_fine_irr']))
-            if str(row['data_fine_irr']) == 'None':
+            if str(row['data_fine_irr']) == 'None': # deve essere != da None
                 return 'Stop'
             else:
                 return 'Go'
@@ -1825,12 +1764,13 @@ def get_finish_session():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT count(*) FROM assoc_sens_data WHERE id_data = %s"
-            "and data_conc_sens IS NOT NULL"
-            "group by id_data",
+            "SELECT count(*) FROM assoc_sens_data "
+            "WHERE id_data = %s "
+            "AND date_conc_sens IS NOT NULL "
+            "GROUP BY id_data",
             (session['id_data'],)
         )
-        null_count = cursor.fetchone()[0]
+        null_count = cursor.fetchone()
         print("NULL COUNT: " + str(null_count))
         cursor.close()
         conn.close()
@@ -1861,6 +1801,13 @@ def get_finish_session():
         else:
             return False, "Continue"
 
+# API PER SENSORI NELL'INIZIALIZZAZIONE
+@app.route("/api/get_sensor")
+@token_required
+def api_get_sensor(current_user):
+    info = get_sensor(current_user)
+    return jsonify(info)
+
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
 @app.route("/api/get_sensor_selected")
 def api_get_sensor_selected():
@@ -1886,7 +1833,7 @@ def api_get_session_data():
     print("INFO: " + str(info))
     return jsonify(info)
 
-# API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA TESTARE
+# API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA CONTROLLARE
 @app.route("/api/get_finish_session")
 def api_get_finish_session():
     info = get_finish_session()[1]
@@ -1896,8 +1843,6 @@ def api_get_finish_session():
 ########################################################################################
 
 ############################ AZIONI IRRIGAZIONE #########################################
-
-
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
     # controllo per la prima volta che si entra nel sito
@@ -2016,7 +1961,7 @@ def set_error_state_data(message):
     conn.close()
     pass
 
-# DA TESTARE
+# FUNZIONATE
 def insert_sensor_data(data):
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
@@ -2059,6 +2004,7 @@ def avviaIrrigazione(current_user):
     if 'serial_active' not in session:
         session['serial_active'] = False
     else:
+        print(session['serial_active'])
         # ricerco finchè non trovo il dispositivo nel seriale
         while session['serial_active'] == False:
             # se non trova il dispositivo entro tot tempo la ricerca va in errore
@@ -2120,6 +2066,7 @@ def avviaIrrigazione(current_user):
                         print(f"Valorì letti: {data}")
                         print(f"Timestamp: {sensor_status.get('timestamp')}")
                         print("=" * 50)
+                        data["date_conc_sens"] = sensor_status.get('timestamp')
                         insert_sensor_data(data)
                         max_time_session = 7200
                     else:

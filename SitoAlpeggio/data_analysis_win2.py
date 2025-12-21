@@ -18,6 +18,8 @@ Errore: Nessuna porta seriale trovata.
 Ultimo controllo: 2025-12-10 19:20:51
 """
 
+# MODIFICARE API INVIO DATI IN MODO CHE INVII SOLO QUANDO SENSORE BAGNATO
+
 # Inizializza Flask
 app = Flask(__name__)
 
@@ -240,6 +242,7 @@ def serial_reader_loop():
 
 @app.route('/api/connection_status', methods=['GET'])
 def get_connection_status():
+    print("Chiamata")
     """
     Ritorna lo stato della connessione seriale
     
