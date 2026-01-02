@@ -45,7 +45,7 @@
       <div class="menu-item"><a href="/aggiungiCampo">Aggiungi Campo</a></div>
       <div class="menu-item"><a href="/gestioneCampo">Gestione Campo</a></div>
       <div class="menu-item"><a href="/visualizzaCampi">Visualizza i tuoi campi</a></div>
-      <div class="menu-item"><a href="//gestione_sensori">Gestione Sensori</a></div>
+      <div class="menu-item"><a href="/gestione_sensori">Gestione Sensori</a></div>
       <!-- Questo menu item verrà mostrato solo se la sessione è attiva -->
       <div class="menu-item" id="visualizza-irrigazione" style="display: none;">
         <a href="/avvia_irr">Visualizza Irrigazione Avviata</a>
@@ -73,6 +73,11 @@
     </div>
   </footer>
   {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+  {% if popup_msg %}
+  <script>
+    alert("{{ popup_msg }}");
+  </script>
+  {% endif %}
 
   <script src="../static/js/verifica_session_data.js"></script>
   <script src="../static/js/home.js" defer></script>

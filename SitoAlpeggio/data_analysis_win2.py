@@ -237,7 +237,6 @@ def serial_reader_loop():
         ser.close()
     print("Thread seriale terminato.")
 
-
 # ==================== API ENDPOINTS ====================
 
 @app.route('/api/connection_status', methods=['GET'])

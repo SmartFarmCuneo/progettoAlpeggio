@@ -704,32 +704,45 @@ def reset_password():
 
 
 ################# FUNZIONI BARRA SINISTRA ####################
-# DA MIGLIORARE -- SOLO VERSIONE BASE
+# VERSIONE BASE
 @app.route('/storici', methods=['GET', 'POST'])
 @token_required
 def storici(current_user):
     risultato = ""
     campo_selezionato = ""
+
     conn = get_db_connection()
+
+    # preselezione da home 
+    campo_id = request.args.get('campo_id')
+    if campo_id:
+        campo_selezionato = campo_id
+
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM data WHERE id_t = %s AND id_u = %s",
+                (session[f"campo{campo_selezionato}"], session["id"])
+            )
+            risultato = cursor.fetchall()
+
     if request.method == 'POST':
         if request.form.get('action-ricercaSt') == 'Ricerca':
-            campo_selezionato = request.form["selezionato"]
-            # prendo l'ultimo carattere
-            campo_selezionato = campo_selezionato[-1]
+            campo_selezionato = request.form["selezionato"][-1]
+
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT * FROM data WHERE id_t = %s AND id_u = %s",
                     (session[f"campo{campo_selezionato}"], session["id"])
                 )
                 risultato = cursor.fetchall()
-            
+
         elif request.form.get('action-dettagli') == 'dettagli':
             id_ricerca = request.form.get('id_ricerca')
-            print("ID RICERCA:", id_ricerca)
+
             with conn.cursor() as cursor:
                 cursor.execute(
                     "SELECT * FROM assoc_sens_data WHERE id_data = %s",
-                    (id_ricerca, )
+                    (id_ricerca,)
                 )
                 dettaglio = cursor.fetchall()
 
@@ -738,13 +751,16 @@ def storici(current_user):
                 dettagli=dettaglio
             )
 
-    return render_template('storici.html', info=risultato, campo=campo_selezionato)
+    return render_template(
+        'storici.html',
+        info=risultato,
+        campo=campo_selezionato
+    )
 
 @app.route('/dettagli_storici', methods=['GET', 'POST'])
 @token_required
 def dettagli_storici(current_user):
     pass
-
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
 @token_required
@@ -996,6 +1012,7 @@ def gestione_sensori(current_user):
                 # A) AGGIUNGI SENSORE
                 if action == 'aggiungi':
                     node_id_input = request.form.get('id_sensore', '').strip()
+                    posizione = request.form.get('posizione_sensore', '').strip()
 
                     if not node_id_input:
                         sensori = get_sensor2(user_id)
@@ -1018,8 +1035,8 @@ def gestione_sensori(current_user):
                         # Default: stato 'O' (Operativo) e posizione vuota
                         cursor.execute("""
                             INSERT INTO sensor (Node_id, stato_sens, posizione)
-                            VALUES (%s, 'C', '')
-                        """, (node_id_input,))
+                            VALUES (%s, 'C', %s)
+                        """, (node_id_input,posizione))
                         conn.commit()
                         id_sens_db = cursor.lastrowid
 
@@ -1102,6 +1119,7 @@ def gestione_sensori(current_user):
                                                user=user,
                                                sensori=sensori,
                                                success='activate')
+                
             sensori = get_sensor2(user_id)
             #print("sensori corretti: " + str(sensori))
     except Exception as e:
@@ -1729,7 +1747,7 @@ def get_sensor_selected(state):
 
 # DA CONTROLLARE
 def get_state_data():
-    # ritorna se è possbile continare la sessione o no 
+    # ritorna se è possbile continare o iniziare la sessione o meno
     # print("Sessione: " + str(session['id_data']))
     if 'id_data' in session:
         if session['id_data'] != 0:
@@ -1742,8 +1760,8 @@ def get_state_data():
             row = cursor.fetchone()
             cursor.close()
             conn.close()
-            print("Fine irr: " + str(row['data_fine_irr']))
-            if str(row['data_fine_irr']) == 'None': # deve essere != da None
+            #print("Fine irr: " + str(row['data_fine_irr']))
+            if row != None: 
                 return 'Stop'
             else:
                 return 'Go'
@@ -1850,6 +1868,7 @@ def inizializzaIrrigazione():
         session['id_data'] = 0
 
     if request.method == 'POST':
+        print("Prova sessione data: " + str(session['id_data']))
         if get_state_data() == 'Go':
             data = request.get_json()
             campo_id = data.get('campo_id')
@@ -1883,7 +1902,7 @@ def inizializzaIrrigazione():
             # estraggo l'id della registrazione dell'irrigazione appena inserita
             last_id = cursor.lastrowid
             session["id_data"] = last_id
-            print("Sess1: " + str(session['id_data']))
+            #print("Sess1: " + str(session['id_data']))
             cursor.close()
             conn.close()
 
@@ -1921,9 +1940,15 @@ def inizializzaIrrigazione():
                 cursor.close()
 
             # DA TESTARE
-            # init_exe() --> inizializzaione dell'exe
-            # subprocess.Popen([r"C:\percorso\al\tuo\programma.exe"])
-
+            # lancia l'exe per prendere i dati dal sensore
+            #subprocess.Popen(
+                #[
+                    #"cmd.exe",
+                    #"/k",  # /k = lascia la finestra aperta, /c = chiude dopo l'esecuzione
+                    #r"C:\Users\giova\OneDrive\Desktop\Marco\Progetto_Alpeggio\progettoAlpeggio\SitoAlpeggio\dist\data_analysis_win3\data_analysis_win3.exe"
+                #],
+                #creationflags=subprocess.CREATE_NEW_CONSOLE
+            #)
             # API per sensori selezionati
             return jsonify({"status": "ok", "selected_sensors": selected_sensors})
         else:
@@ -1946,20 +1971,22 @@ def set_state_sensor(state, sensor_id):
     cursor.close()
     conn.close()
 
-# DA TESTARE
+# FUNZIONANTE
 def set_error_state_data(message):
-    # setta ad errore la ricerca
+    # setta ad errore la ricerca / ripristina i sensori / conclude la sessione di irrigazione
     state = 'ERR'
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE data SET error_data = %s, desc_error = %s WHERE id_ricerca = %s",
-        (state, message, session['id_data'])
+        "UPDATE data SET error_data = %s, desc_error = %s, data_fine_irr = %s WHERE id_ricerca = %s",
+        (state, message, datetime.now(), session['id_data'])
     )
     conn.commit()
     cursor.close()
     conn.close()
-    pass
+    for k in session['selected_sensors']:
+        set_state_sensor('C', k)
+    session['id_data'] = 0
 
 # FUNZIONATE
 def insert_sensor_data(data):
@@ -1987,7 +2014,6 @@ def avviaIrrigazione(current_user):
         sensor_id = request.form.get("sensor_id")
 
         if azione == "sospendi":
-            print(f"Sospensione richiesta per sensore {sensor_id}")
             set_state_sensor("S", sensor_id)
             # session.modified = True
             return redirect("/avvia_irr")
@@ -1996,62 +2022,62 @@ def avviaIrrigazione(current_user):
             set_state_sensor("O", sensor_id)
             return redirect("/avvia_irr")
 
-    max_wait_time = 300
+    MAX_WAIT_TIME = 5  # 300
     start_time = time.time()
 
     # controllo per la prima volta che si entra nel sito
     # ricerco il receiver dal serial
     if 'serial_active' not in session:
         session['serial_active'] = False
-    else:
-        print(session['serial_active'])
-        # ricerco finchè non trovo il dispositivo nel seriale
-        while session['serial_active'] == False:
-            # se non trova il dispositivo entro tot tempo la ricerca va in errore
-            if time.time() - start_time > max_wait_time:
-                print("Timeout: dispositivo non trovato entro 5 minuti.")
-                set_error_state_data('Dispositivo non rilevato entro 5 minuti')
-                break
-            try:
-                response = requests.get(
-                    'http://localhost:8000/api/connection_status', timeout=5)
-                if response.status_code == 200:
-                    connection_status = response.json()
-                    print("=" * 50)
-                    print("STATO CONNESSIONE SERIALE:")
-                    print(f"Connesso: {connection_status.get('connected')}")
-                    print(f"Porta: {connection_status.get('port')}")
-                    print(f"Errore: {connection_status.get('error')}")
-                    print(
-                        f"Ultimo controllo: {connection_status.get('last_check')}")
-                    print("=" * 50)
 
-                    if connection_status.get('connected') != False:
-                        session['serial_active'] = True
-                        break
-                    else:
-                        # DA FARE POPUP CHE INDICA DI INSERIRE IL RICEVITORE
-                        # deve bloccare la pagina sul popup finchè non viene rilevato il dispositvo
-                        print("Dispositivo non trovato nella porta seriale")
-                        pass
-            except requests.exceptions.RequestException as e:
-                print(f"Errore nella chiamata API: {e}")
-                set_error_state_data('Mancata esecuzione del programma')
-            time.sleep(2)
+    # ricerco finché non trovo il dispositivo nel seriale
+    while session['serial_active'] is False: 
+        # se non trova il dispositivo entro tot tempo la ricerca va in errore
+        if time.time() - start_time > MAX_WAIT_TIME:
+            set_error_state_data('Dispositivo non rilevato entro 5 minuti')
+            return redirect('/')
 
-        print("Pronto")
-        all_sensor_wet = False
-        # durata massima dalla durata se non ricevo più segnali dai sensori
-        max_time_session = 7200
-        start_session_time = time.time()
+        try:
+            response = requests.get('http://localhost:8000/api/connection_status',timeout=5)
 
+            if response.status_code == 200:
+                connection_status = response.json()
+                print("=" * 50)
+                print("STATO CONNESSIONE SERIALE:")
+                print(f"Connesso: {connection_status.get('connected')}")
+                print(f"Porta: {connection_status.get('port')}")
+                print(f"Errore: {connection_status.get('error')}")
+                print(f"Ultimo controllo: {connection_status.get('last_check')}")
+                print("=" * 50)
+
+                if connection_status.get('connected') is not False:
+                    session['serial_active'] = True
+                    break
+                else:
+                    return render_template('home.html', campo_corrente=session['id_campo_selezionato'], popup_msg="Dispositivo non trovato nella porta seriale")
+
+        except requests.exceptions.RequestException as e:
+            set_error_state_data('Mancata esecuzione del programma')
+            return redirect('/')
+    time.sleep(2)
+
+    print("Pronto")
+    all_sensor_wet = False
+    # durata massima dalla durata se non ricevo più segnali dai sensori
+    max_time_session = 7200
+    start_session_time = time.time()
+
+    # inizio il ricevimento dei dati solo se è stato lanciato e individuato il dispositivo
+    if session['serial_active'] == True:
         while all_sensor_wet == False:
+            print("CICLO" + " " + str(session['serial_active']))
             # cicla finchè tutti i sensori non hanno finito
             all_sensor_wet = get_finish_session()[0]
             if time.time() - start_session_time > max_time_session:
                 print("Interruzione sessione dopo due ore dall'ultimo ricevimento")
                 set_error_state_data(
                     'Mancata conclusione di tutti i sensori nella durata della sessione')
+                session['serial_active'] = False # DA CONTROLLARE
                 break
             try:
                 response = requests.get(
@@ -2076,14 +2102,11 @@ def avviaIrrigazione(current_user):
 
             except requests.exceptions.RequestException as e:
                 print(f"Errore nella chiamata API: {e}")
+        session['serial_active'] = False
+        session['id_data'] = ''
         time.sleep(2)
 
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
-
-@app.route('/reg_irr', methods=['GET', 'POST'])
-def registroIrrigazione():
-    campo_id = request.args.get('campo_id')
-    return render_template('storici.html', campo_id=campo_id)
 
 ####################################################################################
 def associazioneSessionCampi(current_user):

@@ -97,6 +97,7 @@
                     <th>Data inizio irrigaziones</th>
                     <th>Data fine irrigazione</th>
                     <th>Stato irrigazione</th>
+                    <th>Descrizione errore</th>
                     <th>Maggiori Dettagli</th>
                   </tr>
                 </thead>
@@ -109,6 +110,7 @@
                     <td>
                       <div class="stato-box {% if row.error_data %}stato-rosso{% else %}stato-verde{% endif %}"></div>
                     </td>
+                    <td>{{ row.desc_error if row.error_data is not none else "" }}</td>
                     <td>
                       <form method="POST">
                         <input type="hidden" name="id_ricerca" value="{{ row.id_ricerca }}">

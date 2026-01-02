@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   <button id="avvia-operazioni-btn" class="azione-button">Avvia operazioni</button>
                   <div id="dropdown-menu" class="dropdown-menu hidden">
                     <a href="/ini_irr" class="dropdown-item" id='ini-sens-btn'>Avvia irrigazione</a>
-                    <a href="/reg_irr" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
+                    <a href="/storici" id="registro-irrigazioni-link" class="dropdown-item">Registro irrigazioni</a>
                   </div>
                 </div>
               </div>
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 if (campoIdSelezionato) {
                     console.log("Campo ID selezionato:", campoIdSelezionato);
-                    window.location.href = `/reg_irr?campo_id=${campoIdSelezionato}`;
+                    window.location.href = `/storici?campo_id=${campoIdSelezionato}`;
                 } else {
                     alert("Seleziona un campo prima di procedere.");
                 }

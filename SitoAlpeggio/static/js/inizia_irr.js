@@ -224,7 +224,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const sessionData = await verificaSessione();
             
             if (sessionData === "Stop") {
-                mostraPopup("Sessione di irrigazione già avviata. Terminare quella corrente per proseguire con una prossima.");
+                mostraPopup("Ciao 1");
                 return;
             }
             
@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         window.location.href = `/avvia_irr?campo_id=${campoId}`;
                     } else if (data.status === "no") {
                         // Se lo stato è "no", mostra il popup
-                        mostraPopup("Sessione di irrigazione già avviata. Terminare quella corrente per proseguire con una prossima.");
+                        mostraPopup("Ciao");
                     } else {
                         // Gestisci altri possibili stati
                         mostraPopup("Errore sconosciuto durante l'avvio dell'irrigazione.");
