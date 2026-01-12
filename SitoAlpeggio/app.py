@@ -21,8 +21,10 @@ from email.mime.text import MIMEText
 from flask_mail import Message, Mail
 
 
+############### GLOBALI ####################
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIR = os.path.join(BASE_DIR, "static", "json")
+############################################
 
 ############################ Flask app setup ######################################
 app = Flask(__name__)
@@ -45,24 +47,24 @@ app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv(
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # Database connection
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
         user=os.getenv("DB_USER", 'root'),
         password=os.getenv("DB_PASSWORD", ''),
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
 # se non hai il .env quella sopra funziona lo stesso
-"""def get_db_connection():
+def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 ###############################################################################
 
 # -----------------------------------------------------
@@ -500,8 +502,6 @@ def send_reset_email(user_email, code):
         return False
 
 ########################### Context Processor #########################
-
-
 @app.context_processor
 def inject_user():
     token = request.cookies.get("token")
@@ -518,8 +518,6 @@ def inject_user():
 ########################################################################
 
 ########################### Login-Create account #########################
-
-
 def hash_password(psw):
     return hashlib.sha256(psw.encode()).hexdigest()
 
@@ -836,7 +834,6 @@ def aggiungiCampo(current_user):
         error=error
     )
 
-
 @app.route('/salva-coordinate', methods=['POST'])
 def salvaCoordinate():
     coordinate = request.form.get('coordinate')  # stringa dal frontend
@@ -868,17 +865,14 @@ def salvaCoordinate():
 
     return redirect(url_for('aggiungiCampo'))
 
-
 @app.route('/api/get_session_coordinate')
 def get_session_coordinate():
     return jsonify(session.get('coordinate', {}))
-
 
 @app.route('/mappa', methods=['GET', 'POST'])
 @token_required
 def mappa(current_user):
     return render_template('mappa.html')
-
 
 @app.route("/api/campi-utente")
 @token_required
@@ -901,7 +895,6 @@ def api_campi_utente(current_user):
         return jsonify({"error": "Errore interno del server"}), 500
     finally:
         conn.close()
-
 
 @app.route("/api/campo/<int:campo_id>")
 @token_required
@@ -929,7 +922,6 @@ def api_dettaglio_campo(current_user, campo_id):
         return jsonify({"error": "Errore interno del server"}), 500
     finally:
         conn.close()
-
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
@@ -1178,7 +1170,6 @@ def get_campi(current_user):
     finally:
         conn.close()
 
-
 def get_info_campi(current_user):
     """Restituisce informazioni sui campi dell'utente"""
     conn = get_db_connection()
@@ -1206,17 +1197,13 @@ def get_info_campi(current_user):
     finally:
         conn.close()
 
-
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
 @token_required
 def visualizzaCampi(current_user):
     return render_template('visualizzaCampi.html')
-
 ################################################################
 
 ############################# STRIPE ROUTES #############################
-
-
 @app.route('/pagamenti', methods=['GET', 'POST'])
 @token_required
 def pagamenti(current_user):
@@ -1226,7 +1213,6 @@ def pagamenti(current_user):
     return render_template('pagamenti.html',
                            stripe_public_key=app.config['STRIPE_PUBLIC_KEY'],
                            subscription_info=subscription_info)
-
 
 @app.route("/api/plans", methods=["GET"])
 @token_required
@@ -1254,7 +1240,6 @@ def api_get_plans(current_user):
         "current_plan": current_plan,
         "plans": SUBSCRIPTION_PLANS
     })
-
 
 @app.route('/payment-success')
 @token_required
@@ -1858,6 +1843,27 @@ def api_get_finish_session():
     print("Finish session: " + str(info))
     return jsonify(info)
 
+# API PER RICEVERE INFO SULLA CONNESSIONE DEL DISPOSITIVO -- DA TESTARE
+@app.route('/api/init_receiver', methods=['POST'])
+def init_serial_receiver():
+    data = request.get_json()  # <-- DATI DAL CLIENT
+
+    if not data:
+        return jsonify({"error": "Nessun dato ricevuto"}), 400
+    
+    if data.get('type') == 'Connection':
+        print("=" * 50)
+        print("STATO CONNESSIONE SERIALE (DAL CLIENT):")
+        print(f"Tipo: {data.get('type')}")
+        print(f"Connesso: {data.get('connected')}")
+        print(f"Porta: {data.get('port')}")
+        print(f"Errore: {data.get('error')}")
+        print(f"Ultimo controllo: {data.get('last_check')}")
+        print("=" * 50)
+        if data.get('connected'):
+            session['serial_active'] = True
+
+    return jsonify({"status": "ok"})
 ########################################################################################
 
 ############################ AZIONI IRRIGAZIONE #########################################
@@ -1958,7 +1964,6 @@ def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
-
 def set_state_sensor(state, sensor_id):
     # setta lo stato del sensore
     conn = get_db_connection()
@@ -2005,8 +2010,40 @@ def insert_sensor_data(data):
         conn.commit()
         cursor.close()
 
-# DA TESTARE
+last_client_seen = {}  # { sensor_id: timestamp ultima connessione }
+
 @app.route('/avvia_irr', methods=['GET', 'POST'])
+@token_required
+def avviaIrrigazione(current_user):
+
+    if request.method == 'POST':
+        azione = request.form.get("azione")
+        sensor_id = request.form.get("sensor_id")
+
+        if azione == "sospendi":
+            set_state_sensor("S", sensor_id)
+            # session.modified = True
+            return redirect("/avvia_irr")
+
+        elif azione == 'riattiva':
+            set_state_sensor("O", sensor_id)
+            return redirect("/avvia_irr")
+
+    # controllo per la prima volta che si entra nel sito
+    # ricerco il receiver dal serial
+    if 'serial_active' not in session:
+        session['serial_active'] = False
+
+    print(f"RECEIVER: {session['serial_active']}") 
+    if session['serial_active']:
+        print("SONO PRONTO")
+    else:
+        print("NO PRONTO")
+    
+    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
+
+# DA TESTARE
+"""@app.route('/avvia_irr', methods=['GET', 'POST'])
 @token_required
 def avviaIrrigazione(current_user):
     if request.method == 'POST':
@@ -2106,7 +2143,7 @@ def avviaIrrigazione(current_user):
         session['id_data'] = ''
         time.sleep(2)
 
-    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
+    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])"""
 
 ####################################################################################
 def associazioneSessionCampi(current_user):

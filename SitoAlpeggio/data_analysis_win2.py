@@ -320,7 +320,7 @@ def root():
 def main():
     """Avvia il server Flask"""
     # URL dell'API da controllare (MODIFICA QUESTO con il tuo URL)
-    finish_session_url = "http://localhost:5000/api/get_finish_session"
+    finish_session_url = "http://192.168.1.6:5000/api/get_finish_session"
     
     print("Avvio thread seriale...")
     serial_thread = threading.Thread(target=serial_reader_loop, daemon=True)

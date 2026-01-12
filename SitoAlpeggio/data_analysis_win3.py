@@ -7,14 +7,25 @@ import os
 import serial.tools.list_ports
 import threading
 import requests
-from flask import Flask, jsonify
 
-# ==================== FLASK ====================
-app = Flask(__name__)
+# =========================
+# CONFIGURAZIONE
+# =========================
 
-# ==================== VARIABILI GLOBALI ====================
+SERVER_URL = "http://192.168.1.6:5000/api/sensor_data"
+FINISH_SESSION_URL = "http://192.168.1.6:5000/api/get_finish_session"
+API_KEY = "CHIAVE_SEGRETA_CLIENT"
+
+SEND_INTERVAL = 2  # secondi tra invii
+CHECK_FINISH_INTERVAL = 5
+
+# =========================
+# VARIABILI GLOBALI
+# =========================
+
 ser = None
 should_continue = True
+latest_sensor_data = {}
 
 connection_status = {
     "connected": False,
@@ -23,211 +34,176 @@ connection_status = {
     "last_check": None
 }
 
-latest_sensor_data = {}
-
-# ==================== SERIALE ====================
+# =========================
+# SERIAL INIT
+# =========================
 
 def initSerial():
     global connection_status
 
-    ports = list(serial.tools.list_ports.comports())
-    connection_status["last_check"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        ports = list(serial.tools.list_ports.comports())
 
-    if not ports:
+        if not ports:
+            raise Exception("Nessuna porta seriale trovata")
+
+        for port in ports:
+            try:
+                ser = serial.Serial(port.device, 115200, timeout=1)
+                time.sleep(2)
+                if ser.is_open:
+                    print(f"[SERIALE] Connesso a {port.device}")
+                    connection_status.update({
+                        "connected": True,
+                        "port": port.device,
+                        "error": None,
+                        "last_check": time.strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    return ser
+            except Exception as e:
+                continue
+
+        raise Exception("Nessun dispositivo seriale valido")
+
+    except Exception as e:
         connection_status.update({
             "connected": False,
             "port": None,
-            "error": "Nessuna porta seriale trovata"
+            "error": str(e),
+            "last_check": time.strftime("%Y-%m-%d %H:%M:%S")
         })
+        print("[SERIALE] ERRORE:", e)
         return None
 
-    for port in ports:
-        try:
-            ser = serial.Serial(port.device, 115200, timeout=1)
-            time.sleep(2)
+# =========================
+# SALVATAGGIO CSV
+# =========================
 
-            if ser.is_open:
-                connection_status.update({
-                    "connected": True,
-                    "port": port.device,
-                    "error": None
-                })
-                print(f"[SERIALE] Connesso a {port.device}")
-                return ser
+def save_data(data):
+    sensor_id = data.get("ID", "unknown")
+    filename = f"{sensor_id}_data.csv"
 
-        except Exception as e:
-            connection_status.update({
-                "connected": False,
-                "port": port.device,
-                "error": str(e)
-            })
-
-    return None
-
-
-def save_data(headers, values):
-    filename = f"{values[0]}_data.csv"
-    new_file = not os.path.exists(filename)
+    file_exists = os.path.exists(filename)
 
     with open(filename, "a", newline="") as f:
         writer = csv.writer(f)
-        if new_file:
-            writer.writerow(headers)
-        writer.writerow(values)
+        if not file_exists:
+            writer.writerow(list(data.keys()) + ["Time"])
+        writer.writerow(list(data.values()) + [time.strftime("%Y-%m-%d %H:%M:%S")])
 
+# =========================
+# INVIO DATI SERVER
+# =========================
+
+def send_to_server(data):
+    try:
+        requests.post(
+            SERVER_URL,
+            json=data,
+            headers={"X-API-KEY": API_KEY},
+            timeout=5
+        )
+        print("[SERVER] Dati inviati")
+    except Exception as e:
+        print("[SERVER] Errore invio:", e)
+
+# =========================
+# LETTURA SERIALE
+# =========================
 
 def read_data(ser):
     global latest_sensor_data
 
+    line = ser.readline().decode("utf-8", errors="ignore").strip()
+    if not line:
+        return
+
     try:
-        line = ser.readline().decode("utf-8", errors="ignore").strip()
         data = json.loads(line)
+
+        # ASSICURA ID
+        data.setdefault("ID", "sensore_001")
 
         latest_sensor_data = data.copy()
 
-        headers = list(data.keys()) + ["Time"]
-        values = list(data.values()) + [time.strftime("%Y-%m-%d %H:%M:%S")]
+        print("[DATI]", data)
 
-        if headers[0] == "ID":
-            save_data(headers, values)
+        save_data(data)
+        send_to_server(data)
 
     except json.JSONDecodeError:
-        pass
-    except Exception as e:
-        print("[SERIALE] Errore lettura:", e)
+        print("[LOG]", line)
+        with open("log.csv", "a", encoding="utf-8") as f:
+            f.write(line + "\n")
 
+# =========================
+# LOOP SERIALE
+# =========================
 
 def serial_reader_loop():
     global ser, should_continue
 
+    ser = initSerial()
+    if not ser:
+        return
+
+    ser.write(b"begin")
+    time.sleep(1)
+
     while should_continue:
-        if ser is None or not ser.is_open:
-            print("[SERIALE] Tentativo connessione...")
-            ser = initSerial()
-
-            if ser:
-                try:
-                    ser.write(b"begin")
-                except:
-                    ser = None
-            else:
-                time.sleep(5)
-                continue
-
         try:
-            read_data(ser)
-        except Exception:
-            try:
-                ser.close()
-            except:
-                pass
-            ser = None
+            if ser and ser.is_open:
+                read_data(ser)
+                time.sleep(SEND_INTERVAL)
+            else:
+                print("[SERIALE] Riconnessione...")
+                time.sleep(5)
+                ser = initSerial()
+                if ser:
+                    ser.write(b"begin")
+        except Exception as e:
+            print("[SERIALE] Errore:", e)
             time.sleep(5)
 
     if ser and ser.is_open:
         ser.close()
 
-    print("[SERIALE] Thread terminato")
+# =========================
+# CONTROLLO STOP SESSIONE
+# =========================
 
-# ==================== API CONTROLLO ====================
-
-def check_finish_session(api_url):
+def check_finish_session():
     global should_continue
 
     while should_continue:
         try:
-            r = requests.get(api_url, timeout=3)
+            r = requests.get(FINISH_SESSION_URL, timeout=3)
             if r.status_code == 200 and r.text.strip() == "Concluded":
-                print("[API] Stop richiesto")
+                print("[SERVER] STOP ricevuto")
                 should_continue = False
-        except Exception:
-            pass
+                if ser and ser.is_open:
+                    ser.close()
+                os._exit(0)
+        except Exception as e:
+            print("[SERVER] Errore check:", e)
 
-        time.sleep(5)
+        time.sleep(CHECK_FINISH_INTERVAL)
 
-# ==================== FLASK ENDPOINT ====================
-
-@app.route("/")
-def root():
-    return jsonify({"service": "Serial Reader API", "status": "running"})
-
-
-@app.route("/api/connection_status")
-def api_connection_status():
-    return jsonify(connection_status)
-
-
-@app.route("/api/sensor_data")
-def api_sensor_data():
-    if latest_sensor_data:
-        return jsonify({
-            "status": "ok",
-            "data": latest_sensor_data,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-        })
-    return jsonify({"status": "no_data"})
-
-
-@app.route("/api/reconnect", methods=["POST"])
-def api_reconnect():
-    global ser
-
-    try:
-        if ser and ser.is_open:
-            ser.close()
-    except:
-        pass
-
-    ser = initSerial()
-    if ser:
-        try:
-            ser.write(b"begin")
-        except:
-            pass
-
-        return jsonify({"status": "ok"})
-    return jsonify({"status": "error"})
-
-# ==================== MAIN ====================
+# =========================
+# MAIN
+# =========================
 
 def main():
-    finish_session_url = "http://localhost:5000/api/get_finish_session"
+    print("[CLIENT] Avvio client sensore")
 
-    print("[MAIN] Avvio thread seriale")
-    serial_thread = threading.Thread(target=serial_reader_loop)
-    serial_thread.start()
+    t1 = threading.Thread(target=serial_reader_loop, daemon=True)
+    t2 = threading.Thread(target=check_finish_session, daemon=True)
 
-    print("[MAIN] Avvio thread controllo API")
-    api_thread = threading.Thread(
-        target=check_finish_session,
-        args=(finish_session_url,)
-    )
-    api_thread.start()
+    t1.start()
+    t2.start()
 
-    print("[MAIN] Avvio Flask su http://0.0.0.0:8000")
-
-    try:
-        app.run(
-            host="0.0.0.0",
-            port=8000,
-            debug=False,
-            use_reloader=False,
-            threaded=False
-        )
-    finally:
-        print("[MAIN] Arresto in corso...")
-        global should_continue
-        should_continue = False
-
-        serial_thread.join()
-        api_thread.join()
-
-        if ser and ser.is_open:
-            ser.close()
-
-        print("[MAIN] Chiusura completa")
-
-# ==================== ENTRY POINT ====================
+    while True:
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
