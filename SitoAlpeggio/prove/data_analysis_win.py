@@ -18,7 +18,9 @@ API_KEY = "CHIAVE_SEGRETA_CLIENT"
 
 SEND_INTERVAL = 2  # secondi tra invii
 CHECK_FINISH_INTERVAL = 5
-MAX_WAIT_TIME = 5  # 300 tempo massimo per inserire il ricevitore
+MAX_WAIT_TIME = 300  # 300 tempo massimo per inserire il ricevitore
+FIRST_SEND_CONNECTION = True
+MAX_TIME_SESSION = 7200 # due ore massime dall'ultima ricezione di un sensore
 
 # =========================
 # VARIABILI GLOBALI
@@ -92,11 +94,12 @@ def send_to_server(data):
         print("[SERVER] Errore invio:", e)
 
 def serial_reader_loop():
-    global ser, should_continue, MAX_WAIT_TIME
+    global ser, should_continue, MAX_WAIT_TIME, FIRST_SEND_CONNECTION, MAX_TIME_SESSION
 
     ser = initSerial()
     send_to_server(connection_status)
     start_time = time.time()
+    start_session_time = time.time()
 
     if not ser:
         return
@@ -107,11 +110,17 @@ def serial_reader_loop():
     while should_continue:
         try:
             if ser and ser.is_open:
-                send_to_server(connection_status)
-                should_continue = False 
+                if time.time() - start_session_time > MAX_TIME_SESSION: # DA PROVARE
+                    print("Interruzione sessione dopo due ore dall'ultimo ricevimento")
+                    send_to_server('Mancata conclusione di tutti i sensori nella durata della sessione')
+                if FIRST_SEND_CONNECTION:
+                    send_to_server(connection_status)
+                    FIRST_SEND_CONNECTION = False
+                read_data(ser)
+                #should_continue = False 
                 time.sleep(SEND_INTERVAL)
             else:
-                if time.time() - start_time > MAX_WAIT_TIME:
+                if time.time() - start_time > MAX_WAIT_TIME: # DA PROVARE
                     send_to_server('Dispositivo non rilevato entro 5 minuti')
                     should_continue = False
                 else:
@@ -139,14 +148,14 @@ def read_data(ser):
     try:
         data = json.loads(line)
 
-        # ASSICURA ID
-        data.setdefault("ID", "sensore_001")
+        data['type'] = 'sending_data'
 
         latest_sensor_data = data.copy()
 
         print("[DATI]", data)
 
         #save_data(data) SALVATAGGIO SU FILE CSV
+        #if data['ADC'] < 700: versione base invia solamente quando intercetta acqua
         send_to_server(data)
 
     except json.JSONDecodeError:

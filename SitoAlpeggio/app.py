@@ -1762,7 +1762,7 @@ def get_finish_session():
     # irrigazione sulla tabella "DATA"
     # (VERSIONE BASE) imposta tutti i sensori coinvolti a disponibili
     if 'id_data' not in session or session['id_data'] == 0:
-        return "Continue"
+        return False, "Continue"
     else:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -1847,6 +1847,7 @@ def api_get_finish_session():
 @app.route('/api/init_receiver', methods=['POST'])
 def init_serial_receiver():
     data = request.get_json()  # <-- DATI DAL CLIENT
+    all_sensor_wet = False
 
     if not data:
         return jsonify({"error": "Nessun dato ricevuto"}), 400
@@ -1861,7 +1862,18 @@ def init_serial_receiver():
         print(f"Ultimo controllo: {data.get('last_check')}")
         print("=" * 50)
         if data.get('connected'):
-            session['serial_active'] = True
+            session['serial_active'] = True # può non servire 
+    else:
+        all_sensor_wet = get_finish_session()[0]
+        if all_sensor_wet: # DA PROVARE
+            print("Fine della sessione")
+            session['id_data'] = ''
+        print("=" * 50)
+        print("DATI INVIATI DA SENSORE:")
+        print(f"Tipo: {data.get('type')}")
+        print(f"Dati: {data}")
+        print("=" * 50)
+        #insert_sensor_data(data)
 
     return jsonify({"status": "ok"})
 ########################################################################################
