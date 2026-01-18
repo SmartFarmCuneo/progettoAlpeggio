@@ -8,23 +8,21 @@ import serial.tools.list_ports
 import threading
 import requests
 
-# =========================
-# CONFIGURAZIONE
-# =========================
-
 SERVER_URL = "http://192.168.1.6:5000/api/init_receiver"
 FINISH_SESSION_URL = "http://192.168.1.6:5000/api/get_finish_session"
 API_KEY = "CHIAVE_SEGRETA_CLIENT"
 
 SEND_INTERVAL = 2  # secondi tra invii
 CHECK_FINISH_INTERVAL = 5
-MAX_WAIT_TIME = 300  # 300 tempo massimo per inserire il ricevitore
+MAX_WAIT_TIME = 10  # 300 tempo massimo per inserire il ricevitore
 FIRST_SEND_CONNECTION = True
-MAX_TIME_SESSION = 7200 # due ore massime dall'ultima ricezione di un sensore
+MAX_TIME_SESSION = 60 # 7200 due ore massime dall'ultima ricezione di un sensore
 
-# =========================
-# VARIABILI GLOBALI
-# =========================
+BOT_TOKEN = "8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA"
+
+# URL API PER BOT
+# https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getMe
+# https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getUpdates
 
 ser = None
 should_continue = True
@@ -38,9 +36,34 @@ connection_status = {
     "last_check": None
 }
 
-# =========================
-# SERIAL INIT
-# =========================
+def get_chat_id():
+    """
+    Recupera automaticamente il CHAT_ID dell'ultimo utente che ha scritto al bot.
+    Scrivi un messaggio al bot prima di eseguire questa funzione.
+    """
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
+    try:
+        r = requests.get(url, timeout=5)
+        r.raise_for_status()
+        data = r.json()
+        
+        if not data["result"]:
+            print("Nessun messaggio trovato. Scrivi qualcosa al bot prima di chiamare questa funzione.")
+            return None
+        
+        # Prende l'ultimo messaggio ricevuto
+        last_msg = data["result"][-1]
+        chat_id = last_msg["message"]["chat"]["id"]
+        first_name = last_msg["message"]["chat"].get("first_name", "Unknown")
+        
+        print(f"CHAT_ID trovato: {chat_id} (utente: {first_name})")
+        return chat_id
+    
+    except Exception as e:
+        print("Errore nel recupero del CHAT_ID:", e)
+        return None
+    
+CHAT_ID = get_chat_id()
 
 def initSerial():
     global connection_status
@@ -93,18 +116,25 @@ def send_to_server(data):
     except Exception as e:
         print("[SERVER] Errore invio:", e)
 
+def send_desktop_notification(title, message):
+    print("Invio notifica Telegram...")
+    r = requests.post(
+        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+        data={"chat_id": CHAT_ID, "text": message},
+        timeout=5
+    )
+    print("Risposta Telegram:", r.status_code, r.text)
+
 def serial_reader_loop():
     global ser, should_continue, MAX_WAIT_TIME, FIRST_SEND_CONNECTION, MAX_TIME_SESSION
 
     ser = initSerial()
-    send_to_server(connection_status)
     start_time = time.time()
     start_session_time = time.time()
+    data = {}
 
-    if not ser:
-        return
-
-    ser.write(b"begin")
+    if ser:
+        ser.write(b"begin")
     time.sleep(1)
 
     while should_continue:
@@ -112,17 +142,25 @@ def serial_reader_loop():
             if ser and ser.is_open:
                 if time.time() - start_session_time > MAX_TIME_SESSION: # DA PROVARE
                     print("Interruzione sessione dopo due ore dall'ultimo ricevimento")
-                    send_to_server('Mancata conclusione di tutti i sensori nella durata della sessione')
+                    data['type'] = 'Failed'
+                    data['description'] = 'Mancata conclusione di tutti i sensori nella durata della sessione'
+                    send_to_server(data)
+                    should_continue = False
+                    os._exit(0)
+
                 if FIRST_SEND_CONNECTION:
                     send_to_server(connection_status)
                     FIRST_SEND_CONNECTION = False
                 read_data(ser)
-                #should_continue = False 
                 time.sleep(SEND_INTERVAL)
             else:
-                if time.time() - start_time > MAX_WAIT_TIME: # DA PROVARE
-                    send_to_server('Dispositivo non rilevato entro 5 minuti')
+                if time.time() - start_time > MAX_WAIT_TIME:
+                    print('Dispositivo non rilevato entro 5 minuti')
+                    data['type'] = 'Failed'
+                    data['description'] = 'Dispositivo non rilevato entro 5 minuti'
+                    send_to_server(data)
                     should_continue = False
+                    os._exit(0)
                 else:
                     print("[SERIALE] Riconnessione...")
                     time.sleep(5)
@@ -133,10 +171,6 @@ def serial_reader_loop():
         except Exception as e:
             print("[SERIALE] Errore:", e)
             time.sleep(5)
-
-# =========================
-# LETTURA SERIALE
-# =========================
 
 def read_data(ser):
     global latest_sensor_data
@@ -156,6 +190,7 @@ def read_data(ser):
 
         #save_data(data) SALVATAGGIO SU FILE CSV
         #if data['ADC'] < 700: versione base invia solamente quando intercetta acqua
+        #send_desktop_notification("⚠️ ALLARME SENSORE", "Acqua rilevata!")
         send_to_server(data)
 
     except json.JSONDecodeError:
@@ -182,6 +217,7 @@ def check_finish_session():
 
 def main():
     print("[CLIENT] Avvio client sensore")
+    #get_chat_id()
 
     t1 = threading.Thread(target=serial_reader_loop, daemon=True)
     t2 = threading.Thread(target=check_finish_session, daemon=True)

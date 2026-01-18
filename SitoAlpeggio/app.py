@@ -552,7 +552,7 @@ def login():
 
     return render_template("login.html", error=error)
 
-
+#IMPLEMENTARE FUNZIONE PREMIUM TELEGRAM
 @app.route('/registrati', methods=['GET', 'POST'])
 def registrati():
     error = ""
@@ -568,6 +568,7 @@ def registrati():
         data_nascita = f"{anno}-{mese}-{giorno}"
         username = request.form['username']
         password = request.form['password']
+        #username_tg = request.form['tg_username']
 
         psw = hash_password(password)
 
@@ -582,7 +583,7 @@ def registrati():
                 else:
                     cursor.execute(
                         "INSERT INTO users (username, password_hash, email, telefono, nome, cognome, cod_fiscale, DataDiNascita) "
-                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
                         (username, psw, email, telefono, nome,
                          cognome, cod_fiscale, data_nascita)
                     )
@@ -594,7 +595,6 @@ def registrati():
             connection.close()
 
     return render_template('registrati.html', error=error)
-
 ##################################################################################
 
 ################################ Cookie-Token ####################################
@@ -1863,19 +1863,32 @@ def init_serial_receiver():
         print("=" * 50)
         if data.get('connected'):
             session['serial_active'] = True # può non servire 
+    elif data.get('type') == 'Failed':
+        print("=" * 50)
+        print("ERRORE:")
+        print(f"Tipo: {data.get('type')}")
+        print(f"Dati: {data}")
+        print("=" * 50)
     else:
         all_sensor_wet = get_finish_session()[0]
         if all_sensor_wet: # DA PROVARE
             print("Fine della sessione")
             session['id_data'] = ''
-        print("=" * 50)
-        print("DATI INVIATI DA SENSORE:")
-        print(f"Tipo: {data.get('type')}")
-        print(f"Dati: {data}")
-        print("=" * 50)
-        #insert_sensor_data(data)
+        else:
+            print("=" * 50)
+            print("DATI INVIATI DA SENSORE:")
+            print(f"Tipo: {data.get('type')}")
+            print(f"Dati: {data}")
+            print("=" * 50)
+            #insert_sensor_data(data)
+            #avviaIrrigazione()
 
     return jsonify({"status": "ok"})
+
+# PREMIUM -- invio id chat con telegram per notifiche
+@app.route("/api/get_telegram_chat_id")
+def api_get_telegram_chat_id():
+    pass
 ########################################################################################
 
 ############################ AZIONI IRRIGAZIONE #########################################
@@ -2022,11 +2035,8 @@ def insert_sensor_data(data):
         conn.commit()
         cursor.close()
 
-last_client_seen = {}  # { sensor_id: timestamp ultima connessione }
-
 @app.route('/avvia_irr', methods=['GET', 'POST'])
-@token_required
-def avviaIrrigazione(current_user):
+def avviaIrrigazione():
 
     if request.method == 'POST':
         azione = request.form.get("azione")
@@ -2043,14 +2053,14 @@ def avviaIrrigazione(current_user):
 
     # controllo per la prima volta che si entra nel sito
     # ricerco il receiver dal serial
-    if 'serial_active' not in session:
+    """if 'serial_active' not in session:
         session['serial_active'] = False
 
     print(f"RECEIVER: {session['serial_active']}") 
     if session['serial_active']:
         print("SONO PRONTO")
     else:
-        print("NO PRONTO")
+        print("NO PRONTO")"""
     
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
 
