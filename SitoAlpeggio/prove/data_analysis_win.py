@@ -7,6 +7,7 @@ import os
 import serial.tools.list_ports
 import threading
 import requests
+from datetime import datetime
 
 SERVER_URL = "http://192.168.1.6:5000/api/init_receiver"
 FINISH_SESSION_URL = "http://192.168.1.6:5000/api/get_finish_session"
@@ -183,6 +184,7 @@ def read_data(ser):
         data = json.loads(line)
 
         data['type'] = 'sending_data'
+        data['date_conc_sens'] = datetime.now()
 
         latest_sensor_data = data.copy()
 

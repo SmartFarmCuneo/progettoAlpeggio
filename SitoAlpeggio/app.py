@@ -24,6 +24,8 @@ from flask_mail import Message, Mail
 ############### GLOBALI ####################
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIR = os.path.join(BASE_DIR, "static", "json")
+SELECTED__SENSORS = []
+ID__DATA = ''
 ############################################
 
 ############################ Flask app setup ######################################
@@ -1873,15 +1875,15 @@ def init_serial_receiver():
         all_sensor_wet = get_finish_session()[0]
         if all_sensor_wet: # DA PROVARE
             print("Fine della sessione")
-            session['id_data'] = ''
+            #session['id_data'] = ''
         else:
             print("=" * 50)
             print("DATI INVIATI DA SENSORE:")
             print(f"Tipo: {data.get('type')}")
             print(f"Dati: {data}")
             print("=" * 50)
-            #insert_sensor_data(data)
-            #avviaIrrigazione()
+            insert_sensor_data(data)
+            avviaIrrigazione()
 
     return jsonify({"status": "ok"})
 
@@ -1894,6 +1896,7 @@ def api_get_telegram_chat_id():
 ############################ AZIONI IRRIGAZIONE #########################################
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
+    global SELECTED__SENSORS, ID__DATA
     # controllo per la prima volta che si entra nel sito
     if 'id_data' not in session:
         session['id_data'] = 0
@@ -1907,6 +1910,8 @@ def inizializzaIrrigazione():
             session['id_campo_selezionato'] = campo_id
             # print("Sensori selezionati:", selected_sensors)
             session['selected_sensors'] = selected_sensors
+            SELECTED__SENSORS = selected_sensors
+            
 
             # aggiorna lo stato dei sensori da disponibili a operativi
             conn = get_db_connection()
@@ -1933,6 +1938,7 @@ def inizializzaIrrigazione():
             # estraggo l'id della registrazione dell'irrigazione appena inserita
             last_id = cursor.lastrowid
             session["id_data"] = last_id
+            ID__DATA == last_id
             #print("Sess1: " + str(session['id_data']))
             cursor.close()
             conn.close()
@@ -2020,24 +2026,27 @@ def set_error_state_data(message):
 
 # FUNZIONATE
 def insert_sensor_data(data):
+    global SELECTED__SENSORS, ID__DATA
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
-    if data['Node_id'] in session['selected_sensors']:
+    print(f"Sensore: {data['Node_id']}")
+    print(SELECTED__SENSORS)
+    #print(get_sensor_selected('O'))
+    if data['Node_id'] in SELECTED__SENSORS:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s,"
             "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
             (data['date_conc_sens'], data['INDEX'], data['Bat'], data['Humidity'],
-             data['Temperature'], data['ADC'], session['id_data'])
+             data['Temperature'], data['ADC'], ID__DATA)
         )
         conn.commit()
         cursor.close()
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
-
     if request.method == 'POST':
         azione = request.form.get("azione")
         sensor_id = request.form.get("sensor_id")
