@@ -1,0 +1,48 @@
+Da fare:
+
+1. Cambiare insert sensori, togliere posizione e aggiungere nome significativo (es. sensore campo patate)
+
+2. Fare in modo che si può fare UNA SOLA irrigazione per campo ma per tutti i campi
+
+3. Avvia irrigazione:
+    - scelta sensore disponibili
+    - posizione tramite pc nel campo --> salvata nella session (Monouso per ogni irrigazione)
+    - sensori scelti --> posizione valida nel campo
+    - sensori non scelti pos = "/"
+
+4. Irrigazione vedere live con range colori umidità:
+    - Rosso umid < 30%
+    - Giallo scuro 30% < umid < 80%
+    - Verde 80% < umid 
+
+5. App .exe:
+    - chiedere Username in input per generare il token
+
+6. Gestione abbonamenti:
+    Free:
+        - max 3 campi
+        - Una irrigazione alla volta in generale
+        - dati solamente quando sensore intercetta acqua
+    
+    Basic:
+        - max 10 campi
+        - Meteo campo nella Home (stile Garmin)
+        - Una irrigazione alla volta in generale
+        - dati solamente quando sensore intercetta acqua
+
+    Professional:
+        - Drone
+        - max 20 campi
+        - Meteo campo nella Home (stile Garmin)
+        - Una irrigazione per ogni campo in contemporanea
+        - report mensili telegram
+
+    Enterprise:
+        - Drone
+        - max 50 campi
+        - Meteo campo nella Home (stile Garmin)
+        - Una irrigazione per ogni campo in contemporanea
+        - report mensili telegram
+        - dati sempre
+        - grafico dati per ogni campo per andamento 
+        - machine learning per durata irrigazione
