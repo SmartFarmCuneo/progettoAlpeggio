@@ -112,7 +112,7 @@
               <select class="form-select" id="birthYear" name="birthYear" required>
                 <option value="">Scegli...</option>
                 <script>
-                  for (let i = 1920; i <= new Date().getFullYear(); i++) {
+                  for (let i = new Date().getFullYear() - 100; i <= new Date().getFullYear(); i++) {
                     document.write(`<option>${i}</option>`);
                   }
                 </script>
