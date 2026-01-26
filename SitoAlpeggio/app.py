@@ -1672,18 +1672,25 @@ def stripe_webhook():
             elif event_type == 'invoice.paid':
                 invoice = obj
                 subscription_id = invoice['subscription']
+                plan_key = invoice['lines']['data'][0]['plan']['id']  # o 'nickname'
 
                 subscription = stripe.Subscription.retrieve(subscription_id)
 
                 cursor.execute("""
                     UPDATE users
-                    SET subscription_status = 'active',
+                    SET subscription_plan = %s,
+                        subscription_status = 'active',
                         subscription_start_date = FROM_UNIXTIME(%s),
-                        subscription_end_date   = FROM_UNIXTIME(%s)
+                        subscription_end_date = FROM_UNIXTIME(%s),
+                        stripe_subscription_id = %s,
+                        stripe_customer_id = %s
                     WHERE stripe_subscription_id = %s
                 """, (
+                    plan_key,
                     subscription['current_period_start'],
                     subscription['current_period_end'],
+                    subscription['id'],
+                    invoice['customer'],
                     subscription_id
                 ))
 
@@ -1699,7 +1706,7 @@ def stripe_webhook():
                     invoice.get('payment_intent', invoice['id']),
                     invoice['amount_paid'] / 100,
                     invoice['currency'].upper(),
-                    subscription['metadata'].get('plan_key', 'unknown'),
+                    plan_key,
                     subscription_id
                 ))
 
