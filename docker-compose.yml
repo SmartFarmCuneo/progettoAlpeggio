@@ -9,6 +9,19 @@ services:
     depends_on:
       - mysql
 
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: stripe-cli
+    environment:
+      # Usa la chiave segreta dal .env
+      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_DEVICE_NAME=docker_alpeggio
+    depends_on:
+      - flask-app
+    # Forward webhook al container flask-app sulla porta 5000
+    command: listen --forward-to http://flask-app:5000/webhook --skip-verify --log-level debug
+    restart: unless-stopped
+
   php-fpm:
     image: php:8.2-fpm
     volumes:

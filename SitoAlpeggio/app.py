@@ -16,9 +16,12 @@ import re
 import stripe
 import sys
 import time
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from flask_mail import Message, Mail
+
+load_dotenv()
 
 
 ############### GLOBALI ####################
@@ -683,7 +686,7 @@ def registrati():
                          cognome, cod_fiscale, data_nascita)
                     )
                     connection.commit()
-                
+
                 return redirect(url_for('login'))
         except Exception as e:
             error = "Errore del database"
@@ -1477,82 +1480,52 @@ def admin_refresh_plans_cache(current_user):
 @app.route('/payment-success')
 @token_required
 def payment_success(current_user):
-    """
-    Mostra la pagina di successo pagamento.
-    Lo stato reale dell'abbonamento viene aggiornato dai webhook.
-    """
-    info = get_user_subscription_info(current_user)
 
-    plan_name = info['subscription_plan'] if info and info['subscription_plan'] else 'Free'
-    status = info['subscription_status'] if info and info['subscription_status'] else 'inactive'
+    session_id = request.args.get('session_id')
+
+    # Attendi che il webhook processi (max 5 secondi)
+    import time
+    max_attempts = 10
+    attempt = 0
+
+    info = None
+    while attempt < max_attempts:
+        info = get_user_subscription_info(current_user)
+
+        # Se session_id è presente, verifica che il piano sia aggiornato
+        if session_id:
+            try:
+                session = stripe.checkout.Session.retrieve(session_id)
+                expected_plan = session.get(
+                    'metadata', {}).get('plan_key', 'free')
+
+                # Se il piano è aggiornato, esci dal loop
+                if info and info['subscription_status'] == 'active':
+                    break
+            except Exception as e:
+                print(f"Errore recupero session: {e}")
+
+        time.sleep(0.5)
+        attempt += 1
+
+    # Fallback: se dopo 5 secondi non è aggiornato, mostra messaggio generico
+    if not info or not info.get('subscription_plan'):
+        return render_template(
+            'payment_success.html',
+            plan='Elaborazione in corso',
+            status='processing',
+            message="Il pagamento è stato ricevuto. L'abbonamento sarà attivato entro pochi secondi."
+        )
+
+    plan_name = info['subscription_plan'].capitalize()
+    status = info['subscription_status']
 
     return render_template(
         'payment_success.html',
         plan=plan_name,
         status=status,
-        message="Il pagamento è stato registrato. Lo stato del tuo abbonamento sarà aggiornato a breve."
+        message=f"Benvenuto nel piano {plan_name}! Il tuo abbonamento è ora attivo."
     )
-
-
-@app.route('/cancel-subscription', methods=['POST'])
-@token_required
-def cancel_subscription(current_user):
-    """
-    Gestisce l'annullamento dell'abbonamento.
-    Blocca i pagamenti su Stripe e aggiorna il DB.
-    """
-    try:
-        conn = get_db_connection()
-        user = None
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT stripe_subscription_id, subscription_status 
-                FROM users WHERE username = %s
-            """, (current_user,))
-            user = cursor.fetchone()
-
-        if not user or not user['stripe_subscription_id']:
-            conn.close()
-            return jsonify({'error': 'Nessun abbonamento attivo trovato'}), 404
-
-        sub_id = user['stripe_subscription_id']
-
-        try:
-            # 1. Cancella l'abbonamento su Stripe
-
-            # Opzione A: Cancellazione immediata
-            # stripe.Subscription.delete(sub_id)
-
-            # Opzione B: Cancella alla fine del periodo pagato
-            stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
-
-            # 2. Aggiorna il database locale
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE users 
-                    SET subscription_status = 'canceled',
-                        subscription_plan = NULL,
-                        stripe_subscription_id = NULL
-                    WHERE username = %s
-                """, (current_user,))
-                conn.commit()
-
-            return jsonify({'message': 'Abbonamento annullato con successo. Non ti verranno addebitati altri costi.'})
-
-        except stripe.error.InvalidRequestError:
-            # Succede se l'abbonamento è già cancellato su Stripe ma non sul DB
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE users SET subscription_status = 'canceled' WHERE username = %s", (current_user,))
-                conn.commit()
-            return jsonify({'message': 'Abbonamento già annullato.'})
-
-    except Exception as e:
-        print(f"Errore cancellazione: {e}")
-        return jsonify({'error': 'Si è verificato un errore durante la cancellazione'}), 500
-    finally:
-        if 'conn' in locals() and conn.open:
-            conn.close()
 
 
 @app.route('/payment-cancel')
@@ -1569,54 +1542,47 @@ def payment_cancel(current_user):
 @token_required
 def subscribe_free(current_user):
     """
-    Sottoscrivi al piano Free.
-    Se l'utente ha un abbonamento attivo, lo cancella su Stripe.
+    Passaggio al piano Free = cancellazione subscription Stripe.
+    Il DB viene aggiornato SOLO dai webhook.
     """
     conn = get_db_connection()
+
     try:
         with conn.cursor() as cursor:
-            # Recupera l'abbonamento attivo dell'utente
             cursor.execute("""
-                SELECT stripe_subscription_id, subscription_plan 
-                FROM users 
+                SELECT stripe_subscription_id
+                FROM users
                 WHERE username = %s
             """, (current_user,))
             user = cursor.fetchone()
 
-        # Se ha un abbonamento attivo su Stripe, cancellalo
-        if user and user.get('stripe_subscription_id') and user.get('subscription_plan') != 'free':
-            try:
-                sub_id = user['stripe_subscription_id']
-                # Cancella alla fine del periodo pagato
-                stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
-                print(
-                    f"[Stripe] Abbonamento {sub_id} cancellato per {current_user}")
-            except stripe.error.InvalidRequestError:
-                # Se già cancellato su Stripe
-                print(f"[Stripe] Abbonamento già cancellato: {sub_id}")
-            except Exception as e:
-                print(f"[Stripe] Errore cancellazione: {e}")
-                return jsonify({'error': f'Errore cancellazione abbonamento: {e}'}), 500
+        if not user or not user.get('stripe_subscription_id'):
+            # Nessuna subscription → è già free
+            return jsonify({
+                'success': True,
+                'message': 'Sei già sul piano Free'
+            })
 
-        # Aggiorna il DB al piano Free
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                UPDATE users 
-                SET subscription_plan = 'free',
-                    subscription_status = 'active',
-                    subscription_start_date = NOW(),
-                    stripe_subscription_id = NULL
-                WHERE username = %s
-            """, (current_user,))
-            conn.commit()
+        sub_id = user['stripe_subscription_id']
 
-        return jsonify({'success': True, 'message': 'Sei passato al piano Free'})
+        # Cancella a fine periodo pagato
+        stripe.Subscription.modify(
+            sub_id,
+            cancel_at_period_end=True
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Abbonamento annullato. Passerai al piano Free a fine periodo.'
+        })
+
+    except stripe.error.InvalidRequestError as e:
+        return jsonify({'error': str(e)}), 400
 
     except Exception as e:
-        print(f"Errore passaggio a piano free: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        print(f"Errore subscribe-free: {e}")
+        return jsonify({'error': 'Errore durante il passaggio al piano Free'}), 500
+
     finally:
         conn.close()
 
@@ -1654,170 +1620,148 @@ def create_customer_portal_session(current_user):
 
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
-    """Gestisce tutti i webhook di Stripe relativi a subscription e pagamento"""
     payload = request.get_data()
     sig_header = request.headers.get('Stripe-Signature')
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, app.config['STRIPE_WEBHOOK_SECRET']
+            payload,
+            sig_header,
+            app.config['STRIPE_WEBHOOK_SECRET']
         )
-    except ValueError:
-        return 'Invalid payload', 400
-    except stripe.error.SignatureVerificationError:
-        return 'Invalid signature', 400
+    except Exception as e:
+        print(f"❌ Webhook reject: {e}")
+        return 'Invalid', 400
+
+    event_type = event['type']
+    obj = event['data']['object']
+    print(f"📥 Stripe event: {event_type}")
 
     conn = get_db_connection()
 
     try:
         with conn.cursor() as cursor:
-            # -------------------------
-            # CHECKOUT SESSION COMPLETED
-            # -------------------------
-            if event['type'] == 'checkout.session.completed':
-                session = event['data']['object']
-                if session.get('mode') == 'subscription':
-                    customer_id = session['customer']
-                    subscription_id = session['subscription']
-                    plan_key = session['metadata'].get('plan_key', 'free')
 
-                    subscription = stripe.Subscription.retrieve(subscription_id)
+            # ==================================================
+            # CHECKOUT SESSION COMPLETED (BOOTSTRAP ONLY)
+            # ==================================================
+            if event_type == 'checkout.session.completed':
 
-                    # Aggiorna DB utenti
-                    cursor.execute("""
-                        UPDATE users
-                        SET subscription_plan = %s,
-                            subscription_status = %s,
-                            stripe_customer_id = %s,
-                            stripe_subscription_id = %s,
-                            subscription_start_date = FROM_UNIXTIME(%s),
-                            subscription_end_date = FROM_UNIXTIME(%s)
-                        WHERE stripe_customer_id = %s
-                    """, (
-                        plan_key,
-                        subscription['status'],
-                        customer_id,
-                        subscription_id,
-                        subscription['current_period_start'],
-                        subscription['current_period_end'],
-                        customer_id
-                    ))
-                    conn.commit()
+                if obj['mode'] != 'subscription':
+                    return 'OK', 200
 
-                    # Salva nella payment history solo se c'è un payment_intent
-                    payment_intent_id = session.get('payment_intent')
-                    amount = session.get('amount_total', 0) / 100
-                    currency = session.get('currency', 'usd').upper()
+                cursor.execute("""
+                    UPDATE users
+                    SET stripe_customer_id = %s,
+                        stripe_subscription_id = %s,
+                        subscription_plan = %s
+                    WHERE username = %s
+                """, (
+                    obj['customer'],
+                    obj['subscription'],
+                    obj['metadata']['plan_key'],
+                    obj['metadata']['username']
+                ))
 
-                    if payment_intent_id:
-                        cursor.execute("""
-                            INSERT INTO payment_history 
-                            (user_id, stripe_payment_intent_id, amount, currency, plan_type, payment_status, payment_date)
-                            SELECT id_u, %s, %s, %s, %s, %s, NOW()
-                            FROM users WHERE stripe_customer_id = %s
-                        """, (
-                            payment_intent_id,
-                            amount,
-                            currency,
-                            plan_key,
-                            'paid',
-                            customer_id
-                        ))
-                        conn.commit()
+                conn.commit()
+                print("✅ Checkout bootstrap completato")
 
-            # -------------------------
+            # ==================================================
+            # INVOICE PAID (SOURCE OF TRUTH)
+            # ==================================================
+            elif event_type == 'invoice.paid':
+                invoice = obj
+                subscription_id = invoice['subscription']
+
+                subscription = stripe.Subscription.retrieve(subscription_id)
+
+                cursor.execute("""
+                    UPDATE users
+                    SET subscription_status = 'active',
+                        subscription_start_date = FROM_UNIXTIME(%s),
+                        subscription_end_date   = FROM_UNIXTIME(%s)
+                    WHERE stripe_subscription_id = %s
+                """, (
+                    subscription['current_period_start'],
+                    subscription['current_period_end'],
+                    subscription_id
+                ))
+
+                cursor.execute("""
+                    INSERT INTO payment_history
+                        (user_id, stripe_payment_intent_id, amount, currency,
+                        plan_type, payment_status, payment_date)
+                    SELECT id_u, %s, %s, %s, %s, 'paid', NOW()
+                    FROM users
+                    WHERE stripe_subscription_id = %s
+                    ON DUPLICATE KEY UPDATE payment_status = 'paid'
+                """, (
+                    invoice.get('payment_intent', invoice['id']),
+                    invoice['amount_paid'] / 100,
+                    invoice['currency'].upper(),
+                    subscription['metadata'].get('plan_key', 'unknown'),
+                    subscription_id
+                ))
+
+                conn.commit()
+                print("💰 Invoice paid processata")
+
+            # ==================================================
             # SUBSCRIPTION UPDATED
-            # -------------------------
-            elif event['type'] == 'customer.subscription.updated':
-                subscription = event['data']['object']
-                customer_id = subscription['customer']
+            # ==================================================
+            elif event_type == 'customer.subscription.updated':
                 cursor.execute("""
                     UPDATE users
                     SET subscription_status = %s,
                         subscription_end_date = FROM_UNIXTIME(%s)
-                    WHERE stripe_customer_id = %s
+                    WHERE stripe_subscription_id = %s
                 """, (
-                    subscription['status'],
-                    subscription['current_period_end'],
-                    customer_id
+                    obj['status'],
+                    obj['current_period_end'],
+                    obj['id']
                 ))
-                conn.commit()
 
-            # -------------------------
-            # SUBSCRIPTION DELETED / CANCELLED
-            # -------------------------
-            elif event['type'] == 'customer.subscription.deleted':
-                subscription = event['data']['object']
-                customer_id = subscription['customer']
+                conn.commit()
+                print("🔄 Subscription aggiornata")
+
+            # ==================================================
+            # SUBSCRIPTION DELETED
+            # ==================================================
+            elif event_type == 'customer.subscription.deleted':
                 cursor.execute("""
                     UPDATE users
                     SET subscription_status = 'canceled',
                         subscription_plan = 'free',
                         stripe_subscription_id = NULL
-                    WHERE stripe_customer_id = %s
-                """, (customer_id,))
+                    WHERE stripe_subscription_id = %s
+                """, (obj['id'],))
+
                 conn.commit()
+                print("❌ Subscription cancellata")
 
-            # -------------------------
-            # INVOICE PAYMENT SUCCEEDED
-            # -------------------------
-            elif event['type'] == 'invoice.payment_succeeded':
-                invoice = event['data']['object']
-                customer_id = invoice['customer']
-                subscription_id = invoice.get('subscription')
-                amount = invoice['amount_paid'] / 100
-                currency = invoice['currency'].upper()
-                plan_key = None
-
-                if subscription_id:
-                    subscription = stripe.Subscription.retrieve(subscription_id)
-                    plan_key = subscription['items']['data'][0]['price']['nickname']  # o la tua logica plan_key
-
-                    cursor.execute("""
-                        UPDATE users
-                        SET subscription_status = 'active',
-                            subscription_end_date = FROM_UNIXTIME(%s)
-                        WHERE stripe_customer_id = %s
-                    """, (subscription['current_period_end'], customer_id))
-                    conn.commit()
-
-                    # Salva payment history
-                    cursor.execute("""
-                        INSERT INTO payment_history 
-                        (user_id, stripe_payment_intent_id, amount, currency, plan_type, payment_status, payment_date)
-                        SELECT id_u, %s, %s, %s, %s, %s, NOW()
-                        FROM users WHERE stripe_customer_id = %s
-                    """, (
-                        invoice['payment_intent'],
-                        amount,
-                        currency,
-                        plan_key or 'unknown',
-                        'paid',
-                        customer_id
-                    ))
-                    conn.commit()
-
-            # -------------------------
+            # ==================================================
             # INVOICE PAYMENT FAILED
-            # -------------------------
-            elif event['type'] == 'invoice.payment_failed':
-                invoice = event['data']['object']
-                customer_id = invoice['customer']
+            # ==================================================
+            elif event_type == 'invoice.payment_failed':
                 cursor.execute("""
                     UPDATE users
                     SET subscription_status = 'past_due'
-                    WHERE stripe_customer_id = %s
-                """, (customer_id,))
+                    WHERE stripe_subscription_id = %s
+                """, (obj['subscription'],))
+
                 conn.commit()
+                print("⚠️ Payment failed")
 
     except Exception as e:
-        print(f"Errore gestione webhook: {e}")
         import traceback
         traceback.print_exc()
-    finally:
-        conn.close()
+        return 'Error', 500
 
-    return 'Success', 200
+    finally:
+        if conn and conn.open:
+            conn.close()
+
+    return 'OK', 200
 
 
 @app.route('/api/subscription-status')

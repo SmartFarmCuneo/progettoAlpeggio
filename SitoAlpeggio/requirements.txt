@@ -5,3 +5,4 @@ Flask-Mail
 requests
 cryptography
 stripe
+python-dotenv
