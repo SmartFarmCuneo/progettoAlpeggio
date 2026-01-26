@@ -9,22 +9,28 @@ document.addEventListener("DOMContentLoaded", async function () {
     loadingOverlay.style.display = show ? "flex" : "none";
   };
 
+  showLoading(true);
+
   try {
     const res = await fetch("/api/plans", { credentials: 'same-origin' });
     const data = await res.json();
 
+    console.log("Risposta API /api/plans:", data); // DEBUG
+    
     const plans = data.plans;
     const currentPlan = (data.current_plan || "free").toLowerCase();
 
-    // Mostra il tasto gestione se non è free
+    console.log("Piani ricevuti:", plans); // DEBUG
+    console.log("Piano attuale:", currentPlan); // DEBUG
+
     if (currentPlan !== "free") {
         manageContainer.style.display = "block";
     }
 
     plansContainer.innerHTML = "";
-
-    // Ordiniamo i piani per prezzo (più affidabile dell'ordine manuale se i nomi cambiano)
     const sortedPlanKeys = Object.keys(plans).sort((a, b) => plans[a].price - plans[b].price);
+
+    console.log("Piani ordinati:", sortedPlanKeys); // DEBUG
 
     sortedPlanKeys.forEach(planKey => {
       const plan = plans[planKey];
@@ -51,16 +57,19 @@ document.addEventListener("DOMContentLoaded", async function () {
       `;
       plansContainer.appendChild(card);
     });
+    
+    showLoading(false);
+
   } catch (err) {
-    console.error("Errore nel caricamento dei piani:", err);
+    console.error("Errore nel caricamento dei piani:", err); // DEBUG
     plansContainer.innerHTML = "<p>Errore nel caricamento dei piani.</p>";
+    showLoading(false);
   }
 
   window.selectCurrentPlan = function () {
     alert("Stai già utilizzando questo piano! Se vuoi cambiare, usa il Portale Clienti.");
   };
 
-  // --- FIX CHECKOUT ---
   window.selectPlan = async function (planKey) {
     showLoading(true);
     try {
@@ -68,7 +77,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         method: "POST",
         credentials: 'same-origin',
         headers: { "Content-Type": "application/json" },
-        // Cambiato da plan_id a plan per matchare il tuo Python
         body: JSON.stringify({ plan: planKey }) 
       });
 
@@ -78,7 +86,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         alert("Errore: " + data.error);
         showLoading(false);
       } else {
-        // Stripe Checkout con sessionId
         const result = await stripe.redirectToCheckout({
           sessionId: data.sessionId
         });
@@ -88,13 +95,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
       }
     } catch (error) {
-      console.error("Erro manageSubscription:", error);
+      console.error("Errore selectPlan:", error);
       alert("Si è verificato un errore tecnico.");
       showLoading(false);
     }
   };
 
-  // --- FIX CUSTOMER PORTAL ---
   window.manageSubscription = async function () {
     showLoading(true);
     try {
