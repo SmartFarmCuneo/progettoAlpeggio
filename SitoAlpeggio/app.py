@@ -1,7 +1,7 @@
 # (aggiornato) flask_app.py
 from flask import Flask, render_template, redirect, url_for, request, make_response
 from flask import session, jsonify, render_template_string, current_app
-from functools import wraps
+from functools import wraps, lru_cache
 import pymysql
 import jwt
 import hashlib
@@ -26,6 +26,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIR = os.path.join(BASE_DIR, "static", "json")
 SELECTED__SENSORS = []
 ID__DATA = ''
+
+_stripe_plans_cache = None
+_cache_timestamp = None
+CACHE_DURATION = timedelta(hours=1)
 ############################################
 
 ############################ Flask app setup ######################################
@@ -49,24 +53,24 @@ app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv(
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # Database connection
-"""def get_db_connection():
+def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
         user=os.getenv("DB_USER", 'root'),
         password=os.getenv("DB_PASSWORD", ''),
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 
-# se non hai il .env quella sopra funziona lo stesso
-def get_db_connection():
+
+"""def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 ###############################################################################
 
 # -----------------------------------------------------
@@ -168,63 +172,14 @@ def get_user_data(username):
     conn.close()
 
 
-# Definizione piani di abbonamento
-SUBSCRIPTION_PLANS = {
+# Solo il piano Free che non è su Stripe
+SUBSCRIPTION_PLANS_CONFIG = {
     'free': {
         'name': 'Free',
-        'price': 0,
-        'currency': 'eur',
-        'interval': 'month',
         'features': [
-            'Aggiunta fino a 10 campi',
-            'Dati meteorologici base',
-            '3 tipi di sensori',
-            'Supporto email',
-            'Report mensili'
-        ]
-    },
-    'basic': {
-        'name': 'Basic',
-        'price': 19,
-        'currency': 'eur',
-        'interval': 'month',
-        'features': [
-            'Monitoraggio fino a 5 ettari',
-            'Dati meteorologici base',
-            '3 tipi di sensori',
-            'Supporto email',
-            'Report mensili'
-        ]
-    },
-    'professional': {
-        'name': 'Professional',
-        'price': 49,
-        'currency': 'eur',
-        'interval': 'month',
-        'features': [
-            'Monitoraggio fino a 25 ettari',
-            'Dati meteorologici avanzati',
-            '8 tipi di sensori',
-            'Supporto email e telefono',
-            'Report settimanali',
-            'Analisi predittive AI',
-            'Allerte automatiche'
-        ]
-    },
-    'enterprise': {
-        'name': 'Enterprise',
-        'price': 99,
-        'currency': 'eur',
-        'interval': 'month',
-        'features': [
-            'Monitoraggio illimitato',
-            'Dati meteorologici premium',
-            'Tutti i tipi di sensori',
-            'Supporto prioritario 24/7',
-            'Report personalizzati',
-            'Analisi predittive AI avanzate',
-            'Allerte in tempo reale',
-            'API personalizzate'
+            'Aggiunta fino a 3 campi',
+            'Una irrigazione alla volta permessa',
+            'Dati del terreno solamente quando il sensore è attivo',
         ]
     }
 }
@@ -400,6 +355,136 @@ def save_payment_history(user_id, payment_intent_id, amount, currency, plan_type
         conn.close()
 
 
+def get_all_plans_from_stripe(force_refresh=False):
+    """
+    Recupera TUTTI i piani da Stripe usando i metadata.
+    Include cache per evitare troppe chiamate API.
+    """
+    global _stripe_plans_cache, _cache_timestamp
+
+    now = datetime.now()
+
+    # Usa la cache se valida
+    if (not force_refresh and
+        _stripe_plans_cache is not None and
+        _cache_timestamp is not None and
+            now - _cache_timestamp < CACHE_DURATION):
+        return _stripe_plans_cache
+
+    try:
+        # Recupera tutti i prezzi attivi da Stripe
+        prices = stripe.Price.list(
+            active=True,
+            expand=['data.product'],
+            limit=100
+        )
+
+        plans = {}
+
+        # Processa ogni prezzo
+        for price in prices.data:
+            metadata = price.metadata
+
+            # Verifica che abbia il plan_key nei metadata
+            plan_key = metadata.get('plan_key')
+            if not plan_key:
+                continue
+
+            # Estrai le feature dai metadata
+            features = []
+            i = 1
+            while f'feature_{i}' in metadata:
+                features.append(metadata[f'feature_{i}'])
+                i += 1
+
+            # Costruisci il piano
+            plans[plan_key] = {
+                'name': metadata.get('plan_name', plan_key.capitalize()),
+                'price': price.unit_amount / 100,
+                'currency': price.currency,
+                'interval': price.recurring['interval'] if price.recurring else 'month',
+                'stripe_price_id': price.id,
+                'stripe_product_id': price.product if isinstance(price.product, str) else price.product.id,
+                'features': features
+            }
+
+        # Aggiungi il piano Free (non è su Stripe)
+        plans['free'] = {
+            'name': SUBSCRIPTION_PLANS_CONFIG['free']['name'],
+            'price': 0,
+            'currency': 'eur',
+            'interval': 'month',
+            'stripe_price_id': None,
+            'stripe_product_id': None,
+            'features': SUBSCRIPTION_PLANS_CONFIG['free']['features']
+        }
+
+        # Aggiorna cache
+        _stripe_plans_cache = plans
+        _cache_timestamp = now
+
+        print(f"[Stripe] Recuperati {len(plans)} piani da Stripe")
+        return plans
+
+    except stripe.error.StripeError as e:
+        print(f"Errore Stripe nel recupero piani: {e}")
+
+        # Se c'è una cache precedente, usala
+        if _stripe_plans_cache:
+            print("[Stripe] Uso cache precedente per errore API")
+            return _stripe_plans_cache
+
+        # Fallback: almeno il piano free
+        return {
+            'free': {
+                'name': SUBSCRIPTION_PLANS_CONFIG['free']['name'],
+                'price': 0,
+                'currency': 'eur',
+                'interval': 'month',
+                'stripe_price_id': None,
+                'stripe_product_id': None,
+                'features': SUBSCRIPTION_PLANS_CONFIG['free']['features']
+            }
+        }
+    except Exception as e:
+        print(f"Errore generico nel recupero piani: {e}")
+        import traceback
+        traceback.print_exc()
+
+        # Ritorna almeno il free
+        return {
+            'free': SUBSCRIPTION_PLANS_CONFIG['free']
+        }
+
+
+def get_plan_by_key(plan_key, force_refresh=False):
+    """
+    Recupera un singolo piano per chiave
+    """
+    plans = get_all_plans_from_stripe(force_refresh)
+    return plans.get(plan_key)
+
+
+def clear_plans_cache():
+    """
+    Svuota la cache dei piani
+    """
+    global _stripe_plans_cache, _cache_timestamp
+    _stripe_plans_cache = None
+    _cache_timestamp = None
+    print("[Stripe] Cache piani svuotata")
+
+
+def get_stripe_price_id_by_plan_key(plan_key):
+    """
+    Recupera il Price ID di Stripe dato un plan_key
+    """
+    plan = get_plan_by_key(plan_key)
+    if plan:
+        return plan.get('stripe_price_id')
+    return None
+
+
 ############################## FUNZIONE INVIO MAIL #############################
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -504,6 +589,8 @@ def send_reset_email(user_email, code):
         return False
 
 ########################### Context Processor #########################
+
+
 @app.context_processor
 def inject_user():
     token = request.cookies.get("token")
@@ -520,6 +607,8 @@ def inject_user():
 ########################################################################
 
 ########################### Login-Create account #########################
+
+
 def hash_password(psw):
     return hashlib.sha256(psw.encode()).hexdigest()
 
@@ -554,7 +643,9 @@ def login():
 
     return render_template("login.html", error=error)
 
-#IMPLEMENTARE FUNZIONE PREMIUM TELEGRAM
+# IMPLEMENTARE FUNZIONE PREMIUM TELEGRAM
+
+
 @app.route('/registrati', methods=['GET', 'POST'])
 def registrati():
     error = ""
@@ -570,7 +661,7 @@ def registrati():
         data_nascita = f"{anno}-{mese}-{giorno}"
         username = request.form['username']
         password = request.form['password']
-        #username_tg = request.form['tg_username']
+        # username_tg = request.form['tg_username']
 
         psw = hash_password(password)
 
@@ -600,6 +691,8 @@ def registrati():
 ##################################################################################
 
 ################################ Cookie-Token ####################################
+
+
 def generate_token(username):
     payload = {
         "user": username,
@@ -607,10 +700,12 @@ def generate_token(username):
     }
     return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
+
 def generate_and_set_token(response, username, durata=1):
     token = generate_token(username)
     response.set_cookie("token", token, max_age=3600, httponly=True)
     return response
+
 
 def token_required(f):
     @wraps(f)
@@ -631,6 +726,8 @@ def token_required(f):
 ################################################################################
 
 ########################### RESET PASSWORD #####################################
+
+
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     message = ""
@@ -657,6 +754,7 @@ def forgot_password():
 
     return render_template("forgot_password.html", message=message)
 
+
 @app.route("/verify_code", methods=["GET", "POST"])
 def verify_code():
     error = ""
@@ -668,6 +766,7 @@ def verify_code():
             error = "Codice errato."
 
     return render_template("verify_code.html", error=error)
+
 
 @app.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
@@ -713,7 +812,7 @@ def storici(current_user):
 
     conn = get_db_connection()
 
-    # preselezione da home 
+    # preselezione da home
     campo_id = request.args.get('campo_id')
     if campo_id:
         campo_selezionato = campo_id
@@ -757,10 +856,12 @@ def storici(current_user):
         campo=campo_selezionato
     )
 
+
 @app.route('/dettagli_storici', methods=['GET', 'POST'])
 @token_required
 def dettagli_storici(current_user):
     pass
+
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
 @token_required
@@ -836,6 +937,7 @@ def aggiungiCampo(current_user):
         error=error
     )
 
+
 @app.route('/salva-coordinate', methods=['POST'])
 def salvaCoordinate():
     coordinate = request.form.get('coordinate')  # stringa dal frontend
@@ -867,14 +969,17 @@ def salvaCoordinate():
 
     return redirect(url_for('aggiungiCampo'))
 
+
 @app.route('/api/get_session_coordinate')
 def get_session_coordinate():
     return jsonify(session.get('coordinate', {}))
+
 
 @app.route('/mappa', methods=['GET', 'POST'])
 @token_required
 def mappa(current_user):
     return render_template('mappa.html')
+
 
 @app.route("/api/campi-utente")
 @token_required
@@ -897,6 +1002,7 @@ def api_campi_utente(current_user):
         return jsonify({"error": "Errore interno del server"}), 500
     finally:
         conn.close()
+
 
 @app.route("/api/campo/<int:campo_id>")
 @token_required
@@ -924,6 +1030,7 @@ def api_dettaglio_campo(current_user, campo_id):
         return jsonify({"error": "Errore interno del server"}), 500
     finally:
         conn.close()
+
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
@@ -982,6 +1089,7 @@ def gestioneCampo(current_user):
 
     return redirect(url_for('gestioneCampo'))
 
+
 @app.route('/gestione_sensori', methods=['POST', 'GET'])
 @token_required
 def gestione_sensori(current_user):
@@ -1006,7 +1114,8 @@ def gestione_sensori(current_user):
                 # A) AGGIUNGI SENSORE
                 if action == 'aggiungi':
                     node_id_input = request.form.get('id_sensore', '').strip()
-                    posizione = request.form.get('posizione_sensore', '').strip()
+                    posizione = request.form.get(
+                        'posizione_sensore', '').strip()
 
                     if not node_id_input:
                         sensori = get_sensor2(user_id)
@@ -1030,7 +1139,7 @@ def gestione_sensori(current_user):
                         cursor.execute("""
                             INSERT INTO sensor (Node_id, stato_sens, posizione)
                             VALUES (%s, 'C', %s)
-                        """, (node_id_input,posizione))
+                        """, (node_id_input, posizione))
                         conn.commit()
                         id_sens_db = cursor.lastrowid
 
@@ -1093,29 +1202,31 @@ def gestione_sensori(current_user):
                                                user=user,
                                                sensori=sensori,
                                                error='not_found')
-                    
+
                 elif action == 'sospendi':
-                    id_sens_to_suspend = request.form.get('id_sensore', '').strip()
+                    id_sens_to_suspend = request.form.get(
+                        'id_sensore', '').strip()
                     set_state_sensor('S', id_sens_to_suspend)
-                    #print("Prova")
-                    #print(get_sensor(current_user))
+                    # print("Prova")
+                    # print(get_sensor(current_user))
                     sensori = get_sensor2(user_id)
                     return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               success='suspend')
+                                           user=user,
+                                           sensori=sensori,
+                                           success='suspend')
 
                 elif action == 'riattiva':
-                    id_sens_to_activate = request.form.get('id_sensore', '').strip()
+                    id_sens_to_activate = request.form.get(
+                        'id_sensore', '').strip()
                     set_state_sensor('C', id_sens_to_activate)
                     sensori = get_sensor2(user_id)
                     return render_template('gestione_sensori.html',
-                                               user=user,
-                                               sensori=sensori,
-                                               success='activate')
-                
+                                           user=user,
+                                           sensori=sensori,
+                                           success='activate')
+
             sensori = get_sensor2(user_id)
-            #print("sensori corretti: " + str(sensori))
+            # print("sensori corretti: " + str(sensori))
     except Exception as e:
         print(f"Errore nella gestione sensori: {e}")
         import traceback
@@ -1137,8 +1248,9 @@ def gestione_sensori(current_user):
         conn.close()
     return render_template('gestione_sensori.html', user=user, sensori=sensori)
 
+
 def get_sensor2(user_id):
-    #DA RICONTROLLARE SIMILE AL get_sensor()
+    # DA RICONTROLLARE SIMILE AL get_sensor()
     # ritorna i sensori dell'utente
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1152,6 +1264,7 @@ def get_sensor2(user_id):
     cursor.close()
     conn.close()
     return sensori
+
 
 def get_campi(current_user):
     """Restituisce il numero di campi dell'utente"""
@@ -1171,6 +1284,7 @@ def get_campi(current_user):
         return 0
     finally:
         conn.close()
+
 
 def get_info_campi(current_user):
     """Restituisce informazioni sui campi dell'utente"""
@@ -1199,6 +1313,7 @@ def get_info_campi(current_user):
     finally:
         conn.close()
 
+
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
 @token_required
 def visualizzaCampi(current_user):
@@ -1206,91 +1321,209 @@ def visualizzaCampi(current_user):
 ################################################################
 
 ############################# STRIPE ROUTES #############################
+
+
 @app.route('/pagamenti', methods=['GET', 'POST'])
 @token_required
 def pagamenti(current_user):
-    """Pagina dei piani abbonamento"""
+    """Pagina dei piani abbonamento con dati completamente dinamici"""
     subscription_info = get_user_subscription_info(current_user)
+
+    # Recupera i piani da Stripe
+    plans = get_all_plans_from_stripe()
 
     return render_template('pagamenti.html',
                            stripe_public_key=app.config['STRIPE_PUBLIC_KEY'],
-                           subscription_info=subscription_info)
+                           subscription_info=subscription_info,
+                           plans=plans)
+
 
 @app.route("/api/plans", methods=["GET"])
 @token_required
 def api_get_plans(current_user):
-    user_info = get_user_subscription_info(current_user)
-    # Normalizza il piano (rimuovi spazi e rendilo lowercase) per evitare mismatch di case
-    raw_plan = None
-    if user_info:
-        raw_plan = user_info.get("subscription_plan")
-    # safety: se None -> 'free'
-    if not raw_plan:
+    """
+    Restituisce tutti i piani recuperati dinamicamente da Stripe
+    """
+    try:
+        user_info = get_user_subscription_info(current_user)
+
+        # Normalizza il piano corrente
         current_plan = "free"
-    else:
-        try:
-            current_plan = str(raw_plan).strip().lower()
-        except Exception:
-            current_plan = "free"
+        if user_info and user_info.get("subscription_plan"):
+            try:
+                current_plan = str(
+                    user_info["subscription_plan"]).strip().lower()
+            except Exception:
+                pass
 
-    # debug log (puoi togliere in produzione)
-    print(
-        f"[DEBUG] /api/plans user={current_user} raw_plan={raw_plan} normalized={current_plan}")
+        # Recupera tutti i piani da Stripe
+        plans = get_all_plans_from_stripe()
 
-    # ritorna tutto, incluso free
-    return jsonify({
-        "current_plan": current_plan,
-        "plans": SUBSCRIPTION_PLANS
-    })
+        return jsonify({
+            "current_plan": current_plan,
+            "plans": plans
+        })
+
+    except Exception as e:
+        print(f"Errore in /api/plans: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Errore nel recupero dei piani"}), 500
+
+
+@app.route('/create-checkout-session', methods=['POST'])
+@token_required
+def create_checkout_session(current_user):
+    """Crea una sessione di checkout con validazione dinamica"""
+    try:
+        data = request.get_json()
+        plan_key = data.get('plan')
+
+        if not plan_key or plan_key == 'free':
+            return jsonify({'error': 'Piano non valido'}), 400
+
+        # Recupera il piano da Stripe
+        plan = get_plan_by_key(plan_key)
+
+        if not plan or not plan.get('stripe_price_id'):
+            return jsonify({'error': 'Piano non trovato o non configurato'}), 404
+
+        # Recupera o crea il customer Stripe
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT stripe_customer_id, email FROM users WHERE username = %s",
+                (current_user,)
+            )
+            user = cursor.fetchone()
+        conn.close()
+
+        if not user:
+            return jsonify({'error': 'Utente non trovato'}), 404
+
+        # Crea o recupera il customer
+        customer_id = user.get('stripe_customer_id')
+        if not customer_id:
+            customer = stripe.Customer.create(
+                email=user['email'],
+                metadata={'username': current_user}
+            )
+            customer_id = customer.id
+
+            conn = get_db_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE users SET stripe_customer_id = %s WHERE username = %s",
+                    (customer_id, current_user)
+                )
+                conn.commit()
+            conn.close()
+
+        # Crea la sessione di checkout
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': plan['stripe_price_id'],
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=url_for('payment_success', _external=True) +
+            '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('payment_cancel', _external=True),
+            metadata={
+                'plan_key': plan_key,
+                'username': current_user
+            }
+        )
+
+        return jsonify({'sessionId': checkout_session.id})
+
+    except Exception as e:
+        print(f"Errore creazione checkout: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/refresh-plans-cache', methods=['POST'])
+@token_required
+def admin_refresh_plans_cache(current_user):
+    """
+    Endpoint per svuotare e ricaricare la cache dei piani
+    Utile dopo aver modificato i piani su Stripe
+    """
+    # TODO: Aggiungi controllo admin
+    # if not is_admin(current_user):
+    #     return jsonify({'error': 'Non autorizzato'}), 403
+
+    try:
+        clear_plans_cache()
+        plans = get_all_plans_from_stripe(force_refresh=True)
+
+        return jsonify({
+            'message': 'Cache aggiornata con successo',
+            'plans_count': len(plans),
+            'plans': list(plans.keys())
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/payment-success')
 @token_required
 def payment_success(current_user):
-    """Gestione successo pagamento e attivazione periodo 1 mese esatto"""
+    """Gestione successo pagamento"""
     session_id = request.args.get('session_id')
 
     if not session_id:
         return redirect(url_for('pagamenti'))
 
     try:
-        # Recupera la sessione da Stripe
         checkout_session = stripe.checkout.Session.retrieve(session_id)
 
         if checkout_session.payment_status == 'paid':
-
-            # Recupera ID cliente e ID abbonamento
             customer_id = checkout_session.customer
             subscription_id = checkout_session.subscription
 
-            # Recupera i metadati
-            plan_name = checkout_session.metadata.get('plan')
+            # Recupera plan_key dai metadata
+            plan_key = checkout_session.metadata.get('plan_key')
 
-            # Aggiorna il database
+            if not plan_key:
+                print("ERRORE: plan_key non trovato nei metadata della sessione")
+                return redirect(url_for('pagamenti'))
+
+            # Recupera i dettagli dell'abbonamento
+            subscription = stripe.Subscription.retrieve(subscription_id)
+
             conn = get_db_connection()
             try:
                 with conn.cursor() as cursor:
-                    # Logica richiesta:
-                    # 1. Imposta lo stato su 'active'
-                    # 2. Salva stripe_subscription_id (fondamentale per cancellare dopo)
-                    # 3. Imposta start_date a ADESSO (NOW())
-                    # 4. Imposta end_date a ADESSO + 1 MESE esatto
-
                     cursor.execute("""
                         UPDATE users 
                         SET subscription_plan = %s, 
-                            subscription_status = 'active',
+                            subscription_status = %s,
                             stripe_customer_id = %s,
                             stripe_subscription_id = %s,
-                            subscription_start_date = NOW(),
-                            subscription_end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH)
+                            subscription_start_date = FROM_UNIXTIME(%s),
+                            subscription_end_date = FROM_UNIXTIME(%s)
                         WHERE username = %s
-                    """, (plan_name, customer_id, subscription_id, current_user))
-
+                    """, (
+                        plan_key,
+                        subscription['status'],
+                        customer_id,
+                        subscription_id,
+                        subscription['current_period_start'],
+                        subscription['current_period_end'],
+                        current_user
+                    ))
                     conn.commit()
 
-                    # Salva nella cronologia pagamenti (opzionale ma consigliato)
+                    # Salva cronologia
                     cursor.execute(
-                        "SELECT id_u FROM users WHERE username = %s", (current_user,))
+                        "SELECT id_u FROM users WHERE username = %s",
+                        (current_user,)
+                    )
                     user_data = cursor.fetchone()
 
                     if user_data:
@@ -1299,23 +1532,26 @@ def payment_success(current_user):
                             checkout_session.payment_intent,
                             checkout_session.amount_total / 100,
                             checkout_session.currency.upper(),
-                            plan_name,
+                            plan_key,
                             'paid'
                         )
-            except Exception as db_error:
-                print(f"Errore DB in success: {db_error}")
             finally:
                 conn.close()
+
+            # Recupera il nome del piano per mostrarlo
+            plan = get_plan_by_key(plan_key)
+            plan_name = plan['name'] if plan else plan_key
+
             return render_template('payment_success.html', plan=plan_name)
         else:
-            # Pagamento non riuscito o in attesa
             return redirect(url_for('pagamenti'))
-    except stripe.StripeError as e:
-        print(f"Errore Stripe: {e}")
-        return redirect(url_for('pagamenti'))
+
     except Exception as e:
-        print(f"Errore Generico: {e}")
+        print(f"Errore payment success: {e}")
+        import traceback
+        traceback.print_exc()
         return redirect(url_for('pagamenti'))
+
 
 @app.route('/cancel-subscription', methods=['POST'])
 @token_required
@@ -1377,6 +1613,7 @@ def cancel_subscription(current_user):
         if 'conn' in locals() and conn.open:
             conn.close()
 
+
 @app.route('/payment-cancel')
 @token_required
 def payment_cancel(current_user):
@@ -1385,6 +1622,7 @@ def payment_cancel(current_user):
     PRIMA di pagare (pulsante 'Indietro' su Stripe).
     """
     return render_template('payment_cancel.html')
+
 
 @app.route('/create-customer-portal-session', methods=['POST'])
 @token_required
@@ -1416,6 +1654,7 @@ def create_customer_portal_session(current_user):
         print(f"Errore creazione portale clienti: {e}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
     """Gestisce i webhook di Stripe"""
@@ -1427,20 +1666,54 @@ def stripe_webhook():
             payload, sig_header, app.config['STRIPE_WEBHOOK_SECRET']
         )
     except ValueError:
-        print("Invalid payload")
         return 'Invalid payload', 400
     except stripe.error.SignatureVerificationError:
-        print("Invalid signature")
         return 'Invalid signature', 400
 
-    # Gestisci gli eventi
     conn = get_db_connection()
 
     try:
-        if event['type'] == 'customer.subscription.updated':
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+
+            if session['mode'] == 'subscription':
+                customer_id = session['customer']
+                subscription_id = session['subscription']
+
+                # Recupera plan_key dai metadata
+                plan_key = session['metadata'].get('plan_key')
+
+                if not plan_key:
+                    print(
+                        "WARN: checkout.session.completed senza plan_key nei metadata")
+                    return 'Success', 200
+
+                subscription = stripe.Subscription.retrieve(subscription_id)
+
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE users 
+                        SET subscription_plan = %s,
+                            subscription_status = %s,
+                            stripe_customer_id = %s,
+                            stripe_subscription_id = %s,
+                            subscription_start_date = FROM_UNIXTIME(%s),
+                            subscription_end_date = FROM_UNIXTIME(%s)
+                        WHERE stripe_customer_id = %s
+                    """, (
+                        plan_key,
+                        subscription['status'],
+                        customer_id,
+                        subscription_id,
+                        subscription['current_period_start'],
+                        subscription['current_period_end'],
+                        customer_id
+                    ))
+                    conn.commit()
+
+        elif event['type'] == 'customer.subscription.updated':
             subscription = event['data']['object']
             customer_id = subscription['customer']
-            status = subscription['status']
 
             with conn.cursor() as cursor:
                 cursor.execute("""
@@ -1448,9 +1721,12 @@ def stripe_webhook():
                     SET subscription_status = %s,
                         subscription_end_date = FROM_UNIXTIME(%s)
                     WHERE stripe_customer_id = %s
-                """, (status, subscription['current_period_end'], customer_id))
+                """, (
+                    subscription['status'],
+                    subscription['current_period_end'],
+                    customer_id
+                ))
                 conn.commit()
-                print(f"Abbonamento aggiornato per customer {customer_id}")
 
         elif event['type'] == 'customer.subscription.deleted':
             subscription = event['data']['object']
@@ -1459,25 +1735,29 @@ def stripe_webhook():
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE users 
-                    SET subscription_status = 'cancelled',
-                        subscription_plan = 'free'
+                    SET subscription_status = 'canceled',
+                        subscription_plan = 'free',
+                        stripe_subscription_id = NULL
                     WHERE stripe_customer_id = %s
                 """, (customer_id,))
                 conn.commit()
-                print(f"Abbonamento cancellato per customer {customer_id}")
 
         elif event['type'] == 'invoice.payment_succeeded':
             invoice = event['data']['object']
             customer_id = invoice['customer']
+            subscription_id = invoice['subscription']
 
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE users 
-                    SET subscription_status = 'active'
-                    WHERE stripe_customer_id = %s
-                """, (customer_id,))
-                conn.commit()
-                print(f"Pagamento riuscito per customer {customer_id}")
+            if subscription_id:
+                subscription = stripe.Subscription.retrieve(subscription_id)
+
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE users 
+                        SET subscription_status = 'active',
+                            subscription_end_date = FROM_UNIXTIME(%s)
+                        WHERE stripe_customer_id = %s
+                    """, (subscription['current_period_end'], customer_id))
+                    conn.commit()
 
         elif event['type'] == 'invoice.payment_failed':
             invoice = event['data']['object']
@@ -1490,14 +1770,16 @@ def stripe_webhook():
                     WHERE stripe_customer_id = %s
                 """, (customer_id,))
                 conn.commit()
-                print(f"Pagamento fallito per customer {customer_id}")
 
     except Exception as e:
         print(f"Errore gestione webhook: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         conn.close()
 
     return 'Success', 200
+
 
 @app.route('/api/subscription-status')
 @token_required
@@ -1521,28 +1803,11 @@ def api_subscription_status(current_user):
     })
 
 ############################# FUNZIONALITÀ PREMIUM #############################
-@app.route('/ai-analysis')
-@token_required
-@plan_feature_required('has_ai_analysis')
-def ai_analysis(current_user):
-    """Funzionalità di analisi AI (Professional ed Enterprise)"""
-    return render_template('ai_analysis.html')
 
-@app.route('/priority-support')
-@token_required
-@plan_feature_required('has_priority_support')
-def priority_support(current_user):
-    """Supporto prioritario (solo Enterprise)"""
-    return render_template('priority_support.html')
-
-@app.route('/custom-api')
-@token_required
-@plan_feature_required('has_custom_api')
-def custom_api(current_user):
-    """API personalizzate (solo Enterprise)"""
-    return render_template('custom_api.html')
 
 ################### PROFILO #################################
+
+
 @app.route('/profilo', methods=['POST', 'GET'])
 @token_required
 def profilo(current_user):
@@ -1585,17 +1850,21 @@ def profilo(current_user):
     # Render del template con i dati aggiornati
     return render_template('profilo.html', user=user)
 
+
 @app.route('/privacy', methods=['GET', 'POST'])
 def privacy():
     return render_template('privacy.html')
+
 
 @app.route('/terms', methods=['GET', 'POST'])
 def terms():
     return render_template('terms.html')
 
+
 @app.route('/contatti', methods=['GET', 'POST'])
 def contatti():
     return render_template('contatti.html')
+
 
 @app.route("/supporto")
 def supporto():
@@ -1604,6 +1873,8 @@ def supporto():
 #############################################################
 
 #################### GESTIONE DINAMICA DEI CAMPI e SENSORI - API ###############################
+
+
 def haversine(lat1, lon1, lat2, lon2):
     # distanza in km tra due coordinate
     R = 6371
@@ -1614,6 +1885,7 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(dphi/2)**2 + math.cos(phi1) * \
         math.cos(phi2) * math.sin(dlambda/2)**2
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
 
 @app.route("/api/get_location_by_coords", methods=["GET"])
 def get_location_by_coords():
@@ -1641,6 +1913,7 @@ def get_location_by_coords():
     }
     return jsonify(result)
 
+
 def get_campi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1649,6 +1922,7 @@ def get_campi(current_user):
     num_campi = cursor.fetchone()['COUNT(*)']
     conn.close()
     return num_campi
+
 
 def get_info_campi(current_user):
     conn = get_db_connection()
@@ -1661,12 +1935,14 @@ def get_info_campi(current_user):
             info += str(risultato[i]["coordinate"]) + "/" + str(risultato[i]
                                                                 ["comune"]) + "|"
         return info
-    
+
+
 @app.route("/api/numCampi")
 @token_required
 def api_num_campi(current_user):
     campi = get_campi(current_user)
     return jsonify(campi)
+
 
 @app.route("/api/infoCampi")
 @token_required
@@ -1674,12 +1950,14 @@ def api_info_campi(current_user):
     info = get_info_campi(current_user)
     return jsonify(info)
 
+
 @app.route("/api/get_provincia")
 def get_provincia():
     file_path = os.path.join(JSON_DIR, "gi_province.json")
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     return jsonify({"province": data.get("province", [])})
+
 
 @app.route("/api/get_comune", methods=["GET"])
 def get_comune():
@@ -1691,6 +1969,7 @@ def get_comune():
     if provincia:
         comuni = [c for c in comuni if c['sigla_provincia'] == provincia]
     return jsonify({"comuni": comuni})
+
 
 def get_sensor(current_user):
     conn = get_db_connection()
@@ -1716,6 +1995,7 @@ def get_sensor(current_user):
         else:
             return info
 
+
 def get_sensor_selected(state):
     # ritorna i sensori selezionati in base allo stato
     conn = get_db_connection()
@@ -1733,6 +2013,8 @@ def get_sensor_selected(state):
     return sens
 
 # DA CONTROLLARE
+
+
 def get_state_data():
     # ritorna se è possbile continare o iniziare la sessione o meno
     # print("Sessione: " + str(session['id_data']))
@@ -1747,8 +2029,8 @@ def get_state_data():
             row = cursor.fetchone()
             cursor.close()
             conn.close()
-            #print("Fine irr: " + str(row['data_fine_irr']))
-            if row != None: 
+            # print("Fine irr: " + str(row['data_fine_irr']))
+            if row != None:
                 return 'Stop'
             else:
                 return 'Go'
@@ -1758,6 +2040,8 @@ def get_state_data():
         return 'Go'
 
 # DA TESTARE
+
+
 def get_finish_session():
     # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL
     # se ritorna come conteggio 0, si salva la data di conclusione dell'ultimo sensore come data di fine
@@ -1798,7 +2082,7 @@ def get_finish_session():
             conn.commit()
             cursor.close()
             conn.close()
-            # settaggio stato concluso dei sensori 
+            # settaggio stato concluso dei sensori
             for sensor in session['selected_sensors']:
                 set_state_sensor("C", sensor)
 
@@ -1807,6 +2091,8 @@ def get_finish_session():
             return False, "Continue"
 
 # API PER SENSORI NELL'INIZIALIZZAZIONE
+
+
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
@@ -1814,24 +2100,32 @@ def api_get_sensor(current_user):
     return jsonify(info)
 
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
+
+
 @app.route("/api/get_sensor_selected")
 def api_get_sensor_selected():
     info = get_sensor_selected('O')
     return jsonify(info)
 
 # API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
+
+
 @app.route("/api/get_sensor/concluded")
 def api_get_sensor_concluded():
     info = get_sensor_selected('C')
     return jsonify(info)
 
 # API PER SENSORI SOSPESI NELL'IRRIGAZIONE
+
+
 @app.route("/api/get_sensor/suspended")
 def api_get_sensor_suspended():
     info = get_sensor_selected('S')
     return jsonify(info)
 
 # API PER SESSIONE DI IRRIGAZIONE
+
+
 @app.route("/api/get_session_data")
 def api_get_session_data():
     info = get_state_data()
@@ -1839,6 +2133,8 @@ def api_get_session_data():
     return jsonify(info)
 
 # API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA CONTROLLARE
+
+
 @app.route("/api/get_finish_session")
 def api_get_finish_session():
     info = get_finish_session()[1]
@@ -1846,6 +2142,8 @@ def api_get_finish_session():
     return jsonify(info)
 
 # API PER RICEVERE INFO SULLA CONNESSIONE DEL DISPOSITIVO -- DA TESTARE
+
+
 @app.route('/api/init_receiver', methods=['POST'])
 def init_serial_receiver():
     data = request.get_json()  # <-- DATI DAL CLIENT
@@ -1853,7 +2151,7 @@ def init_serial_receiver():
 
     if not data:
         return jsonify({"error": "Nessun dato ricevuto"}), 400
-    
+
     if data.get('type') == 'Connection':
         print("=" * 50)
         print("STATO CONNESSIONE SERIALE (DAL CLIENT):")
@@ -1864,7 +2162,7 @@ def init_serial_receiver():
         print(f"Ultimo controllo: {data.get('last_check')}")
         print("=" * 50)
         if data.get('connected'):
-            session['serial_active'] = True # può non servire 
+            session['serial_active'] = True  # può non servire
     elif data.get('type') == 'Failed':
         print("=" * 50)
         print("ERRORE:")
@@ -1873,9 +2171,9 @@ def init_serial_receiver():
         print("=" * 50)
     else:
         all_sensor_wet = get_finish_session()[0]
-        if all_sensor_wet: # DA PROVARE
+        if all_sensor_wet:  # DA PROVARE
             print("Fine della sessione")
-            #session['id_data'] = ''
+            # session['id_data'] = ''
         else:
             print("=" * 50)
             print("DATI INVIATI DA SENSORE:")
@@ -1888,12 +2186,16 @@ def init_serial_receiver():
     return jsonify({"status": "ok"})
 
 # PREMIUM -- invio id chat con telegram per notifiche
+
+
 @app.route("/api/get_telegram_chat_id")
 def api_get_telegram_chat_id():
     pass
 ########################################################################################
 
 ############################ AZIONI IRRIGAZIONE #########################################
+
+
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
     global SELECTED__SENSORS, ID__DATA
@@ -1911,7 +2213,6 @@ def inizializzaIrrigazione():
             # print("Sensori selezionati:", selected_sensors)
             session['selected_sensors'] = selected_sensors
             SELECTED__SENSORS = selected_sensors
-            
 
             # aggiorna lo stato dei sensori da disponibili a operativi
             conn = get_db_connection()
@@ -1939,7 +2240,7 @@ def inizializzaIrrigazione():
             last_id = cursor.lastrowid
             session["id_data"] = last_id
             ID__DATA == last_id
-            #print("Sess1: " + str(session['id_data']))
+            # print("Sess1: " + str(session['id_data']))
             cursor.close()
             conn.close()
 
@@ -1978,14 +2279,14 @@ def inizializzaIrrigazione():
 
             # DA TESTARE
             # lancia l'exe per prendere i dati dal sensore
-            #subprocess.Popen(
-                #[
-                    #"cmd.exe",
-                    #"/k",  # /k = lascia la finestra aperta, /c = chiude dopo l'esecuzione
-                    #r"C:\Users\giova\OneDrive\Desktop\Marco\Progetto_Alpeggio\progettoAlpeggio\SitoAlpeggio\dist\data_analysis_win3\data_analysis_win3.exe"
-                #],
-                #creationflags=subprocess.CREATE_NEW_CONSOLE
-            #)
+            # subprocess.Popen(
+                # [
+                # "cmd.exe",
+                # "/k",  # /k = lascia la finestra aperta, /c = chiude dopo l'esecuzione
+                # r"C:\Users\giova\OneDrive\Desktop\Marco\Progetto_Alpeggio\progettoAlpeggio\SitoAlpeggio\dist\data_analysis_win3\data_analysis_win3.exe"
+                # ],
+                # creationflags=subprocess.CREATE_NEW_CONSOLE
+            # )
             # API per sensori selezionati
             return jsonify({"status": "ok", "selected_sensors": selected_sensors})
         else:
@@ -1994,6 +2295,7 @@ def inizializzaIrrigazione():
 
     campo_id = request.args.get('campo_id')
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
+
 
 def set_state_sensor(state, sensor_id):
     # setta lo stato del sensore
@@ -2008,6 +2310,8 @@ def set_state_sensor(state, sensor_id):
     conn.close()
 
 # FUNZIONANTE
+
+
 def set_error_state_data(message):
     # setta ad errore la ricerca / ripristina i sensori / conclude la sessione di irrigazione
     state = 'ERR'
@@ -2025,6 +2329,8 @@ def set_error_state_data(message):
     session['id_data'] = 0
 
 # FUNZIONATE
+
+
 def insert_sensor_data(data):
     global SELECTED__SENSORS, ID__DATA
     # funzione per salvare su db le info
@@ -2032,7 +2338,7 @@ def insert_sensor_data(data):
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
     print(f"Sensore: {data['Node_id']}")
     print(SELECTED__SENSORS)
-    #print(get_sensor_selected('O'))
+    # print(get_sensor_selected('O'))
     if data['Node_id'] in SELECTED__SENSORS:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -2044,6 +2350,7 @@ def insert_sensor_data(data):
         )
         conn.commit()
         cursor.close()
+
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
@@ -2070,8 +2377,9 @@ def avviaIrrigazione():
         print("SONO PRONTO")
     else:
         print("NO PRONTO")"""
-    
+
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
+
 
 # DA TESTARE
 """@app.route('/avvia_irr', methods=['GET', 'POST'])
@@ -2177,6 +2485,8 @@ def avviaIrrigazione(current_user):
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])"""
 
 ####################################################################################
+
+
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2192,6 +2502,7 @@ def associazioneSessionCampi(current_user):
         for i, e in enumerate(id_array):
             session[f"campo{i+1}"] = e
 
+
 @app.route('/', methods=['GET'])
 def index():
     token = request.cookies.get("token")
@@ -2202,6 +2513,7 @@ def index():
         except Exception:
             pass
     return render_template("index.html")  # pagina pubblica iniziale
+
 
 @app.route('/home', methods=['GET', 'POST'])
 @token_required
@@ -2234,11 +2546,13 @@ def home(current_user):
     campo_corrente = session.get('campo_corrente', None)
     return render_template('home.html', campo_corrente=campo_corrente)
 
+
 @app.route('/logout', methods=['POST'])
 def logout():
     response = make_response(redirect(url_for('index')))
     response.delete_cookie('token')
     return response
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

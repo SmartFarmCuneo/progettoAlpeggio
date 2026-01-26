@@ -51,6 +51,12 @@
           <p style="color: white; margin-top: 0.5rem">
             Seleziona l'abbonamento più adatto alle tue esigenze agricole
           </p>
+
+          <div id="manage-subscription-container" style="display: none; margin-top: 1.5rem;">
+            <button onclick="manageSubscription()" class="btn-manage">
+              ⚙️ Gestisci il tuo abbonamento (Fatture e Disdetta)
+            </button>
+          </div>
         </div>
 
         <div class="billing-info">
@@ -105,4 +111,5 @@
   <script src="https://js.stripe.com/v3/"></script>
   <script src="../static/js/pagamenti.js" defer></script>
 </body>
+
 </html>

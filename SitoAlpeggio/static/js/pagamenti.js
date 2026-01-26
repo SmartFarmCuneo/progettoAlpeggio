@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", async function () {
   const plansContainer = document.getElementById("plans-container");
   const loadingOverlay = document.getElementById("loading-overlay");
+  const manageContainer = document.getElementById("manage-subscription-container");
   const stripePublicKey = document.getElementById("stripe-public-key").getAttribute("data-key");
   const stripe = Stripe(stripePublicKey);
 
@@ -9,26 +10,25 @@ document.addEventListener("DOMContentLoaded", async function () {
   };
 
   try {
-    // 🔹 Recupera piani + piano attuale
-    // --> aggiunto credentials: 'same-origin' per essere sicuri che il cookie 'token' venga inviato
     const res = await fetch("/api/plans", { credentials: 'same-origin' });
     const data = await res.json();
 
     const plans = data.plans;
-    const currentPlan = data.current_plan || "free";
+    const currentPlan = (data.current_plan || "free").toLowerCase();
+
+    // Mostra il tasto gestione se non è free
+    if (currentPlan !== "free") {
+        manageContainer.style.display = "block";
+    }
 
     plansContainer.innerHTML = "";
 
-    // 🔹 Ordine definito
-    const planOrder = ["free", "basic", "professional", "enterprise"];
+    // Ordiniamo i piani per prezzo (più affidabile dell'ordine manuale se i nomi cambiano)
+    const sortedPlanKeys = Object.keys(plans).sort((a, b) => plans[a].price - plans[b].price);
 
-    // 🔹 Genera dinamicamente le card
-    planOrder.forEach(planKey => {
+    sortedPlanKeys.forEach(planKey => {
       const plan = plans[planKey];
-      if (!plan) return;
-
-      // confronto case-insensitive e tolerance whitespace
-      const isCurrent = planKey.toLowerCase() === (String(currentPlan).trim().toLowerCase());
+      const isCurrent = planKey.toLowerCase() === currentPlan;
 
       const card = document.createElement("div");
       card.className = `plan-card ${isCurrent ? "current" : ""}`;
@@ -37,15 +37,15 @@ document.addEventListener("DOMContentLoaded", async function () {
           ${plan.name}
           ${isCurrent ? '<span class="plan-badge">Attuale ✅</span>' : ''}
         </div>
-        <div class="plan-price"><span class="currency">€</span>${plan.price}</div>
-        <div class="plan-period">al mese</div>
+        <div class="plan-price">
+            <span class="currency">${plan.currency === 'eur' ? '€' : plan.currency}</span>${plan.price}
+        </div>
+        <div class="plan-period">${plan.interval === 'month' ? 'al mese' : 'all\'anno'}</div>
         <ul class="plan-features">
           ${plan.features.map(f => `<li>${f}</li>`).join("")}
         </ul>
         <button class="subscribe-btn ${isCurrent ? "secondary" : ""}"
-          ${isCurrent
-            ? 'onclick="selectCurrentPlan()"'
-            : `onclick="selectPlan('${planKey}')"`}>
+          onclick="${isCurrent ? "selectCurrentPlan()" : `selectPlan('${planKey}')`}">
           ${isCurrent ? "Piano Attuale" : "Scegli " + plan.name}
         </button>
       `;
@@ -56,48 +56,62 @@ document.addEventListener("DOMContentLoaded", async function () {
     plansContainer.innerHTML = "<p>Errore nel caricamento dei piani.</p>";
   }
 
-  // 🔹 Piano già attivo
   window.selectCurrentPlan = function () {
-    alert("Stai già utilizzando questo piano!");
+    alert("Stai già utilizzando questo piano! Se vuoi cambiare, usa il Portale Clienti.");
   };
 
-  // 🔹 Checkout Stripe
-  window.selectPlan = async function (planId) {
+  // --- FIX CHECKOUT ---
+  window.selectPlan = async function (planKey) {
     showLoading(true);
     try {
       const response = await fetch("/create-checkout-session", {
         method: "POST",
-        credentials: 'same-origin',              // <-- anche qui invia cookie
+        credentials: 'same-origin',
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: planId })
+        // Cambiato da plan_id a plan per matchare il tuo Python
+        body: JSON.stringify({ plan: planKey }) 
       });
 
       const data = await response.json();
+      
       if (data.error) {
         alert("Errore: " + data.error);
+        showLoading(false);
       } else {
-        window.location.href = data.checkout_url;
+        // Stripe Checkout con sessionId
+        const result = await stripe.redirectToCheckout({
+          sessionId: data.sessionId
+        });
+        if (result.error) {
+          alert(result.error.message);
+          showLoading(false);
+        }
       }
     } catch (error) {
-      console.error("Errore:", error);
-      alert("Si è verificato un errore. Riprova più tardi.");
-    } finally {
+      console.error("Erro manageSubscription:", error);
+      alert("Si è verificato un errore tecnico.");
       showLoading(false);
     }
   };
 
-  // 🔹 Portale clienti Stripe
+  // --- FIX CUSTOMER PORTAL ---
   window.manageSubscription = async function () {
     showLoading(true);
     try {
-      const res = await fetch("/create-customer-portal-session", { method: "POST", credentials: 'same-origin' });
+      const res = await fetch("/create-customer-portal-session", { 
+        method: "POST", 
+        credentials: 'same-origin' 
+      });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else alert("Errore: " + (data.error || "Impossibile accedere al portale."));
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Errore: " + (data.error || "Impossibile accedere al portale."));
+        showLoading(false);
+      }
     } catch (err) {
       console.error(err);
       alert("Errore durante l'apertura del portale clienti.");
-    } finally {
       showLoading(false);
     }
   };
