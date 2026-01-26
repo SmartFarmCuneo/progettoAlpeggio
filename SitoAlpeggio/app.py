@@ -53,6 +53,8 @@ app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv(
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # Database connection
+
+
 def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
@@ -1622,6 +1624,62 @@ def payment_cancel(current_user):
     PRIMA di pagare (pulsante 'Indietro' su Stripe).
     """
     return render_template('payment_cancel.html')
+
+
+@app.route('/subscribe-free', methods=['POST'])
+@token_required
+def subscribe_free(current_user):
+    """
+    Sottoscrivi al piano Free.
+    Se l'utente ha un abbonamento attivo, lo cancella su Stripe.
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Recupera l'abbonamento attivo dell'utente
+            cursor.execute("""
+                SELECT stripe_subscription_id, subscription_plan 
+                FROM users 
+                WHERE username = %s
+            """, (current_user,))
+            user = cursor.fetchone()
+
+        # Se ha un abbonamento attivo su Stripe, cancellalo
+        if user and user.get('stripe_subscription_id') and user.get('subscription_plan') != 'free':
+            try:
+                sub_id = user['stripe_subscription_id']
+                # Cancella alla fine del periodo pagato
+                stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
+                print(
+                    f"[Stripe] Abbonamento {sub_id} cancellato per {current_user}")
+            except stripe.error.InvalidRequestError:
+                # Se già cancellato su Stripe
+                print(f"[Stripe] Abbonamento già cancellato: {sub_id}")
+            except Exception as e:
+                print(f"[Stripe] Errore cancellazione: {e}")
+                return jsonify({'error': f'Errore cancellazione abbonamento: {e}'}), 500
+
+        # Aggiorna il DB al piano Free
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE users 
+                SET subscription_plan = 'free',
+                    subscription_status = 'active',
+                    subscription_start_date = NOW(),
+                    stripe_subscription_id = NULL
+                WHERE username = %s
+            """, (current_user,))
+            conn.commit()
+
+        return jsonify({'success': True, 'message': 'Sei passato al piano Free'})
+
+    except Exception as e:
+        print(f"Errore passaggio a piano free: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
 
 @app.route('/create-customer-portal-session', methods=['POST'])

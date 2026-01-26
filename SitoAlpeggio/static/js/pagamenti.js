@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const data = await res.json();
 
     console.log("Risposta API /api/plans:", data); // DEBUG
-    
+
     const plans = data.plans;
     const currentPlan = (data.current_plan || "free").toLowerCase();
 
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.log("Piano attuale:", currentPlan); // DEBUG
 
     if (currentPlan !== "free") {
-        manageContainer.style.display = "block";
+      manageContainer.style.display = "block";
     }
 
     plansContainer.innerHTML = "";
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       `;
       plansContainer.appendChild(card);
     });
-    
+
     showLoading(false);
 
   } catch (err) {
@@ -72,16 +72,42 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   window.selectPlan = async function (planKey) {
     showLoading(true);
+
+    // Se sceglie Free, cancella prima l'abbonamento attivo
+    if (planKey === 'free') {
+      try {
+        const response = await fetch("/subscribe-free", {
+          method: "POST",
+          credentials: 'same-origin',
+          headers: { "Content-Type": "application/json" }
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert("Sei passato al piano Free. L'abbonamento è stato cancellato.");
+          window.location.href = "/pagamenti?success=true";
+        } else {
+          alert("Errore: " + data.error);
+          showLoading(false);
+        }
+      } catch (error) {
+        console.error("Errore cambio piano free:", error);
+        alert("Si è verificato un errore tecnico.");
+        showLoading(false);
+      }
+      return;
+    }
+
+    // Per i piani a pagamento, usa Stripe
     try {
       const response = await fetch("/create-checkout-session", {
         method: "POST",
         credentials: 'same-origin',
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey }) 
+        body: JSON.stringify({ plan: planKey })
       });
 
       const data = await response.json();
-      
+
       if (data.error) {
         alert("Errore: " + data.error);
         showLoading(false);
@@ -104,9 +130,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   window.manageSubscription = async function () {
     showLoading(true);
     try {
-      const res = await fetch("/create-customer-portal-session", { 
-        method: "POST", 
-        credentials: 'same-origin' 
+      const res = await fetch("/create-customer-portal-session", {
+        method: "POST",
+        credentials: 'same-origin'
       });
       const data = await res.json();
       if (data.url) {
