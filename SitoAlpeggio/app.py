@@ -1120,8 +1120,8 @@ def gestione_sensori(current_user):
                 # A) AGGIUNGI SENSORE
                 if action == 'aggiungi':
                     node_id_input = request.form.get('id_sensore', '').strip()
-                    posizione = request.form.get(
-                        'posizione_sensore', '').strip()
+                    nome_sens = request.form.get(
+                        'nome_sensore', '').strip()
 
                     if not node_id_input:
                         sensori = get_sensor2(user_id)
@@ -1143,9 +1143,9 @@ def gestione_sensori(current_user):
                         # Il sensore non esiste, lo creiamo nella tabella 'sensor'
                         # Default: stato 'O' (Operativo) e posizione vuota
                         cursor.execute("""
-                            INSERT INTO sensor (Node_id, stato_sens, posizione)
+                            INSERT INTO sensor (Node_id, stato_sens, nome_sens)
                             VALUES (%s, 'C', %s)
-                        """, (node_id_input, posizione))
+                        """, (node_id_input, nome_sens))
                         conn.commit()
                         id_sens_db = cursor.lastrowid
 
@@ -1261,7 +1261,7 @@ def get_sensor2(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.posizione
+                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.nome_sens
                         FROM sensor s
                         JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
                         WHERE aus.id_utente = %s
@@ -1972,12 +1972,12 @@ def get_sensor(current_user):
 
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT s.posizione, s.Node_Id, s.stato_sens FROM sensor s, assoc_users_sens aus WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens",
+            "SELECT s.nome_sens, s.Node_Id, s.stato_sens FROM sensor s, assoc_users_sens aus WHERE aus.id_utente = %s AND s.id_sens = aus.id_sens",
             (id_user,))
         risultato = cursor.fetchall()
         info = ""
         for i in range(len(risultato)):
-            info += str(risultato[i]["posizione"]) + "/" + str(risultato[i]
+            info += str(risultato[i]["nome_sens"]) + "/" + str(risultato[i]
                                                                ["Node_Id"]) + "/" + str(risultato[i]["stato_sens"]) + "|"
         print(f"Info: {info}")
         if info == '':
