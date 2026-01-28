@@ -1,4 +1,5 @@
 services:
+
   flask-app:
     build: ./SitoAlpeggio
     container_name: flask-app
@@ -8,19 +9,20 @@ services:
       - .env
     depends_on:
       - mysql
+      - postgres
+
 
   stripe-cli:
     image: stripe/stripe-cli:latest
     container_name: stripe-cli
     environment:
-      # Usa la chiave segreta dal .env
       - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_DEVICE_NAME=docker_alpeggio
     depends_on:
       - flask-app
-    # Forward webhook al container flask-app sulla porta 5000
     command: listen --forward-to http://flask-app:5000/webhook --skip-verify --log-level debug
     restart: unless-stopped
+
 
   php-fpm:
     image: php:8.2-fpm
@@ -29,20 +31,22 @@ services:
     ports:
       - "9000:9000"
 
+
   nginx:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "8080:80"  
+      - "8080:80"
+
 
   mysql:
     image: mysql:latest
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
-
     volumes:
       - ./mysql_data:/var/lib/mysql
+
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
@@ -50,7 +54,32 @@ services:
       - mysql
     environment:
       PMA_HOST: mysql
-      PMA_USER: root
-      PMA_PASSWORD: ciao
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
     ports:
       - "8081:80"
+
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_DB: ${PG_DB_NAME}
+      POSTGRES_USER: ${PG_DB_USER}
+      POSTGRES_PASSWORD: ${PG_DB_PASSWORD}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "8082:80"
