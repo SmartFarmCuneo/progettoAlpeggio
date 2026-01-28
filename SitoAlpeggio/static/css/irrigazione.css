@@ -298,12 +298,13 @@
 .sensor-name {
     font-size: 20px;
     font-weight: 600;
-    color: #333;
+    color: #666;
     margin-bottom: 8px;
 }
 
-.sensor-location {
+.sensor-id {
     font-size: 14px;
+    font-weight: 500;
     color: #666;
     margin-bottom: 12px;
 }

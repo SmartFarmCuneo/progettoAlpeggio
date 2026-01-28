@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const parti = sensoreStr.split('/');
 
             if (parti.length >= 3) {
-                const posizione = parti[0].trim();
+                const nome_sens = parti[0].trim();
                 const nodeId = parti[1].trim();
                 const statoSens = parti[2].trim();
 
@@ -116,8 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 sensori.push({
                     id: nodeId,
-                    name: `Sensore ${nodeId}`,
-                    location: posizione,
+                    name: nome_sens,
                     status: statusInfo.status,
                     statusLabel: statusInfo.label,
                     icon: '💧'
@@ -150,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function () {
             card.innerHTML = `
                 <div class="sensor-checkbox"></div>
                 <div class="sensor-name">${sensor.name}</div>
-                <div class="sensor-location">${sensor.location}</div>
+                <div class="sensor-id">${sensor.id}</div>
                 <span class="sensor-status ${sensor.status}">
                     ${sensor.statusLabel}
                 </span>
