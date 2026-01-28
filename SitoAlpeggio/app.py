@@ -27,12 +27,11 @@ load_dotenv()
 ############### GLOBALI ####################
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_DIR = os.path.join(BASE_DIR, "static", "json")
-SELECTED__SENSORS = []
-ID__DATA = ''
 
 _stripe_plans_cache = None
 _cache_timestamp = None
 CACHE_DURATION = timedelta(hours=1)
+
 ############################################
 
 ############################ Flask app setup ######################################
@@ -2139,9 +2138,10 @@ def init_serial_receiver():
     data = request.get_json()  # <-- DATI DAL CLIENT
     all_sensor_wet = False
 
+    """print(session['id_data'])
     if not data:
-        return jsonify({"error": "Nessun dato ricevuto"}), 400
-
+        return jsonify({"error": "Nessun dato ricevuto"}), 400"""
+    
     if data.get('type') == 'Connection':
         print("=" * 50)
         print("STATO CONNESSIONE SERIALE (DAL CLIENT):")
@@ -2159,21 +2159,27 @@ def init_serial_receiver():
         print(f"Tipo: {data.get('type')}")
         print(f"Dati: {data}")
         print("=" * 50)
+        #set_error_state_data(data)
     else:
         all_sensor_wet = get_finish_session()[0]
         if all_sensor_wet:  # DA PROVARE
             print("Fine della sessione")
-            # session['id_data'] = ''
-        else:
-            print("=" * 50)
-            print("DATI INVIATI DA SENSORE:")
-            print(f"Tipo: {data.get('type')}")
-            print(f"Dati: {data}")
-            print("=" * 50)
-            insert_sensor_data(data)
-            avviaIrrigazione()
+            #session['id_data'] = ''
+        print("=" * 50)
+        print("DATI INVIATI DA SENSORE:")
+        print(f"Tipo: {data.get('type')}")
+        print(f"Dati: {data}")
+        print("=" * 50)
+        insert_sensor_data(data)
+        avviaIrrigazione()
 
     return jsonify({"status": "ok"})
+
+# API PER INVIO TOKEN AL CLIENT
+@app.route("/api/get_token/<username>", methods=["GET"])
+def get_token(username):
+    token = generate_token(username)
+    return jsonify({"token": token})
 
 # PREMIUM -- invio id chat con telegram per notifiche
 
@@ -2203,6 +2209,10 @@ def inizializzaIrrigazione():
             # print("Sensori selezionati:", selected_sensors)
             session['selected_sensors'] = selected_sensors
             SELECTED__SENSORS = selected_sensors
+
+            ID_CAMPO_SELEZIONATO = campo_id
+            print(f"Sensori: {session['selected_sensors']}")
+
 
             # aggiorna lo stato dei sensori da disponibili a operativi
             conn = get_db_connection()
@@ -2267,16 +2277,6 @@ def inizializzaIrrigazione():
                     conn.commit()
                 cursor.close()
 
-            # DA TESTARE
-            # lancia l'exe per prendere i dati dal sensore
-            # subprocess.Popen(
-                # [
-                # "cmd.exe",
-                # "/k",  # /k = lascia la finestra aperta, /c = chiude dopo l'esecuzione
-                # r"C:\Users\giova\OneDrive\Desktop\Marco\Progetto_Alpeggio\progettoAlpeggio\SitoAlpeggio\dist\data_analysis_win3\data_analysis_win3.exe"
-                # ],
-                # creationflags=subprocess.CREATE_NEW_CONSOLE
-            # )
             # API per sensori selezionati
             return jsonify({"status": "ok", "selected_sensors": selected_sensors})
         else:
@@ -2327,15 +2327,15 @@ def insert_sensor_data(data):
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
     print(f"Sensore: {data['Node_id']}")
-    print(SELECTED__SENSORS)
-    # print(get_sensor_selected('O'))
-    if data['Node_id'] in SELECTED__SENSORS:
+    #print(get_sensor_selected('O'))
+    if data['Node_id'] in session['selected_sensors']: # NON FUNZIONA
+        print("INSERIMENTO")
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s,"
             "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
-            (data['date_conc_sens'], data['INDEX'], data['Bat'], data['Humidity'],
+            (datetime.now(), data['INDEX'], data['Bat'], data['Humidity'],
              data['Temperature'], data['ADC'], ID__DATA)
         )
         conn.commit()
@@ -2344,6 +2344,8 @@ def insert_sensor_data(data):
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
+    print(session['id_data'])
+    
     if request.method == 'POST':
         azione = request.form.get("azione")
         sensor_id = request.form.get("sensor_id")
@@ -2356,124 +2358,8 @@ def avviaIrrigazione():
         elif azione == 'riattiva':
             set_state_sensor("O", sensor_id)
             return redirect("/avvia_irr")
-
-    # controllo per la prima volta che si entra nel sito
-    # ricerco il receiver dal serial
-    """if 'serial_active' not in session:
-        session['serial_active'] = False
-
-    print(f"RECEIVER: {session['serial_active']}") 
-    if session['serial_active']:
-        print("SONO PRONTO")
-    else:
-        print("NO PRONTO")"""
-
+    
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
-
-
-# DA TESTARE
-"""@app.route('/avvia_irr', methods=['GET', 'POST'])
-@token_required
-def avviaIrrigazione(current_user):
-    if request.method == 'POST':
-        azione = request.form.get("azione")
-        sensor_id = request.form.get("sensor_id")
-
-        if azione == "sospendi":
-            set_state_sensor("S", sensor_id)
-            # session.modified = True
-            return redirect("/avvia_irr")
-
-        elif azione == 'riattiva':
-            set_state_sensor("O", sensor_id)
-            return redirect("/avvia_irr")
-
-    MAX_WAIT_TIME = 5  # 300
-    start_time = time.time()
-
-    # controllo per la prima volta che si entra nel sito
-    # ricerco il receiver dal serial
-    if 'serial_active' not in session:
-        session['serial_active'] = False
-
-    # ricerco finché non trovo il dispositivo nel seriale
-    while session['serial_active'] is False: 
-        # se non trova il dispositivo entro tot tempo la ricerca va in errore
-        if time.time() - start_time > MAX_WAIT_TIME:
-            set_error_state_data('Dispositivo non rilevato entro 5 minuti')
-            return redirect('/')
-
-        try:
-            response = requests.get('http://localhost:8000/api/connection_status',timeout=5)
-
-            if response.status_code == 200:
-                connection_status = response.json()
-                print("=" * 50)
-                print("STATO CONNESSIONE SERIALE:")
-                print(f"Connesso: {connection_status.get('connected')}")
-                print(f"Porta: {connection_status.get('port')}")
-                print(f"Errore: {connection_status.get('error')}")
-                print(f"Ultimo controllo: {connection_status.get('last_check')}")
-                print("=" * 50)
-
-                if connection_status.get('connected') is not False:
-                    session['serial_active'] = True
-                    break
-                else:
-                    return render_template('home.html', campo_corrente=session['id_campo_selezionato'], popup_msg="Dispositivo non trovato nella porta seriale")
-
-        except requests.exceptions.RequestException as e:
-            set_error_state_data('Mancata esecuzione del programma')
-            return redirect('/')
-    time.sleep(2)
-
-    print("Pronto")
-    all_sensor_wet = False
-    # durata massima dalla durata se non ricevo più segnali dai sensori
-    max_time_session = 7200
-    start_session_time = time.time()
-
-    # inizio il ricevimento dei dati solo se è stato lanciato e individuato il dispositivo
-    if session['serial_active'] == True:
-        while all_sensor_wet == False:
-            print("CICLO" + " " + str(session['serial_active']))
-            # cicla finchè tutti i sensori non hanno finito
-            all_sensor_wet = get_finish_session()[0]
-            if time.time() - start_session_time > max_time_session:
-                print("Interruzione sessione dopo due ore dall'ultimo ricevimento")
-                set_error_state_data(
-                    'Mancata conclusione di tutti i sensori nella durata della sessione')
-                session['serial_active'] = False # DA CONTROLLARE
-                break
-            try:
-                response = requests.get(
-                    'http://localhost:8000/api/sensor_data', timeout=5)
-                if response.status_code == 200:
-                    sensor_status = response.json()
-                    print("=" * 50)
-                    print("DATI SENSORI:")
-                    # ricevo soltanto i dati con il sensore che rileva bagnato
-                    if sensor_status.get('status') == "ok":
-                        data = sensor_status.get('data', {})
-                        print(f"Valorì letti: {data}")
-                        print(f"Timestamp: {sensor_status.get('timestamp')}")
-                        print("=" * 50)
-                        data["date_conc_sens"] = sensor_status.get('timestamp')
-                        insert_sensor_data(data)
-                        max_time_session = 7200
-                    else:
-                        print("Nessun dato disponibile dai sensori")
-                        print(f"Timestamp: {sensor_status.get('timestamp')}")
-                        print("=" * 50)
-
-            except requests.exceptions.RequestException as e:
-                print(f"Errore nella chiamata API: {e}")
-        session['serial_active'] = False
-        session['id_data'] = ''
-        time.sleep(2)
-
-    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])"""
-
 ####################################################################################
 
 

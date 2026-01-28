@@ -20,7 +20,6 @@ FIRST_SEND_CONNECTION = True
 MAX_TIME_SESSION = 60 # 7200 due ore massime dall'ultima ricezione di un sensore
 
 BOT_TOKEN = "8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA"
-TOKEN = None
 
 # URL API PER BOT
 # https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getMe
@@ -107,22 +106,6 @@ def initSerial():
         return None
 
 def send_to_server(data):
-    headers = {
-        "X-API-KEY": API_KEY,
-        "X-Token": TOKEN
-    }
-    try:
-        requests.post(
-            SERVER_URL,
-            json=data,
-            headers=headers,
-            timeout=5
-        )
-        print("[SERVER] Dati inviati")
-    except Exception as e:
-        print("[SERVER] Errore invio:", e)
-
-"""def send_to_server(data):
     try:
         requests.post(
             SERVER_URL,
@@ -132,7 +115,7 @@ def send_to_server(data):
         )
         print("[SERVER] Dati inviati")
     except Exception as e:
-        print("[SERVER] Errore invio:", e)"""
+        print("[SERVER] Errore invio:", e)
 
 def send_desktop_notification(title, message):
     print("Invio notifica Telegram...")
@@ -201,6 +184,7 @@ def read_data(ser):
         data = json.loads(line)
 
         data['type'] = 'sending_data'
+        #data['date_conc_sens'] = datetime.now()
 
         latest_sensor_data = data.copy()
 
@@ -234,12 +218,8 @@ def check_finish_session():
         time.sleep(CHECK_FINISH_INTERVAL)
 
 def main():
-    global TOKEN
     print("[CLIENT] Avvio client sensore")
     #get_chat_id()
-    r = requests.get("http://192.168.1.6:5000/api/get_token/MarcoGiorgis")
-    TOKEN = r.json()["token"]
-    print("TOKEN ricevuto:", TOKEN)
 
     t1 = threading.Thread(target=serial_reader_loop, daemon=True)
     t2 = threading.Thread(target=check_finish_session, daemon=True)
