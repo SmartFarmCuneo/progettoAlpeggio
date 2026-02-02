@@ -55,33 +55,27 @@ app.config['STRIPE_WEBHOOK_SECRET'] = os.getenv(
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # Database connection
-
-
-def get_db_connection():
+"""def get_db_connection():
     return pymysql.connect(
         host=os.getenv("DB_HOST", 'localhost'),
         user=os.getenv("DB_USER", 'root'),
         password=os.getenv("DB_PASSWORD", ''),
         database=os.getenv("DB_NAME", 'irrigazione'),
         cursorclass=pymysql.cursors.DictCursor
-    )
+    )"""
 
-
-"""def get_db_connection():
+def get_db_connection():
     return pymysql.connect(
         host='localhost',
         user='root',
         password='',
         database='irrigazione',
         cursorclass=pymysql.cursors.DictCursor
-    )"""
+    )
 ###############################################################################
-
 # -----------------------------------------------------
 # Context processor per passare il consenso a tutti i template
 # -----------------------------------------------------
-
-
 @app.context_processor
 def inject_cookie_consent():
     consent_cookie = request.cookies.get("cookie_consent")
@@ -97,8 +91,6 @@ def inject_cookie_consent():
 # -----------------------------------------------------
 # Endpoint per settare il consenso (chiamato dal banner)
 # -----------------------------------------------------
-
-
 @app.route("/set-consent", methods=["POST"])
 def set_consent():
     # semplice validazione della richiesta
@@ -134,8 +126,6 @@ def set_consent():
 # -----------------------------------------------------
 # Endpoint per leggere lo stato del consenso (opzionale, utile per JS)
 # -----------------------------------------------------
-
-
 @app.route("/get-consent", methods=["GET"])
 def get_consent():
     consent_cookie = request.cookies.get("cookie_consent")
@@ -151,8 +141,6 @@ def get_consent():
 # -----------------------------------------------------
 # Endpoint per revocare il consenso (utile nel footer “Gestisci cookie”)
 # -----------------------------------------------------
-
-
 @app.route("/revoke-consent", methods=["POST"])
 def revoke_consent():
     resp = make_response(jsonify({"status": "revoked"}))
@@ -167,14 +155,12 @@ def revoke_consent():
     )
     return resp
 
-
 def get_user_data(username):
     conn = get_db_connection()
     with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         return cursor.fetchone()
     conn.close()
-
 
 # Solo il piano Free che non è su Stripe
 SUBSCRIPTION_PLANS_CONFIG = {
@@ -187,9 +173,7 @@ SUBSCRIPTION_PLANS_CONFIG = {
         ]
     }
 }
-
 ############################# STRIPE HELPER FUNCTIONS #############################
-
 
 def get_user_plan_limits(username):
     """Restituisce i limiti del piano dell'utente"""
@@ -207,7 +191,6 @@ def get_user_plan_limits(username):
         return None
     finally:
         conn.close()
-
 
 def can_user_add_field(username):
     """Controlla se l'utente può aggiungere un nuovo campo"""
@@ -237,7 +220,6 @@ def can_user_add_field(username):
         return False
     finally:
         conn.close()
-
 
 def get_user_subscription_info(username):
     """Restituisce informazioni complete sull'abbonamento dell'utente (approccio più robusto e debug)"""
@@ -317,7 +299,6 @@ def get_user_subscription_info(username):
         except Exception:
             pass
 
-
 def plan_feature_required(feature):
     """Decorator per controllare se l'utente ha accesso a una funzionalità"""
     def decorator(f):
@@ -341,7 +322,6 @@ def plan_feature_required(feature):
         return decorated_function
     return decorator
 
-
 def save_payment_history(user_id, payment_intent_id, amount, currency, plan_type, status):
     """Salva la cronologia dei pagamenti nel database"""
     conn = get_db_connection()
@@ -357,7 +337,6 @@ def save_payment_history(user_id, payment_intent_id, amount, currency, plan_type
         print(f"Errore nel salvataggio cronologia pagamenti: {e}")
     finally:
         conn.close()
-
 
 def get_all_plans_from_stripe(force_refresh=False):
     """
@@ -460,14 +439,12 @@ def get_all_plans_from_stripe(force_refresh=False):
             'free': SUBSCRIPTION_PLANS_CONFIG['free']
         }
 
-
 def get_plan_by_key(plan_key, force_refresh=False):
     """
     Recupera un singolo piano per chiave
     """
     plans = get_all_plans_from_stripe(force_refresh)
     return plans.get(plan_key)
-
 
 def clear_plans_cache():
     """
@@ -478,8 +455,8 @@ def clear_plans_cache():
     _cache_timestamp = None
     print("[Stripe] Cache piani svuotata")
 
-
 def get_stripe_price_id_by_plan_key(plan_key):
+
     """
     Recupera il Price ID di Stripe dato un plan_key
     """
@@ -487,15 +464,12 @@ def get_stripe_price_id_by_plan_key(plan_key):
     if plan:
         return plan.get('stripe_price_id')
     return None
-
-
 ############################## FUNZIONE INVIO MAIL #############################
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 
 mail = Mail(app)
-
 
 def send_reset_email(user_email, code):
     msg = Message("Agrinnov - Reset Password", recipients=[user_email])
@@ -591,10 +565,7 @@ def send_reset_email(user_email, code):
     except Exception as e:
         print("❌ Errore invio mail:", e)
         return False
-
 ########################### Context Processor #########################
-
-
 @app.context_processor
 def inject_user():
     token = request.cookies.get("token")
@@ -611,14 +582,13 @@ def inject_user():
 ########################################################################
 
 ########################### Login-Create account #########################
-
-
 def hash_password(psw):
     return hashlib.sha256(psw.encode()).hexdigest()
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+
+
     error = ""
     if request.method == "POST":
         username = request.form["username"]
@@ -648,8 +618,6 @@ def login():
     return render_template("login.html", error=error)
 
 # IMPLEMENTARE FUNZIONE PREMIUM TELEGRAM
-
-
 @app.route('/registrati', methods=['GET', 'POST'])
 def registrati():
     error = ""
@@ -696,8 +664,6 @@ def registrati():
 ##################################################################################
 
 ################################ Cookie-Token ####################################
-
-
 def generate_token(username):
     payload = {
         "user": username,
@@ -705,14 +671,13 @@ def generate_token(username):
     }
     return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
-
 def generate_and_set_token(response, username, durata=1):
     token = generate_token(username)
     response.set_cookie("token", token, max_age=3600, httponly=True)
     return response
 
-
 def token_required(f):
+    """Decorator per route web (legge token dai cookie)"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.cookies.get("token")
@@ -728,11 +693,36 @@ def token_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated
+
+def api_token_required(f):
+    """Decorator per API (legge token dall'header X-Token)"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        api_key = request.headers.get("X-API-KEY")
+        token = request.headers.get("X-Token")
+        
+        # Verifica API key
+        if api_key != "CHIAVE_SEGRETA_CLIENT":
+            return jsonify({"error": "API Key non valida"}), 401
+        
+        # Verifica token JWT
+        if not token:
+            return jsonify({"error": "Token mancante"}), 401
+        
+        try:
+            decoded = jwt.decode(
+                token, app.config["SECRET_KEY"], algorithms=["HS256"])
+            kwargs["current_user"] = decoded["user"]
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token scaduto"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token non valido"}), 401
+        
+        return f(*args, **kwargs)
+    return decorated
 ################################################################################
 
 ########################### RESET PASSWORD #####################################
-
-
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     message = ""
@@ -759,7 +749,6 @@ def forgot_password():
 
     return render_template("forgot_password.html", message=message)
 
-
 @app.route("/verify_code", methods=["GET", "POST"])
 def verify_code():
     error = ""
@@ -771,7 +760,6 @@ def verify_code():
             error = "Codice errato."
 
     return render_template("verify_code.html", error=error)
-
 
 @app.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
@@ -805,7 +793,6 @@ def reset_password():
     return render_template("reset_password.html", error=error)
 
 ################################################################################
-
 
 ################# FUNZIONI BARRA SINISTRA ####################
 # VERSIONE BASE
@@ -861,12 +848,10 @@ def storici(current_user):
         campo=campo_selezionato
     )
 
-
 @app.route('/dettagli_storici', methods=['GET', 'POST'])
 @token_required
 def dettagli_storici(current_user):
     pass
-
 
 @app.route('/aggiungiCampo', methods=['GET', 'POST'])
 @token_required
@@ -942,7 +927,6 @@ def aggiungiCampo(current_user):
         error=error
     )
 
-
 @app.route('/salva-coordinate', methods=['POST'])
 def salvaCoordinate():
     coordinate = request.form.get('coordinate')  # stringa dal frontend
@@ -974,17 +958,14 @@ def salvaCoordinate():
 
     return redirect(url_for('aggiungiCampo'))
 
-
 @app.route('/api/get_session_coordinate')
 def get_session_coordinate():
     return jsonify(session.get('coordinate', {}))
-
 
 @app.route('/mappa', methods=['GET', 'POST'])
 @token_required
 def mappa(current_user):
     return render_template('mappa.html')
-
 
 @app.route("/api/campi-utente")
 @token_required
@@ -1007,7 +988,6 @@ def api_campi_utente(current_user):
         return jsonify({"error": "Errore interno del server"}), 500
     finally:
         conn.close()
-
 
 @app.route("/api/campo/<int:campo_id>")
 @token_required
@@ -1035,7 +1015,6 @@ def api_dettaglio_campo(current_user, campo_id):
         return jsonify({"error": "Errore interno del server"}), 500
     finally:
         conn.close()
-
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
@@ -1093,7 +1072,6 @@ def gestioneCampo(current_user):
             conn.close()
 
     return redirect(url_for('gestioneCampo'))
-
 
 @app.route('/gestione_sensori', methods=['POST', 'GET'])
 @token_required
@@ -1253,7 +1231,6 @@ def gestione_sensori(current_user):
         conn.close()
     return render_template('gestione_sensori.html', user=user, sensori=sensori)
 
-
 def get_sensor2(user_id):
     # DA RICONTROLLARE SIMILE AL get_sensor()
     # ritorna i sensori dell'utente
@@ -1269,7 +1246,6 @@ def get_sensor2(user_id):
     cursor.close()
     conn.close()
     return sensori
-
 
 def get_campi(current_user):
     """Restituisce il numero di campi dell'utente"""
@@ -1289,7 +1265,6 @@ def get_campi(current_user):
         return 0
     finally:
         conn.close()
-
 
 def get_info_campi(current_user):
     """Restituisce informazioni sui campi dell'utente"""
@@ -1318,7 +1293,6 @@ def get_info_campi(current_user):
     finally:
         conn.close()
 
-
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
 @token_required
 def visualizzaCampi(current_user):
@@ -1327,8 +1301,6 @@ def visualizzaCampi(current_user):
 ################################################################
 
 ############################# STRIPE ROUTES #############################
-
-
 @app.route('/pagamenti', methods=['GET', 'POST'])
 @token_required
 def pagamenti(current_user):
@@ -1342,7 +1314,6 @@ def pagamenti(current_user):
                            stripe_public_key=app.config['STRIPE_PUBLIC_KEY'],
                            subscription_info=subscription_info,
                            plans=plans)
-
 
 @app.route("/api/plans", methods=["GET"])
 @token_required
@@ -1375,7 +1346,6 @@ def api_get_plans(current_user):
         import traceback
         traceback.print_exc()
         return jsonify({"error": "Errore nel recupero dei piani"}), 500
-
 
 @app.route('/create-checkout-session', methods=['POST'])
 @token_required
@@ -1451,7 +1421,6 @@ def create_checkout_session(current_user):
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/admin/refresh-plans-cache', methods=['POST'])
 @token_required
 def admin_refresh_plans_cache(current_user):
@@ -1474,7 +1443,6 @@ def admin_refresh_plans_cache(current_user):
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/payment-success')
 @token_required
@@ -1526,7 +1494,6 @@ def payment_success(current_user):
         message=f"Benvenuto nel piano {plan_name}! Il tuo abbonamento è ora attivo."
     )
 
-
 @app.route('/payment-cancel')
 @token_required
 def payment_cancel(current_user):
@@ -1535,7 +1502,6 @@ def payment_cancel(current_user):
     PRIMA di pagare (pulsante 'Indietro' su Stripe).
     """
     return render_template('payment_cancel.html')
-
 
 @app.route('/subscribe-free', methods=['POST'])
 @token_required
@@ -1585,7 +1551,6 @@ def subscribe_free(current_user):
     finally:
         conn.close()
 
-
 @app.route('/create-customer-portal-session', methods=['POST'])
 @token_required
 def create_customer_portal_session(current_user):
@@ -1615,7 +1580,6 @@ def create_customer_portal_session(current_user):
     except Exception as e:
         print(f"Errore creazione portale clienti: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/webhook', methods=['POST'])
 def stripe_webhook():
@@ -1769,7 +1733,6 @@ def stripe_webhook():
 
     return 'OK', 200
 
-
 @app.route('/api/subscription-status')
 @token_required
 def api_subscription_status(current_user):
@@ -1793,10 +1756,7 @@ def api_subscription_status(current_user):
 
 ############################# FUNZIONALITÀ PREMIUM #############################
 
-
 ################### PROFILO #################################
-
-
 @app.route('/profilo', methods=['POST', 'GET'])
 @token_required
 def profilo(current_user):
@@ -1839,31 +1799,24 @@ def profilo(current_user):
     # Render del template con i dati aggiornati
     return render_template('profilo.html', user=user)
 
-
 @app.route('/privacy', methods=['GET', 'POST'])
 def privacy():
     return render_template('privacy.html')
-
 
 @app.route('/terms', methods=['GET', 'POST'])
 def terms():
     return render_template('terms.html')
 
-
 @app.route('/contatti', methods=['GET', 'POST'])
 def contatti():
     return render_template('contatti.html')
 
-
 @app.route("/supporto")
 def supporto():
     return render_template("supporto.html")
-
 #############################################################
 
 #################### GESTIONE DINAMICA DEI CAMPI e SENSORI - API ###############################
-
-
 def haversine(lat1, lon1, lat2, lon2):
     # distanza in km tra due coordinate
     R = 6371
@@ -1874,7 +1827,6 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(dphi/2)**2 + math.cos(phi1) * \
         math.cos(phi2) * math.sin(dlambda/2)**2
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
 
 @app.route("/api/get_location_by_coords", methods=["GET"])
 def get_location_by_coords():
@@ -1902,7 +1854,6 @@ def get_location_by_coords():
     }
     return jsonify(result)
 
-
 def get_campi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1911,7 +1862,6 @@ def get_campi(current_user):
     num_campi = cursor.fetchone()['COUNT(*)']
     conn.close()
     return num_campi
-
 
 def get_info_campi(current_user):
     conn = get_db_connection()
@@ -1925,13 +1875,11 @@ def get_info_campi(current_user):
                                                                 ["comune"]) + "|"
         return info
 
-
 @app.route("/api/numCampi")
 @token_required
 def api_num_campi(current_user):
     campi = get_campi(current_user)
     return jsonify(campi)
-
 
 @app.route("/api/infoCampi")
 @token_required
@@ -1939,14 +1887,12 @@ def api_info_campi(current_user):
     info = get_info_campi(current_user)
     return jsonify(info)
 
-
 @app.route("/api/get_provincia")
 def get_provincia():
     file_path = os.path.join(JSON_DIR, "gi_province.json")
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
     return jsonify({"province": data.get("province", [])})
-
 
 @app.route("/api/get_comune", methods=["GET"])
 def get_comune():
@@ -1958,7 +1904,6 @@ def get_comune():
     if provincia:
         comuni = [c for c in comuni if c['sigla_provincia'] == provincia]
     return jsonify({"comuni": comuni})
-
 
 def get_sensor(current_user):
     conn = get_db_connection()
@@ -1984,7 +1929,6 @@ def get_sensor(current_user):
         else:
             return info
 
-
 def get_sensor_selected(state):
     # ritorna i sensori selezionati in base allo stato
     conn = get_db_connection()
@@ -2002,8 +1946,6 @@ def get_sensor_selected(state):
     return sens
 
 # DA CONTROLLARE
-
-
 def get_state_data():
     # ritorna se è possbile continare o iniziare la sessione o meno
     # print("Sessione: " + str(session['id_data']))
@@ -2029,8 +1971,6 @@ def get_state_data():
         return 'Go'
 
 # DA TESTARE
-
-
 def get_finish_session():
     # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL
     # se ritorna come conteggio 0, si salva la data di conclusione dell'ultimo sensore come data di fine
@@ -2080,8 +2020,6 @@ def get_finish_session():
             return False, "Continue"
 
 # API PER SENSORI NELL'INIZIALIZZAZIONE
-
-
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
@@ -2089,32 +2027,24 @@ def api_get_sensor(current_user):
     return jsonify(info)
 
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
-
-
 @app.route("/api/get_sensor_selected")
 def api_get_sensor_selected():
     info = get_sensor_selected('O')
     return jsonify(info)
 
 # API PER SENSORI CONCLUSI NELL'IRRIGAZIONE
-
-
 @app.route("/api/get_sensor/concluded")
 def api_get_sensor_concluded():
     info = get_sensor_selected('C')
     return jsonify(info)
 
 # API PER SENSORI SOSPESI NELL'IRRIGAZIONE
-
-
 @app.route("/api/get_sensor/suspended")
 def api_get_sensor_suspended():
     info = get_sensor_selected('S')
     return jsonify(info)
 
 # API PER SESSIONE DI IRRIGAZIONE
-
-
 @app.route("/api/get_session_data")
 def api_get_session_data():
     info = get_state_data()
@@ -2122,8 +2052,6 @@ def api_get_session_data():
     return jsonify(info)
 
 # API PER CHIUDERE LA SESSIONE DI IRRIGAZIONE -- DA CONTROLLARE
-
-
 @app.route("/api/get_finish_session")
 def api_get_finish_session():
     info = get_finish_session()[1]
@@ -2131,70 +2059,56 @@ def api_get_finish_session():
     return jsonify(info)
 
 # API PER RICEVERE INFO SULLA CONNESSIONE DEL DISPOSITIVO -- DA TESTARE
-
-
 @app.route('/api/init_receiver', methods=['POST'])
-def init_serial_receiver():
-    data = request.get_json()  # <-- DATI DAL CLIENT
+@api_token_required
+def init_serial_receiver(current_user):
+    data = request.get_json()
     all_sensor_wet = False
-
-    """print(session['id_data'])
-    if not data:
-        return jsonify({"error": "Nessun dato ricevuto"}), 400"""
     
     if data.get('type') == 'Connection':
         print("=" * 50)
         print("STATO CONNESSIONE SERIALE (DAL CLIENT):")
-        print(f"Tipo: {data.get('type')}")
         print(f"Connesso: {data.get('connected')}")
         print(f"Porta: {data.get('port')}")
         print(f"Errore: {data.get('error')}")
-        print(f"Ultimo controllo: {data.get('last_check')}")
         print("=" * 50)
-        if data.get('connected'):
-            session['serial_active'] = True  # può non servire
+            
     elif data.get('type') == 'Failed':
         print("=" * 50)
         print("ERRORE:")
-        print(f"Tipo: {data.get('type')}")
         print(f"Dati: {data}")
         print("=" * 50)
-        #set_error_state_data(data)
+        # set_error_state_data(data, current_user)
+        
     else:
-        all_sensor_wet = get_finish_session()[0]
-        if all_sensor_wet:  # DA PROVARE
+        all_sensor_wet = get_finish_session(current_user)[0]
+        if all_sensor_wet:
             print("Fine della sessione")
-            #session['id_data'] = ''
+            
         print("=" * 50)
         print("DATI INVIATI DA SENSORE:")
-        print(f"Tipo: {data.get('type')}")
         print(f"Dati: {data}")
         print("=" * 50)
-        insert_sensor_data(data)
-        avviaIrrigazione()
+        insert_sensor_data(data, current_user)
+        avviaIrrigazione(current_user)
 
     return jsonify({"status": "ok"})
 
 # API PER INVIO TOKEN AL CLIENT
-@app.route("/api/get_token/<username>", methods=["GET"])
-def get_token(username):
-    token = generate_token(username)
+@app.route('/api/get_token/<username>')
+def get_token_api(username):
+    token = generate_token(username)   
     return jsonify({"token": token})
 
 # PREMIUM -- invio id chat con telegram per notifiche
-
-
 @app.route("/api/get_telegram_chat_id")
 def api_get_telegram_chat_id():
     pass
 ########################################################################################
 
 ############################ AZIONI IRRIGAZIONE #########################################
-
-
 @app.route('/ini_irr', methods=['GET', 'POST'])
 def inizializzaIrrigazione():
-    global SELECTED__SENSORS, ID__DATA
     # controllo per la prima volta che si entra nel sito
     if 'id_data' not in session:
         session['id_data'] = 0
@@ -2211,8 +2125,7 @@ def inizializzaIrrigazione():
             SELECTED__SENSORS = selected_sensors
 
             ID_CAMPO_SELEZIONATO = campo_id
-            print(f"Sensori: {session['selected_sensors']}")
-
+            #print(f"Sensori: {session['selected_sensors']}")
 
             # aggiorna lo stato dei sensori da disponibili a operativi
             conn = get_db_connection()
@@ -2239,8 +2152,7 @@ def inizializzaIrrigazione():
             # estraggo l'id della registrazione dell'irrigazione appena inserita
             last_id = cursor.lastrowid
             session["id_data"] = last_id
-            ID__DATA == last_id
-            # print("Sess1: " + str(session['id_data']))
+            print("Ses1: " + str(session['id_data']))
             cursor.close()
             conn.close()
 
@@ -2286,7 +2198,6 @@ def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
-
 def set_state_sensor(state, sensor_id):
     # setta lo stato del sensore
     conn = get_db_connection()
@@ -2300,8 +2211,6 @@ def set_state_sensor(state, sensor_id):
     conn.close()
 
 # FUNZIONANTE
-
-
 def set_error_state_data(message):
     # setta ad errore la ricerca / ripristina i sensori / conclude la sessione di irrigazione
     state = 'ERR'
@@ -2319,10 +2228,7 @@ def set_error_state_data(message):
     session['id_data'] = 0
 
 # FUNZIONATE
-
-
 def insert_sensor_data(data):
-    global SELECTED__SENSORS, ID__DATA
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
@@ -2330,17 +2236,16 @@ def insert_sensor_data(data):
     #print(get_sensor_selected('O'))
     if data['Node_id'] in session['selected_sensors']: # NON FUNZIONA
         print("INSERIMENTO")
-        conn = get_db_connection()
+        """conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s,"
             "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
             (datetime.now(), data['INDEX'], data['Bat'], data['Humidity'],
-             data['Temperature'], data['ADC'], ID__DATA)
+             data['Temperature'], data['ADC'], session['id_data'])
         )
         conn.commit()
-        cursor.close()
-
+        cursor.close()"""
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
@@ -2362,7 +2267,6 @@ def avviaIrrigazione():
     return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
 ####################################################################################
 
-
 def associazioneSessionCampi(current_user):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2378,7 +2282,6 @@ def associazioneSessionCampi(current_user):
         for i, e in enumerate(id_array):
             session[f"campo{i+1}"] = e
 
-
 @app.route('/', methods=['GET'])
 def index():
     token = request.cookies.get("token")
@@ -2389,7 +2292,6 @@ def index():
         except Exception:
             pass
     return render_template("index.html")  # pagina pubblica iniziale
-
 
 @app.route('/home', methods=['GET', 'POST'])
 @token_required
@@ -2422,13 +2324,11 @@ def home(current_user):
     campo_corrente = session.get('campo_corrente', None)
     return render_template('home.html', campo_corrente=campo_corrente)
 
-
 @app.route('/logout', methods=['POST'])
 def logout():
     response = make_response(redirect(url_for('index')))
     response.delete_cookie('token')
     return response
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

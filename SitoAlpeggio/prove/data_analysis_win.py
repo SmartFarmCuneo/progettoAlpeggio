@@ -107,6 +107,7 @@ def initSerial():
         return None
 
 def send_to_server(data):
+    print("Mando a server")
     headers = {
         "X-API-KEY": API_KEY,
         "X-Token": TOKEN
@@ -236,8 +237,10 @@ def check_finish_session():
 def main():
     global TOKEN
     print("[CLIENT] Avvio client sensore")
+    input_token = input("Inserire lo Username: ")
+    print(f"User: {input_token}")
     #get_chat_id()
-    r = requests.get("http://192.168.1.6:5000/api/get_token/MarcoGiorgis")
+    r = requests.get(f"http://192.168.1.6:5000/api/get_token/{input_token}")
     TOKEN = r.json()["token"]
     print("TOKEN ricevuto:", TOKEN)
 
