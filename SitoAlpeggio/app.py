@@ -2019,6 +2019,45 @@ def get_finish_session():
         else:
             return False, "Continue"
 
+# FUNZIONANTE
+def get_user_id(username):
+    #ritorna l'id dell'utente dallo username
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id_u FROM users "
+        "WHERE username = %s ",
+        (username,)
+    )
+    id = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return id
+
+# DA TESTARE  
+def get_data_info(id_user):
+    # VERSIONE BASE
+    # prende una sola ricerca, si può fare un'irrigazione alla volta
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT d.id_ricerca, d.id_t
+        FROM data d
+        WHERE d.id_u = %s
+        AND d.data_fine_irr IS NULL
+        ORDER BY d.data_inizio_irr DESC
+        LIMIT 1;
+        """,
+        (id_user,)
+    )
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if row is None:
+        return None, None
+    return row[0], row[1]
+
 # API PER SENSORI NELL'INIZIALIZZAZIONE
 @app.route("/api/get_sensor")
 @token_required
@@ -2079,6 +2118,13 @@ def init_serial_receiver(current_user):
         print(f"Dati: {data}")
         print("=" * 50)
         # set_error_state_data(data, current_user)
+
+    elif data.get('type') == 'Authentication':
+        print("=" * 50)
+        print("UTENTE:")
+        print(f"Dati: {data}")
+        print("=" * 50)
+        print(f"Info: {get_user_id(data.get('user'))}")
         
     else:
         all_sensor_wet = get_finish_session(current_user)[0]
@@ -2089,8 +2135,8 @@ def init_serial_receiver(current_user):
         print("DATI INVIATI DA SENSORE:")
         print(f"Dati: {data}")
         print("=" * 50)
-        insert_sensor_data(data, current_user)
-        avviaIrrigazione(current_user)
+        #insert_sensor_data(data, current_user)
+        #avviaIrrigazione(current_user)
 
     return jsonify({"status": "ok"})
 

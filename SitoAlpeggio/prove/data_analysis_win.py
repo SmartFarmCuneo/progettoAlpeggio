@@ -236,13 +236,18 @@ def check_finish_session():
 
 def main():
     global TOKEN
+    data = {}
+
     print("[CLIENT] Avvio client sensore")
     input_token = input("Inserire lo Username: ")
     print(f"User: {input_token}")
     #get_chat_id()
     r = requests.get(f"http://192.168.1.6:5000/api/get_token/{input_token}")
     TOKEN = r.json()["token"]
-    print("TOKEN ricevuto:", TOKEN)
+    #print("TOKEN ricevuto:", TOKEN)
+    data['type'] = 'Authentication'
+    data['user'] = input_token
+    send_to_server(data)
 
     t1 = threading.Thread(target=serial_reader_loop, daemon=True)
     t2 = threading.Thread(target=check_finish_session, daemon=True)
