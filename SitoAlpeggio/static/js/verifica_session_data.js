@@ -9,9 +9,9 @@ function verificaSessione() {
       
       // Mostra il pulsante solo se la sessione ritorna "Go" (irrigazione attiva)
       if (data === "Stop") {
-        visualizzaIrrigazione.style.display = 'block';
-      } else {
         visualizzaIrrigazione.style.display = 'none';
+      } else {
+        visualizzaIrrigazione.style.display = 'block';
       }
     })
     .catch(error => {

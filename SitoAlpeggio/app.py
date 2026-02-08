@@ -1960,8 +1960,8 @@ def get_state_data():
             row = cursor.fetchone()
             cursor.close()
             conn.close()
-            # print("Fine irr: " + str(row['data_fine_irr']))
-            if row != None:
+            print("Fine irr: " + str(row['data_fine_irr']))
+            if row['data_fine_irr'] is not None:        #row['data_fine_irr'] is not None
                 return 'Stop'
             else:
                 return 'Go'
@@ -2054,9 +2054,27 @@ def get_data_info(id_user):
     row = cursor.fetchone()
     cursor.close()
     conn.close()
-    if row is None:
-        return None, None
-    return row[0], row[1]
+
+    id_ricerca = row['id_ricerca']
+    id_field = row['id_t']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT s.Node_id
+        FROM assoc_sens_data a, sensor s
+        WHERE a.id_data = %s
+        AND a.id_sens = s.id_sens;
+        """,
+        (id_ricerca,)
+    )
+    sensors = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    #if row is None:
+        #return None, None
+    return id_ricerca, id_field, sensors
 
 # API PER SENSORI NELL'INIZIALIZZAZIONE
 @app.route("/api/get_sensor")
@@ -2124,10 +2142,12 @@ def init_serial_receiver(current_user):
         print("UTENTE:")
         print(f"Dati: {data}")
         print("=" * 50)
-        print(f"Info: {get_user_id(data.get('user'))}")
+        id_user = get_user_id(data.get('user'))
+        id_ricerca, id_terreno, sensors = get_data_info(id_user['id_u'])
+        print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
         
     else:
-        all_sensor_wet = get_finish_session(current_user)[0]
+        all_sensor_wet = get_finish_session()[0]
         if all_sensor_wet:
             print("Fine della sessione")
             
@@ -2135,7 +2155,7 @@ def init_serial_receiver(current_user):
         print("DATI INVIATI DA SENSORE:")
         print(f"Dati: {data}")
         print("=" * 50)
-        #insert_sensor_data(data, current_user)
+        insert_sensor_data(data, sensors, id_ricerca)   #correggere sensors perchè non passa parametro come dizionario
         #avviaIrrigazione(current_user)
 
     return jsonify({"status": "ok"})
@@ -2161,17 +2181,14 @@ def inizializzaIrrigazione():
 
     if request.method == 'POST':
         print("Prova sessione data: " + str(session['id_data']))
-        if get_state_data() == 'Go':
+        # STOP --> si intende che non si può procedere con la visualizzazione dell'irrigazione avviata
+        # usata la stessa funzione per vedere se è possibile vedeere il pulsante "Visualizza Irrigazione"
+        if get_state_data() == 'Stop':      
             data = request.get_json()
             campo_id = data.get('campo_id')
             selected_sensors = data.get('selectedSensors', [])
             session['id_campo_selezionato'] = campo_id
-            # print("Sensori selezionati:", selected_sensors)
             session['selected_sensors'] = selected_sensors
-            SELECTED__SENSORS = selected_sensors
-
-            ID_CAMPO_SELEZIONATO = campo_id
-            #print(f"Sensori: {session['selected_sensors']}")
 
             # aggiorna lo stato dei sensori da disponibili a operativi
             conn = get_db_connection()
@@ -2274,27 +2291,27 @@ def set_error_state_data(message):
     session['id_data'] = 0
 
 # FUNZIONATE
-def insert_sensor_data(data):
+def insert_sensor_data(data, sensors, id_data):
     # funzione per salvare su db le info
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
     print(f"Sensore: {data['Node_id']}")
-    #print(get_sensor_selected('O'))
-    if data['Node_id'] in session['selected_sensors']: # NON FUNZIONA
+    if data['Node_id'] in sensors: # NON FUNZIONA
         print("INSERIMENTO")
-        """conn = get_db_connection()
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s,"
             "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
             (datetime.now(), data['INDEX'], data['Bat'], data['Humidity'],
-             data['Temperature'], data['ADC'], session['id_data'])
+             data['Temperature'], data['ADC'], id_data)
         )
         conn.commit()
-        cursor.close()"""
+        cursor.close()
 
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
+    print("AVVIA IRRIGAZIONE")
     print(session['id_data'])
     
     if request.method == 'POST':

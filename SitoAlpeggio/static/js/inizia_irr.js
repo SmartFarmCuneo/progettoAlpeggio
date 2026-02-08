@@ -222,15 +222,15 @@ document.addEventListener("DOMContentLoaded", function () {
             // Prima verifica lo stato della sessione
             const sessionData = await verificaSessione();
             
-            if (sessionData === "Stop") {
-                mostraPopup("Ciao 1");
+            if (sessionData === "Go") {
+                mostraPopup("Sessione di irrigazione già avviata");
                 return;
             }
             
-            if (sessionData !== "Go") {
-                mostraPopup("Errore nella verifica dello stato. Riprova più tardi.");
-                return;
-            }
+            //if (sessionData !== "Go") {
+                //mostraPopup("Errore nella verifica dello stato. Riprova più tardi.");
+                //return;
+            //}
 
             // Se la verifica è OK, procedi con l'invio
             const sensorsArray = Array.from(selectedSensors);
