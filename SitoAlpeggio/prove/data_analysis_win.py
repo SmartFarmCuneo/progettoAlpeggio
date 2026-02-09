@@ -21,6 +21,7 @@ MAX_TIME_SESSION = 60 # 7200 due ore massime dall'ultima ricezione di un sensore
 
 BOT_TOKEN = "8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA"
 TOKEN = None
+INPUT_TOKEN = ''
 
 # URL API PER BOT
 # https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getMe
@@ -192,7 +193,7 @@ def serial_reader_loop():
             time.sleep(5)
 
 def read_data(ser):
-    global latest_sensor_data
+    global latest_sensor_data, INPUT_TOKEN
 
     line = ser.readline().decode("utf-8", errors="ignore").strip()
     if not line:
@@ -202,6 +203,7 @@ def read_data(ser):
         data = json.loads(line)
 
         data['type'] = 'sending_data'
+        data['user'] = INPUT_TOKEN
 
         latest_sensor_data = data.copy()
 
@@ -235,18 +237,18 @@ def check_finish_session():
         time.sleep(CHECK_FINISH_INTERVAL)
 
 def main():
-    global TOKEN
+    global TOKEN, INPUT_TOKEN
     data = {}
 
     print("[CLIENT] Avvio client sensore")
-    input_token = input("Inserire lo Username: ")
-    print(f"User: {input_token}")
+    INPUT_TOKEN = input("Inserire lo Username: ")
+    print(f"User: {INPUT_TOKEN}")
     #get_chat_id()
-    r = requests.get(f"http://192.168.1.6:5000/api/get_token/{input_token}")
+    r = requests.get(f"http://192.168.1.6:5000/api/get_token/{INPUT_TOKEN}")
     TOKEN = r.json()["token"]
     #print("TOKEN ricevuto:", TOKEN)
     data['type'] = 'Authentication'
-    data['user'] = input_token
+    data['user'] = INPUT_TOKEN
     send_to_server(data)
 
     t1 = threading.Thread(target=serial_reader_loop, daemon=True)

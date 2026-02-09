@@ -1966,9 +1966,9 @@ def get_state_data():
             else:
                 return 'Go'
         else:
-            return 'Go'
+            return 'Stop'
     else:
-        return 'Go'
+        return 'Stop' #Go
 
 # DA TESTARE
 def get_finish_session():
@@ -2142,9 +2142,6 @@ def init_serial_receiver(current_user):
         print("UTENTE:")
         print(f"Dati: {data}")
         print("=" * 50)
-        id_user = get_user_id(data.get('user'))
-        id_ricerca, id_terreno, sensors = get_data_info(id_user['id_u'])
-        print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
         
     else:
         all_sensor_wet = get_finish_session()[0]
@@ -2155,6 +2152,9 @@ def init_serial_receiver(current_user):
         print("DATI INVIATI DA SENSORE:")
         print(f"Dati: {data}")
         print("=" * 50)
+        id_user = get_user_id(data.get('user'))
+        id_ricerca, id_terreno, sensors = get_data_info(id_user['id_u'])
+        print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
         insert_sensor_data(data, sensors, id_ricerca)   #correggere sensors perchè non passa parametro come dizionario
         #avviaIrrigazione(current_user)
 
@@ -2296,7 +2296,8 @@ def insert_sensor_data(data, sensors, id_data):
     # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
     print(f"Sensore: {data['Node_id']}")
-    if data['Node_id'] in sensors: # NON FUNZIONA
+    print(f"Sensori tuoi: {sensors}")
+    if data['Node_id'] in sensors['Node_id']: # NON FUNZIONA
         print("INSERIMENTO")
         conn = get_db_connection()
         cursor = conn.cursor()
