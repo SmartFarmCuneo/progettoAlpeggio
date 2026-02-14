@@ -2310,10 +2310,24 @@ def insert_sensor_data(data, sensors, id_data):
         conn.commit()
         cursor.close()
 
+def get_coordinate(field_id):
+    #ritorna le coordinate di un campo
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT coordinate FROM fields "
+        "WHERE id_t = %s ",
+        (field_id,)
+    )
+    coor = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return coor['coordinate']
+
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
     print("AVVIA IRRIGAZIONE")
-    print(session['id_data'])
+    # aggiungere la parte dello storico
     
     if request.method == 'POST':
         azione = request.form.get("azione")
@@ -2323,12 +2337,14 @@ def avviaIrrigazione():
             set_state_sensor("S", sensor_id)
             # session.modified = True
             return redirect("/avvia_irr")
-
         elif azione == 'riattiva':
             set_state_sensor("O", sensor_id)
             return redirect("/avvia_irr")
+        elif azione == 'concludi':
+            print("Conclusione")
+            # conclusione dell'irrigazione
     
-    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'])
+    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'], coordinate_campo=get_coordinate(session['id_campo_selezionato']))
 ####################################################################################
 
 def associazioneSessionCampi(current_user):

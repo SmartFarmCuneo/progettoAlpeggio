@@ -7,8 +7,8 @@
   <link rel="icon" href="../static/image/logo.png" />
   <title>Agrinnov - Avvia irrigazione</title>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <!-- CSS -->
   <link rel="stylesheet" href="../static/css/style.css" />
@@ -17,7 +17,15 @@
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/irrigazione.css" />
+
   <style>
+    /* NECESSARIO PER LEAFLET */
+    #mini-map {
+      width: 100%;
+      height: 300px;
+      border-radius: 10px;
+    }
+
     .btn-sospendi {
       margin-top: 10px;
       padding: 8px 12px;
@@ -33,15 +41,16 @@
       background-color: #c9302c;
     }
   </style>
-
 </head>
 
 <body>
-  <!-- NAVBAR -->
+
+  <!-- NAVBAR (NON TOCCATA) -->
   <nav class="navbar" role="navigation">
     <div class="navbar-top container">
       <a href="/home" class="logo">Agrinnov</a>
-      <a>Campo selezionato: {{campo_id}}</a> <!--FARE CSS-->
+      <a>Campo selezionato: {{campo_id}}</a>
+
       <div class="user-nav">
         <div class="user-info">
           <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
@@ -56,81 +65,54 @@
 
   <!-- CONTENUTO PRINCIPALE -->
   <div class="main-container">
-    <!-- SEZIONE SINISTRA - Stati (40%) -->
+
+    <!-- SINISTRA -->
     <div class="left-section">
       <div class="status-grid">
-        <div class="status-card active" data-status="attivi">
-          <h3>Attivi</h3>
-          <div class="sensors-list">
-            <div class="sensor-item">Caricamento...</div>
-          </div>
+
+        <div class="status-card active" data-status="operazioni">
+          <h3>Operazioni</h3>
+          <div class="sensors-list"></div>
+          <form method="POST" action="/avvia_irr">
+            <input type="hidden" name="azione" value="concludi">
+            <input type="hidden" name="sensor_id" value="0">
+            <button class="btn-sospendi">Concludi forzatamente l'irrigazione</button>
+          </form>
         </div>
+
         <div class="status-card" data-status="conclusi">
           <h3>Conclusi</h3>
-          <div class="sensors-list">
-            <div class="sensor-item">Caricamento...</div>
-          </div>
+          <div class="sensors-list"></div>
         </div>
+
         <div class="status-card" data-status="attesa">
           <h3>In Attesa</h3>
-          <div class="sensors-list">
-            <div class="sensor-item">Caricamento...</div>
-          </div>
+          <div class="sensors-list"></div>
         </div>
+
         <div class="status-card" data-status="sospesi">
           <h3>Sospesi</h3>
-          <div class="sensors-list">
-            <div class="sensor-item">Caricamento...</div>
-          </div>
+          <div class="sensors-list"></div>
         </div>
+
       </div>
     </div>
 
-    <!-- SEZIONE CENTRALE - Campo e Mappa (40%) -->
+    <!-- CENTRO -->
     <div class="center-section">
-      <!--<div class="campo-header">
-          <h2 id="campo-nome">Seleziona un campo</h2>
-          <p id="campo-info">Visualizza i dettagli del campo sulla mappa</p>
-        </div>-->
-
       <div class="map-container">
-        <div id="mini-map"></div>
+        <div id="mini-map" data-coord="{{ coordinate_campo }}"></div>
       </div>
     </div>
 
-    <!-- SEZIONE DESTRA - Storico (20%) -->
+    <!-- DESTRA -->
     <div class="right-section">
       <div class="storico-container">
         <h3>Storico</h3>
-        <div class="storico-content">
-          <div class="storico-item">
-            <div class="storico-item-date">10/10/2024 - 14:30</div>
-            <div class="storico-item-title">Irrigazione completata</div>
-            <div class="storico-item-desc">Sensore 1 - Campo Nord</div>
-          </div>
-          <div class="storico-item">
-            <div class="storico-item-date">09/10/2024 - 09:15</div>
-            <div class="storico-item-title">Manutenzione sensore</div>
-            <div class="storico-item-desc">Sensore 5 - Campo Sud</div>
-          </div>
-          <div class="storico-item">
-            <div class="storico-item-date">08/10/2024 - 16:45</div>
-            <div class="storico-item-title">Irrigazione avviata</div>
-            <div class="storico-item-desc">Sensore 3 - Campo Est</div>
-          </div>
-          <div class="storico-item">
-            <div class="storico-item-date">07/10/2024 - 11:20</div>
-            <div class="storico-item-title">Allarme risolto</div>
-            <div class="storico-item-desc">Sensore 7 - Campo Ovest</div>
-          </div>
-          <div class="storico-item">
-            <div class="storico-item-date">06/10/2024 - 08:00</div>
-            <div class="storico-item-title">Sistema avviato</div>
-            <div class="storico-item-desc">Tutti i sensori</div>
-          </div>
-        </div>
+        <div class="storico-content"></div>
       </div>
     </div>
+
   </div>
 
   <!-- FOOTER -->
@@ -145,11 +127,17 @@
       </ul>
     </div>
   </footer>
-  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
-  <!-- Script -->
-  <script src="../static/js/avvia_irr.js" defer></script>
+  {% if not cookie_consent %}
+  {% include "cookie_banner.html" %}
+  {% endif %}
+
+  <!-- Leaflet JS (PRIMA del tuo JS) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- TUO JS -->
+  <script src="../static/js/avvia_irr.js" defer></script>
+
 </body>
 
 </html>
