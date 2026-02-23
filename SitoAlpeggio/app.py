@@ -2011,9 +2011,6 @@ def get_finish_session():
             conn.commit()
             cursor.close()
             conn.close()
-            # settaggio stato concluso dei sensori
-            for sensor in session['selected_sensors']:
-                set_state_sensor("C", sensor)
 
             return True, "Concluded"
         else:
@@ -2156,7 +2153,6 @@ def init_serial_receiver(current_user):
         id_ricerca, id_terreno, sensors = get_data_info(id_user['id_u'])
         print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
         insert_sensor_data(data, sensors, id_ricerca)   #correggere sensors perchè non passa parametro come dizionario
-        #avviaIrrigazione(current_user)
 
     return jsonify({"status": "ok"})
 
@@ -2293,22 +2289,22 @@ def set_error_state_data(message):
 # FUNZIONATE
 def insert_sensor_data(data, sensors, id_data):
     # funzione per salvare su db le info
-    # session['selected_sensors'] -->ritorna come risultato ['ID010000','ID010001']
     # risultato di data --> {"Node_id":"ID010000","INDEX":0,"Bat":670"Humidity":57.00,"Temperature":22.80,"ADC":831}
     print(f"Sensore: {data['Node_id']}")
     print(f"Sensori tuoi: {sensors}")
-    if data['Node_id'] in sensors['Node_id']: # NON FUNZIONA
+    if any(s['Node_id'] == data['Node_id'] for s in sensors):
         print("INSERIMENTO")
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE assoc_sens_data SET date_conc_sens = %s, idx = %s, Bat = %s,"
-            "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s",
+            "Humidity = %s, Temperature = %s, ADC = %s WHERE id_data = %s AND Node_id = %s",
             (datetime.now(), data['INDEX'], data['Bat'], data['Humidity'],
-             data['Temperature'], data['ADC'], id_data)
+             data['Temperature'], data['ADC'], id_data, data['Node_id'])
         )
         conn.commit()
         cursor.close()
+        set_state_sensor("C", data['Node_id'])
 
 def get_coordinate(field_id):
     #ritorna le coordinate di un campo
@@ -2328,7 +2324,8 @@ def get_coordinate(field_id):
 def avviaIrrigazione():
     print("AVVIA IRRIGAZIONE")
     # aggiungere la parte dello storico
-    
+    campo_id = request.args.get("campo_id")
+
     if request.method == 'POST':
         azione = request.form.get("azione")
         sensor_id = request.form.get("sensor_id")
@@ -2344,7 +2341,7 @@ def avviaIrrigazione():
             print("Conclusione")
             # conclusione dell'irrigazione
     
-    return render_template('avvia_irrigazione.html', campo_id=session['id_campo_selezionato'], coordinate_campo=get_coordinate(session['id_campo_selezionato']))
+    return render_template('avvia_irrigazione.html', campo_id=campo_id, coordinate_campo=get_coordinate(campo_id))
 ####################################################################################
 
 def associazioneSessionCampi(current_user):
