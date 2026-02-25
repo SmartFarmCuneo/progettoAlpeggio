@@ -1,8 +1,5 @@
 services:
 
-  # ------------------------------
-  # Flask app
-  # ------------------------------
   flask-app:
     build: ./SitoAlpeggio
     container_name: flask-app
@@ -17,9 +14,7 @@ services:
     networks:
       - backend
 
-  # ------------------------------
-  # Stripe CLI (dev only)
-  # ------------------------------
+ 
   stripe-cli:
     image: stripe/stripe-cli:latest
     container_name: stripe-cli
@@ -33,9 +28,7 @@ services:
     networks:
       - backend
 
-  # ------------------------------
-  # PHP-FPM
-  # ------------------------------
+
   php-fpm:
     image: php:8.2-fpm
     restart: unless-stopped
@@ -46,9 +39,7 @@ services:
     networks:
       - backend
 
-  # ------------------------------
-  # Nginx
-  # ------------------------------
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -58,9 +49,7 @@ services:
     networks:
       - backend
 
-  # ------------------------------
-  # MySQL (solo per compatibilità legacy)
-  # ------------------------------
+  
   mysql:
     image: mysql:latest
     container_name: mysql
@@ -92,9 +81,7 @@ services:
     networks:
       - backend
 
-  # ------------------------------
-  # PostgreSQL (DB principale)
-  # ------------------------------
+  
   postgres:
     image: postgres:16
     container_name: postgres
@@ -129,9 +116,7 @@ services:
     networks:
       - backend
 
-# ------------------------------
-# Network isolata
-# ------------------------------
+
 networks:
   backend:
     driver: bridge
