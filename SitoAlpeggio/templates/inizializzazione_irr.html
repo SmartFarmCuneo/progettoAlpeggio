@@ -14,6 +14,130 @@
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/irrigazione.css" />
+  <style>
+    /* =====================================
+   LAYOUT INIZIALIZZAZIONE IRRIGAZIONE
+===================================== */
+
+.main-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* ---------- HEADER ---------- */
+
+.page-header {
+  text-align: center;
+}
+
+.page-header h1 {
+  font-size: 38px;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+/* ---------- CONTROL CARD ---------- */
+
+.irrigation-control {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* info selezione */
+
+.selection-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.selection-count {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+}
+
+.selection-count span {
+  color: #4CAF50;
+  font-size: 26px;
+}
+
+/* bottoni */
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* ---------- SENSORI ---------- */
+
+.sensors-section {
+  width: 100%;
+}
+
+.sensors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+/* tablet */
+@media (max-width: 992px) {
+
+  .page-header h1 {
+    font-size: 30px;
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+
+  .main-container {
+    padding: 25px 15px;
+    gap: 30px;
+  }
+
+  .selection-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-start,
+  .btn-cancel {
+    width: 100%;
+  }
+}
+  </style>
   
 </head>
 
@@ -36,39 +160,53 @@
 
   <!-- CONTENUTO PRINCIPALE -->
   <div class="main-container">
-    <div class="page-title">
-      <h1>Inizializzazione Irrigazione - Campo {{campo_id}}</h1>
-      <p>Seleziona i sensori da utilizzare per avviare il sistema di irrigazione</p>
-    </div>
 
-    <!-- Sezione controlli -->
-    <div class="controls-section">
-      <div class="selection-info">
-        <div class="selection-count">
-          Campo selezionato: {{campo_id}} | 
-          Sensori selezionati: <span id="selected-count">0</span>
-        </div>
-        <div class="bulk-actions">
-          <button class="bulk-btn" id="select-all">Seleziona Tutti</button>
-          <button class="bulk-btn" id="deselect-all">Deseleziona Tutti</button>
-        </div>
+  <!-- HEADER PAGINA -->
+  <section class="page-header">
+    <h1>Inizializzazione Irrigazione</h1>
+    <p>Campo {{campo_id}} — Seleziona i sensori da utilizzare</p>
+  </section>
+
+  <!-- CARD CONTROLLO IRRIGAZIONE -->
+  <section class="irrigation-control">
+
+    <div class="selection-info">
+      <div class="selection-count">
+        Sensori selezionati:
+        <span id="selected-count">0</span>
       </div>
 
-      <div class="action-buttons">
-        <button class="btn-cancel" onclick="window.location.href='/home'">
-          Annulla
+      <div class="bulk-actions">
+        <button class="bulk-btn" id="select-all">
+          Seleziona Tutti
         </button>
-        <button class="btn-start" id="start-btn" disabled>
-          Avvia Irrigazione
+        <button class="bulk-btn" id="deselect-all">
+          Deseleziona Tutti
         </button>
       </div>
     </div>
 
-    <!-- Griglia sensori -->
+    <div class="action-buttons">
+      <button class="btn-cancel"
+        onclick="window.location.href='/home'">
+        Annulla
+      </button>
+
+      <button class="btn-start" id="start-btn" disabled>
+        Avvia Irrigazione
+      </button>
+    </div>
+
+  </section>
+
+  <!-- SENSORI -->
+  <section class="sensors-section">
     <div class="sensors-grid" id="sensors-grid">
-      <!-- I sensori verranno generati dinamicamente -->
+      <!-- generati via JS -->
     </div>
-  </div>
+  </section>
+
+</div>
 
   <!-- FOOTER -->
   <footer id="contact">

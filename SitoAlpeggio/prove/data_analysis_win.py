@@ -39,35 +39,6 @@ connection_status = {
     "last_check": None
 }
 
-def get_chat_id():
-    """
-    Recupera automaticamente il CHAT_ID dell'ultimo utente che ha scritto al bot.
-    Scrivi un messaggio al bot prima di eseguire questa funzione.
-    """
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
-    try:
-        r = requests.get(url, timeout=5)
-        r.raise_for_status()
-        data = r.json()
-        
-        if not data["result"]:
-            print("Nessun messaggio trovato. Scrivi qualcosa al bot prima di chiamare questa funzione.")
-            return None
-        
-        # Prende l'ultimo messaggio ricevuto
-        last_msg = data["result"][-1]
-        chat_id = last_msg["message"]["chat"]["id"]
-        first_name = last_msg["message"]["chat"].get("first_name", "Unknown")
-        
-        print(f"CHAT_ID trovato: {chat_id} (utente: {first_name})")
-        return chat_id
-    
-    except Exception as e:
-        print("Errore nel recupero del CHAT_ID:", e)
-        return None
-    
-CHAT_ID = get_chat_id()
-
 def initSerial():
     global connection_status
 
@@ -211,7 +182,7 @@ def read_data(ser):
 
         #save_data(data) SALVATAGGIO SU FILE CSV
         #if data['ADC'] < 700: versione base invia solamente quando intercetta acqua
-        #send_desktop_notification("⚠️ ALLARME SENSORE", "Acqua rilevata!")
+        send_desktop_notification("⚠️ ALLARME SENSORE", "Acqua rilevata!")
         send_to_server(data)
 
     except json.JSONDecodeError:
@@ -237,15 +208,17 @@ def check_finish_session():
         time.sleep(CHECK_FINISH_INTERVAL)
 
 def main():
-    global TOKEN, INPUT_TOKEN
+    global TOKEN, INPUT_TOKEN, CHAT_ID
     data = {}
 
     print("[CLIENT] Avvio client sensore")
     INPUT_TOKEN = input("Inserire lo Username: ")
     print(f"User: {INPUT_TOKEN}")
-    #get_chat_id()
     r = requests.get(f"http://192.168.1.6:5000/api/get_token/{INPUT_TOKEN}")
     TOKEN = r.json()["token"]
+    r1 = requests.get(F"http://192.168.1.6:5000/api/get_telegram_chat_id/{INPUT_TOKEN}")
+    CHAT_ID = r1.json()["chat_id"]
+    #print("CHAR_ID: ", CHAT_ID)
     #print("TOKEN ricevuto:", TOKEN)
     data['type'] = 'Authentication'
     data['user'] = INPUT_TOKEN

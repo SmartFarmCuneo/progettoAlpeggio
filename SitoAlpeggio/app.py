@@ -1757,6 +1757,27 @@ def api_subscription_status(current_user):
 ############################# FUNZIONALITÀ PREMIUM #############################
 
 ################### PROFILO #################################
+def get_chat_id_by_username(username: str):
+    BOT_TOKEN = "8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA"
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
+
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        for update in data.get("result", []):
+            message = update.get("message") or update.get("edited_message")
+            if not message:
+                continue
+            user = message.get("from", {})
+            chat = message.get("chat", {})
+            if user.get("first_name") == username:
+                return chat.get("id")
+        return None
+    except requests.RequestException as e:
+        print("Errore richiesta Telegram:", e)
+        return None
+    
 @app.route('/profilo', methods=['POST', 'GET'])
 @token_required
 def profilo(current_user):
@@ -1776,10 +1797,10 @@ def profilo(current_user):
             email = request.form['email']
             telefono = request.form['telefono']
             cod_fiscale = request.form['cod_fiscale']
-            # deve corrispondere al nome del campo nel DB
             dataDiNascita = request.form['DataDiNascita']
+            telegram_user = request.form['username_telegram']
+            telegram_chat_id = get_chat_id_by_username(telegram_user)
 
-            # Aggiorna il database
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE users
@@ -1792,6 +1813,15 @@ def profilo(current_user):
                     WHERE username=%s
                 """, (nome, cognome, email, telefono, cod_fiscale, dataDiNascita, current_user))
                 conn.commit()
+            
+            if telegram_chat_id is not None:
+               with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET telegram_chat_id=%s
+                    WHERE username=%s
+                """, (telegram_chat_id, current_user))
+                conn.commit() 
 
             # Redirect con messaggio di successo
             return redirect(url_for('profilo') + '?saved=true')
@@ -1945,7 +1975,6 @@ def get_sensor_selected(state):
     conn.close()
     return sens
 
-# DA CONTROLLARE
 def get_state_data():
     # ritorna se è possbile continare o iniziare la sessione o meno
     # print("Sessione: " + str(session['id_data']))
@@ -2132,7 +2161,7 @@ def init_serial_receiver(current_user):
         print("ERRORE:")
         print(f"Dati: {data}")
         print("=" * 50)
-        # set_error_state_data(data, current_user)
+        set_error_state_data(data, current_user)
 
     elif data.get('type') == 'Authentication':
         print("=" * 50)
@@ -2142,6 +2171,7 @@ def init_serial_receiver(current_user):
         
     else:
         all_sensor_wet = get_finish_session()[0]
+        print(f"Stato sensori: {all_sensor_wet}")
         if all_sensor_wet:
             print("Fine della sessione")
             
@@ -2163,9 +2193,14 @@ def get_token_api(username):
     return jsonify({"token": token})
 
 # PREMIUM -- invio id chat con telegram per notifiche
-@app.route("/api/get_telegram_chat_id")
-def api_get_telegram_chat_id():
-    pass
+@app.route("/api/get_telegram_chat_id/<username>")
+def api_get_telegram_chat_id(username):
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT telegram_chat_id FROM users WHERE username = %s", (username,))
+        info = cursor.fetchone()
+    return jsonify({"chat_id": info})
 ########################################################################################
 
 ############################ AZIONI IRRIGAZIONE #########################################
@@ -2325,6 +2360,8 @@ def avviaIrrigazione():
     print("AVVIA IRRIGAZIONE")
     # aggiungere la parte dello storico
     campo_id = request.args.get("campo_id")
+    if campo_id is None:
+        campo_id = session['id_campo_selezionato']
 
     if request.method == 'POST':
         azione = request.form.get("azione")
@@ -2339,7 +2376,19 @@ def avviaIrrigazione():
             return redirect("/avvia_irr")
         elif azione == 'concludi':
             print("Conclusione")
-            # conclusione dell'irrigazione
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE data SET data_fine_irr = %s"
+                "WHERE id_ricerca = %s",
+                (datetime.now(), session['id_data'],)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            for k in session['selected_sensors']:
+                set_state_sensor('C', k)
+            return redirect(url_for('home'))
     
     return render_template('avvia_irrigazione.html', campo_id=campo_id, coordinate_campo=get_coordinate(campo_id))
 ####################################################################################
