@@ -19,6 +19,25 @@
   <link rel="stylesheet" href="../static/css/footer.css" />
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
+  <style>
+    /* Linea di divisione con ombra */
+    .campo-card {
+      padding-bottom: 35px;
+      margin-bottom: 35px;
+      position: relative;
+    }
+
+    .campo-card:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: var(--primary, #4CAF50);
+      box-shadow: 0 1px 3px rgba(76, 175, 80, 0.5);
+    }
+  </style>
 
 </head>
 
@@ -56,9 +75,7 @@
     <div class="profile-content">
       <main>
         <div class="py-5 text-center">
-          <img class="d-block mx-auto mb-4"
-            src="../static/image/logo.png" alt="" width="72"
-            height="57" />
+          <img class="d-block mx-auto mb-4" src="../static/image/logo.png" alt="" width="72" height="57" />
           <h2>Visualizza i campi registrati</h2>
           <p class="lead">Panoramica completa dei tuoi terreni agricoli</p>
         </div>

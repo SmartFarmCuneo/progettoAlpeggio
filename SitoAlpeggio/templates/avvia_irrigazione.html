@@ -18,12 +18,27 @@
   <link rel="stylesheet" href="../static/css/animazioni.css" />
   <link rel="stylesheet" href="../static/css/irrigazione.css" />
 
-  <style>
+<style>
     /* NECESSARIO PER LEAFLET */
     #mini-map {
-      width: 100%;
-      height: 300px;
+      width: 100% !important;
+      height: 100% !important;
       border-radius: 10px;
+    }
+
+    .map-container {
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .center-section {
+      display: flex !important;
+      flex-direction: column !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      overflow: hidden !important;
     }
 
     .btn-sospendi {
@@ -40,7 +55,54 @@
     .btn-sospendi:hover {
       background-color: #c9302c;
     }
-  </style>
+
+    /* NUOVE REGOLE PER OCCUPARE TUTTA LA PAGINA */
+    html, body {
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+
+    body {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .main-container {
+      flex: 1 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+      display: grid !important;
+      grid-template-columns: 50% 50% !important;
+      height: auto !important;
+    }
+
+    .left-section {
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      height: 100% !important;
+    }
+
+    .status-grid {
+      flex: 1 !important;
+      overflow-y: auto !important;
+      min-height: 0 !important;
+    }
+
+    .right-section {
+      display: none !important;
+    }
+
+    footer {
+      flex-shrink: 0 !important;
+    }
+
+    nav, .navbar {
+      flex-shrink: 0 !important;
+    }
+</style>
 </head>
 
 <body>
@@ -64,56 +126,50 @@
   </nav>
 
   <!-- CONTENUTO PRINCIPALE -->
-  <div class="main-container">
+  <!-- CONTENUTO PRINCIPALE -->
+<div class="main-container">
 
-    <!-- SINISTRA -->
-    <div class="left-section">
-      <div class="status-grid">
+  <!-- SINISTRA - SENSORI -->
+  <div class="left-section">
+    <h3>Stato Sensori</h3>
+    <div class="status-grid">
 
-        <div class="status-card active" data-status="operazioni">
-          <h3>Operazioni</h3>
-          <div class="sensors-list"></div>
-          <form method="POST" action="/avvia_irr">
-            <input type="hidden" name="azione" value="concludi">
-            <input type="hidden" name="sensor_id" value="0">
-            <button class="btn-sospendi">Concludi forzatamente l'irrigazione</button>
-          </form>
-        </div>
-
-        <div class="status-card" data-status="conclusi">
-          <h3>Conclusi</h3>
-          <div class="sensors-list"></div>
-        </div>
-
-        <div class="status-card" data-status="attesa">
-          <h3>In Attesa</h3>
-          <div class="sensors-list"></div>
-        </div>
-
-        <div class="status-card" data-status="sospesi">
-          <h3>Sospesi</h3>
-          <div class="sensors-list"></div>
-        </div>
-
+      <div class="status-card active" data-status="operazioni">
+        <h3>Operazioni</h3>
+        <div class="sensors-list"></div>
+        <form method="POST" action="/avvia_irr">
+          <input type="hidden" name="azione" value="concludi">
+          <input type="hidden" name="sensor_id" value="0">
+          <button class="btn-sospendi">Concludi forzatamente l'irrigazione</button>
+        </form>
       </div>
-    </div>
 
-    <!-- CENTRO -->
-    <div class="center-section">
-      <div class="map-container">
-        <div id="mini-map" data-coord="{{ coordinate_campo }}"></div>
+      <div class="status-card" data-status="conclusi">
+        <h3>Conclusi</h3>
+        <div class="sensors-list"></div>
       </div>
-    </div>
 
-    <!-- DESTRA -->
-    <div class="right-section">
-      <div class="storico-container">
-        <h3>Storico</h3>
-        <div class="storico-content"></div>
+      <div class="status-card" data-status="attesa">
+        <h3>In Attesa</h3>
+        <div class="sensors-list"></div>
       </div>
-    </div>
 
+      <div class="status-card" data-status="sospesi">
+        <h3>Sospesi</h3>
+        <div class="sensors-list"></div>
+      </div>
+
+    </div>
   </div>
+
+  <!-- DESTRA - MAPPA -->
+  <div class="center-section">
+    <div class="map-container">
+      <div id="mini-map" data-coord="{{ coordinate_campo }}"></div>
+    </div>
+  </div>
+
+</div>
 
   <!-- FOOTER -->
   <footer id="contact">
