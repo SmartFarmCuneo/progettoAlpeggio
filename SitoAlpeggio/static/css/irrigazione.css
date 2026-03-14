@@ -1,630 +1,438 @@
 /* =============================================
-   IRRIGAZIONE
+   IRRIGAZIONE — Layout verticale scorrevole
    ============================================= */
 
-/* NUOVE REGOLE PER ELIMINARE SCROLLBAR */
 html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 body {
   display: flex;
   flex-direction: column;
-}
-
-/* Navbar con altezza fissa ridotta */
-.navbar {
-  flex-shrink: 0;
-}
-
-/* Footer con altezza fissa ridotta */
-footer {
-  flex-shrink: 0;
-  padding: 15px 0;
-}
-
-.main-container {
-  display: grid;
-  grid-template-columns: 50% 50%;
-  gap: 20px;
-  padding: 20px;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  /* Calcola l'altezza disponibile tra navbar e footer */
-  height: calc(100vh - 80px - 60px); /* Regola questi valori in base all'altezza effettiva di navbar e footer */
-}
-
-.left-section,
-.center-section {
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  height: 100%;
-}
-
-.left-section {
-    gap: 16px;
-}
-
-/* Titolo sezione sensori */
-.left-section h3 {
-    margin: 0 0 20px 0;
-    font-size: 20px;
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-    padding-bottom: 15px;
-    border-bottom: 2px solid var(--primary, #4CAF50);
-    flex-shrink: 0;
-}
-
-.status-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-}
-
-.status-card {
-    background: rgba(76, 175, 80, 0.05);
-    border: 2px solid var(--primary, #4CAF50);
-    border-radius: 16px;
-    padding: 25px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-.status-card:hover {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    transform: translateY(-3px);
-}
-
-.status-card.active {
-    border-color: white;
-}
-
-.status-card h3 {
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.sensors-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 8px;
-}
-
-.sensor-item {
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
-    text-align: center;
-    transition: transform 0.2s ease;
-}
-
-.sensor-item:hover {
-    transform: scale(1.05);
-}
-
-.status-card[data-status="operazioni"] .sensor-item {
-    background: #2196F3;
-}
-
-.status-card[data-status="conclusi"] .sensor-item {
-    background: #4CAF50;
-}
-
-.status-card[data-status="attesa"] .sensor-item {
-    background: #FFC107;
-    color: #333;
-}
-
-.status-card[data-status="sospesi"] .sensor-item {
-    background: #F44336;
-}
-
-.center-section {
-  flex: 1;
-}
-
-.campo-header {
-    background: white;
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.campo-header h2 {
-    margin: 0 0 10px 0;
-    color: #333;
-    font-size: 24px;
-}
-
-.campo-header p {
-    margin: 0;
-    color: #666;
-    font-size: 16px;
-}
-
-.map-container {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    height: 100%;
-    flex: 1;
-    min-height: 0;
-}
-
-#mini-map {
-  width: 100%;
-  height: 100%;
-  border-radius: 10px;
-}
-
-.page-title {
-    text-align: center;
-    color: white;
-    margin-bottom: 40px;
-}
-
-.page-title h1 {
-    font-size: 36px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.page-title p {
-    font-size: 18px;
-    opacity: 0.9;
-}
-
-.sensors-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
-    margin-bottom: 40px;
-}
-
-.sensor-card {
-    background: rgba(255, 255, 255, 0.95);
-    border: 3px solid transparent;
-    border-radius: 16px;
-    padding: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.sensor-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-}
-
-.sensor-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.sensor-card.selected {
-    border-color: #4CAF50;
-    background: rgba(76, 175, 80, 0.1);
-}
-
-.sensor-card.selected::before {
-    transform: scaleX(1);
-}
-
-.sensor-checkbox {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 28px;
-    height: 28px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.sensor-card.selected .sensor-checkbox {
-    background: #4CAF50;
-    border-color: #4CAF50;
-}
-
-.sensor-checkbox::after {
-    content: '✓';
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    opacity: 0;
-    transform: scale(0);
-    transition: all 0.2s ease;
-}
-
-.sensor-card.selected .sensor-checkbox::after {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.sensor-name {
-    font-size: 20px;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 8px;
-}
-
-.sensor-id {
-    font-size: 14px;
-    font-weight: 500;
-    color: #666;
-    margin-bottom: 12px;
-}
-
-.sensor-status {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.sensor-status.disponibile {
-    background: #E8F5E9;
-    color: #4CAF50;
-}
-
-.sensor-status.in-uso {
-    background: #FFF3E0;
-    color: #FF9800;
-}
-
-.sensor-status.offline {
-    background: #FFEBEE;
-    color: #F44336;
-}
-
-.controls-section {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-}
-
-.selection-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #e0e0e0;
-}
-
-.selection-count {
-    font-size: 18px;
-    color: #333;
-    font-weight: 600;
-}
-
-.selection-count span {
-    color: #4CAF50;
-    font-size: 24px;
-    font-weight: 700;
-}
-
-.bulk-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.bulk-btn {
-    padding: 10px 20px;
-    border: 2px solid #4CAF50;
-    background: white;
-    color: #4CAF50;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.bulk-btn:hover {
-    background: #4CAF50;
-    color: white;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-.btn-start {
-    background: linear-gradient(135deg, #4CAF50, #8BC34A);
-    color: white;
-    border: none;
-    padding: 18px 50px;
-    font-size: 18px;
-    font-weight: 700;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-}
-
-.btn-start:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-}
-
-.btn-start:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.btn-cancel {
-    background: white;
-    color: #666;
-    border: 2px solid #ddd;
-    padding: 16px 40px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-cancel:hover {
-    border-color: #999;
-    color: #333;
+  min-height: 100vh;
 }
 
 /* =============================================
-   RESPONSIVE DESIGN
+   MAIN CONTAINER
    ============================================= */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 30px 40px;
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
 
-/* Tablet - Layout verticale */
-@media (max-width: 1024px) {
+/* =============================================
+   PAGE HEADER
+   ============================================= */
+.page-header {
+  background: var(--bg-light, #2d3748);
+  border-radius: 16px;
+  padding: 28px 32px;
+  border-left: 4px solid var(--primary, #48bb78);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.page-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.page-header p {
+  color: var(--text-body, #cbd5e0);
+  font-size: 14px;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.page-header p:last-child {
+  margin-bottom: 0;
+  color: var(--primary, #48bb78);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* =============================================
+   IRRIGATION CONTROL BAR
+   ============================================= */
+.irrigation-control {
+  background: var(--bg-light, #2d3748);
+  border-radius: 16px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border, #4a5568);
+  animation: fadeUp 0.5s ease forwards 0.1s;
+  opacity: 0;
+}
+
+/* Contatore selezionati */
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.selection-count {
+  font-size: 16px;
+  color: var(--text-body, #cbd5e0);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selection-count #selected-count {
+  color: var(--primary, #48bb78);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 28px;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Bulk actions */
+.bulk-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.bulk-btn {
+  padding: 9px 18px;
+  border: 2px solid var(--primary, #48bb78);
+  background: transparent;
+  color: var(--primary, #48bb78);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
+}
+
+.bulk-btn:hover {
+  background: var(--primary, #48bb78);
+  color: var(--bg-dark, #1a202c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+/* Pulsanti azione principali */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: var(--text-body, #cbd5e0);
+  border: 2px solid var(--border, #4a5568);
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-cancel:hover {
+  border-color: #718096;
+  color: white;
+  background: rgba(255,255,255,0.05);
+}
+
+.btn-start {
+  background: linear-gradient(135deg, var(--primary, #48bb78), #68d391);
+  color: var(--bg-dark, #1a202c);
+  border: none;
+  padding: 13px 36px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.35);
+}
+
+.btn-start:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.5);
+}
+
+.btn-start:disabled {
+  background: var(--border, #4a5568);
+  color: #718096;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* =============================================
+   SENSORS SECTION
+   ============================================= */
+.sensors-section {
+  animation: fadeUp 0.5s ease forwards 0.2s;
+  opacity: 0;
+  padding-bottom: 20px;
+}
+
+.sensors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* =============================================
+   SENSOR CARD
+   ============================================= */
+.sensor-card {
+  background: var(--bg-light, #2d3748);
+  border: 2px solid var(--border, #4a5568);
+  border-radius: 14px;
+  padding: 22px 22px 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sensor-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary, #48bb78), #68d391);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.sensor-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: #718096;
+}
+
+.sensor-card.selected {
+  border-color: var(--primary, #48bb78);
+  background: rgba(72, 187, 120, 0.08);
+  box-shadow: 0 0 0 1px var(--primary, #48bb78), 0 6px 20px rgba(72, 187, 120, 0.15);
+}
+
+.sensor-card.selected::before {
+  transform: scaleX(1);
+}
+
+/* Checkbox */
+.sensor-checkbox {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--border, #4a5568);
+  border-radius: 6px;
+  background: var(--bg-dark, #1a202c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.sensor-card.selected .sensor-checkbox {
+  background: var(--primary, #48bb78);
+  border-color: var(--primary, #48bb78);
+}
+
+.sensor-checkbox::after {
+  content: '✓';
+  color: var(--bg-dark, #1a202c);
+  font-size: 16px;
+  font-weight: bold;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s ease;
+}
+
+.sensor-card.selected .sensor-checkbox::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Card content */
+.sensor-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 6px;
+  padding-right: 36px; /* spazio per checkbox */
+  display: block;
+}
+
+.sensor-id {
+  font-size: 13px;
+  font-weight: 500;
+  color: #718096;
+  margin-bottom: 14px;
+  display: block;
+  letter-spacing: 0.3px;
+}
+
+.sensor-status {
+  display: inline-block;
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.sensor-status.disponibile {
+  background: rgba(72, 187, 120, 0.15);
+  color: var(--primary, #48bb78);
+  border: 1px solid rgba(72, 187, 120, 0.3);
+}
+
+.sensor-status.in-uso {
+  background: rgba(237, 137, 54, 0.15);
+  color: #ed8936;
+  border: 1px solid rgba(237, 137, 54, 0.3);
+}
+
+.sensor-status.offline {
+  background: rgba(229, 62, 62, 0.15);
+  color: #fc8181;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+/* Pulsante Rileva Posizione dentro la card */
+.btn-rileva {
+  margin-top: 14px;
+  display: inline-block;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid var(--border, #4a5568);
+  color: var(--text-body, #cbd5e0);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.btn-rileva:hover {
+  border-color: var(--primary, #48bb78);
+  color: var(--primary, #48bb78);
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* =============================================
+   ANIMAZIONI
+   ============================================= */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 768px) {
   .main-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 15px;
-    padding: 15px;
-    height: calc(100vh - 80px - 60px);
+    padding: 16px;
+    gap: 16px;
   }
 
-  .left-section {
-    max-height: 40vh;
-    overflow-y: auto;
-  }
-
-  .left-section h3 {
-    font-size: 18px;
-    margin-bottom: 15px;
-    padding-bottom: 12px;
-  }
-
-  .status-card {
+  .page-header {
     padding: 20px;
   }
 
-  .status-card h3 {
-    font-size: 16px;
-    margin-bottom: 15px;
+  .page-header h1 {
+    font-size: 20px;
   }
 
-  .center-section {
-    min-height: 50vh;
-  }
-
-  #mini-map {
-    min-height: 400px;
-  }
-}
-
-/* Mobile - Layout verticale ottimizzato */
-@media (max-width: 768px) {
-  html, body {
-    overflow-y: auto;
-    height: auto;
-  }
-
-  body {
-    display: block;
-  }
-
-  .main-container {
-    display: flex;
+  .irrigation-control {
     flex-direction: column;
-    gap: 15px;
-    padding: 10px;
-    min-height: auto;
-    height: auto;
-    overflow: visible;
+    align-items: flex-start;
+    padding: 18px 20px;
+    gap: 16px;
   }
 
-  .left-section,
-  .center-section {
-    padding: 12px;
-    min-height: auto;
-    height: auto;
-    overflow: visible;
+  .selection-info {
+    width: 100%;
+    justify-content: space-between;
   }
 
-  .left-section {
-    max-height: none;
-    order: 2;
+  .action-buttons {
+    width: 100%;
+    justify-content: flex-end;
   }
 
-  .center-section {
-    order: 1;
-    min-height: 50vh;
-  }
-
-  .left-section h3 {
-    font-size: 16px;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-  }
-
-  .status-grid {
-    overflow-y: visible;
-    gap: 12px;
-  }
-
-  .status-card {
-    padding: 15px;
-  }
-
-  .status-card h3 {
+  .btn-start {
+    padding: 11px 24px;
     font-size: 14px;
-    margin-bottom: 12px;
   }
 
-  .sensor-item {
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  #mini-map {
-    height: 400px;
-    min-height: 300px;
-  }
-
-  .btn-sospendi {
-    font-size: 13px;
-    padding: 8px 10px;
-  }
-
-  .page-title h1 {
-    font-size: 28px;
-  }
-
-  .page-title p {
-    font-size: 16px;
-  }
-
-  footer {
-    font-size: 14px;
+  .sensors-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 }
 
-/* Mobile piccolo - Ultra compatto */
 @media (max-width: 480px) {
-  .main-container {
+  .bulk-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .bulk-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
     gap: 10px;
-    padding: 8px;
   }
 
-  .left-section,
-  .center-section {
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  .left-section h3 {
-    font-size: 14px;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-  }
-
-  .status-card {
-    padding: 12px;
-    border-radius: 12px;
-  }
-
-  .status-card h3 {
-    font-size: 13px;
-    margin-bottom: 10px;
-  }
-
-  .sensor-item {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  #mini-map {
-    height: 300px;
-    min-height: 250px;
-  }
-
-  .btn-sospendi {
-    font-size: 12px;
-    padding: 6px 8px;
-  }
-
-  .page-title h1 {
-    font-size: 24px;
-  }
-
-  .page-title p {
-    font-size: 14px;
-  }
-}
-
-/* Landscape mobile - Priorità alla mappa */
-@media (max-width: 768px) and (orientation: landscape) {
-  .main-container {
-    grid-template-columns: 35% 65%;
-    grid-template-rows: 1fr;
-    height: calc(100vh - 80px - 60px);
-  }
-
-  .left-section {
-    order: 1;
-    max-height: 100%;
-  }
-
-  .center-section {
-    order: 2;
-  }
-
-  #mini-map {
-    height: 100%;
-    min-height: 400px;
+  .btn-cancel,
+  .btn-start {
+    width: 100%;
+    text-align: center;
   }
 }

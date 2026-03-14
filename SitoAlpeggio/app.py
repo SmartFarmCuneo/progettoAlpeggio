@@ -1207,6 +1207,11 @@ def gestione_sensori(current_user):
                                            user=user,
                                            sensori=sensori,
                                            success='activate')
+                
+                elif action == 'modifica':
+                    #DA FARE
+                    id_sens = request.form.get('id_sensore', '').strip()
+                    pass
 
             sensori = get_sensor2(user_id)
             # print("sensori corretti: " + str(sensori))
@@ -1237,7 +1242,7 @@ def get_sensor2(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-                        SELECT s.id_sens, s.Node_id, s.stato_sens, s.nome_sens
+                        SELECT *
                         FROM sensor s
                         JOIN assoc_users_sens aus ON s.id_sens = aus.id_sens
                         WHERE aus.id_utente = %s
@@ -2218,6 +2223,14 @@ def inizializzaIrrigazione():
             data = request.get_json()
             campo_id = data.get('campo_id')
             selected_sensors = data.get('selectedSensors', [])
+            sensori_posizione = data.get('sensoriConPosizione', [])
+
+            # Crea dizionario node_id → posizione per accesso rapido
+            posizioni_map = {
+                sp['node_id']: sp['posizione'] for sp in sensori_posizione
+            }
+            print(f"Mappa posizioni: {posizioni_map}")
+
             session['id_campo_selezionato'] = campo_id
             session['selected_sensors'] = selected_sensors
 
@@ -2226,10 +2239,21 @@ def inizializzaIrrigazione():
             cursor = conn.cursor()
             # utilizzo l'id univoco del sensore
             for i in selected_sensors:
-                cursor.execute(
-                    "UPDATE sensor SET stato_sens = 'O' WHERE Node_ID = %s",
-                    (i)
-                )
+                pos = posizioni_map.get(i)
+                if pos is None:
+                    cursor.execute(
+                        "UPDATE sensor SET stato_sens = 'O' WHERE Node_ID = %s",
+                        (i,)
+                    )
+                else:
+                    lat      = pos.get('latitude')
+                    lon      = pos.get('longitude')
+                    accuracy = pos.get('accuracy')
+                    cursor.execute(
+                        "UPDATE sensor SET stato_sens='O', latitude=%s, longitude=%s, accuracy=%s WHERE Node_ID = %s",
+                        (lat, lon, accuracy, i) 
+                    )
+
             conn.commit()
             cursor.close()
             conn.close()
@@ -2246,7 +2270,6 @@ def inizializzaIrrigazione():
             # estraggo l'id della registrazione dell'irrigazione appena inserita
             last_id = cursor.lastrowid
             session["id_data"] = last_id
-            print("Ses1: " + str(session['id_data']))
             cursor.close()
             conn.close()
 
@@ -2260,7 +2283,6 @@ def inizializzaIrrigazione():
                     (k,)
                 )
                 row = cursor.fetchone()
-                print(f"Riga: {row}")
                 if row:
                     result_ids.append(row['id_sens'])
             cursor.close()
@@ -2272,8 +2294,6 @@ def inizializzaIrrigazione():
             cursor = conn.cursor()
             with conn:
                 for our_id, node_id in zip(result_ids, selected_sensors):
-                    print("MIO ID:" + str(our_id))
-                    print("NODE ID: " + str(node_id))
                     cursor.execute(
                         "INSERT INTO assoc_sens_data "
                         "(id_data, id_sens, date_att_sens, date_conc_sens, Node_id, idx, Bat, Humidity, Temperature, ADC) "

@@ -1,15 +1,17 @@
 document.addEventListener("DOMContentLoaded", function () {
 
     let sensorsData = [];
-    const selectedSensors = new Set();
+    const selectedSensors  = new Set();
+    const posizioniSensori = {};  // { node_id: { latitude, longitude, accuracy } }
 
-    const sensorsGrid = document.getElementById('sensors-grid');
+    const sensorsGrid  = document.getElementById('sensors-grid');
     const selectedCount = document.getElementById('selected-count');
-    const startBtn = document.getElementById('start-btn');
+    const startBtn     = document.getElementById('start-btn');
 
-    // Funzione per mostrare il popup
+    // ---------------------------------------------------------------
+    // POPUP
+    // ---------------------------------------------------------------
     function mostraPopup(messaggio) {
-        // Crea overlay scuro
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed;
@@ -24,7 +26,6 @@ document.addEventListener("DOMContentLoaded", function () {
             z-index: 9999;
         `;
 
-        // Crea popup
         const popup = document.createElement('div');
         popup.style.cssText = `
             background: white;
@@ -52,13 +53,14 @@ document.addEventListener("DOMContentLoaded", function () {
         overlay.appendChild(popup);
         document.body.appendChild(overlay);
 
-        // Chiudi popup al click
         document.getElementById('close-popup').addEventListener('click', () => {
             document.body.removeChild(overlay);
         });
     }
 
-    // Carica sensori da API
+    // ---------------------------------------------------------------
+    // CARICA SENSORI DA API
+    // ---------------------------------------------------------------
     function caricaSensori() {
         fetch("/api/get_sensor")
             .then((res) => res.json())
@@ -85,17 +87,21 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Ritorna info stato
+    // ---------------------------------------------------------------
+    // STATO SENSORE
+    // ---------------------------------------------------------------
     function getStatusInfo(statoSens) {
         switch (statoSens) {
             case 'C': return { status: 'disponibile', label: 'Disponibile' };
-            case 'O': return { status: 'in-uso', label: 'In Uso' };
-            case 'S': return { status: 'offline', label: 'Sospeso' };
-            default:  return { status: 'offline', label: 'Sconosciuto' };
+            case 'O': return { status: 'in-uso',      label: 'In Uso' };
+            case 'S': return { status: 'offline',     label: 'Sospeso' };
+            default:  return { status: 'offline',     label: 'Sconosciuto' };
         }
     }
 
-    // Parsing stringa ricevuta
+    // ---------------------------------------------------------------
+    // PARSING STRINGA SENSORI
+    // ---------------------------------------------------------------
     function parseSensoriData(dataString) {
         const sensori = [];
 
@@ -108,18 +114,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const parti = sensoreStr.split('/');
 
             if (parti.length >= 3) {
-                const nome_sens = parti[0].trim();
-                const nodeId = parti[1].trim();
-                const statoSens = parti[2].trim();
-
+                const nome_sens  = parti[0].trim();
+                const nodeId     = parti[1].trim();
+                const statoSens  = parti[2].trim();
                 const statusInfo = getStatusInfo(statoSens);
 
                 sensori.push({
-                    id: nodeId,
-                    name: nome_sens,
-                    status: statusInfo.status,
+                    id:          nodeId,
+                    name:        nome_sens,
+                    status:      statusInfo.status,
                     statusLabel: statusInfo.label,
-                    icon: '💧'
+                    icon:        '💧'
                 });
             }
         });
@@ -127,7 +132,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return sensori;
     }
 
-    // Render sensori
+    // ---------------------------------------------------------------
+    // RENDER SENSORI
+    // ---------------------------------------------------------------
     function renderSensors() {
         sensorsGrid.innerHTML = '';
 
@@ -143,7 +150,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (sensor.status !== 'disponibile') {
                 card.style.opacity = '0.6';
-                card.style.cursor = 'not-allowed';
+                card.style.cursor  = 'not-allowed';
             }
 
             card.innerHTML = `
@@ -153,17 +160,94 @@ document.addEventListener("DOMContentLoaded", function () {
                 <span class="sensor-status ${sensor.status}">
                     ${sensor.statusLabel}
                 </span>
+                <button class="location-btn" data-sensor-id="${sensor.id}" title="Mostra posizione in tempo reale">
+                    Rileva Posizione
+                </button>
+                <div class="location-info" id="location-${sensor.id}" style="display:none;">
+                    <span class="location-text">Recupero posizione...</span>
+                </div>
             `;
 
+            // Selezione card (solo sensori disponibili)
             if (sensor.status === 'disponibile') {
                 card.addEventListener('click', () => toggleSensor(sensor.id, card));
             }
+
+            // -----------------------------------------------------------
+            // PULSANTE POSIZIONE IN TEMPO REALE
+            // -----------------------------------------------------------
+            const locationBtn = card.querySelector('.location-btn');
+            let watchId = null;
+
+            locationBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // evita selezione/deselezione della card
+
+                const locationDiv  = document.getElementById(`location-${sensor.id}`);
+                const locationText = locationDiv.querySelector('.location-text');
+
+                // Toggle: se già aperto, chiudi e stoppa il watch
+                if (locationDiv.style.display === 'block') {
+                    locationDiv.style.display = 'none';
+                    locationBtn.textContent   = 'Rileva Posizione';
+                    if (watchId !== null) {
+                        navigator.geolocation.clearWatch(watchId);
+                        watchId = null;
+                    }
+                    // Rimuovi la posizione salvata quando si chiude
+                    delete posizioniSensori[sensor.id];
+                    return;
+                }
+
+                if (!navigator.geolocation) {
+                    locationText.textContent  = '❌ Geolocalizzazione non supportata dal browser.';
+                    locationDiv.style.display = 'block';
+                    return;
+                }
+
+                locationDiv.style.display = 'block';
+                locationText.textContent  = 'Recupero posizione...';
+                locationBtn.textContent   = 'Annulla Rilevamento';
+
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const { latitude, longitude, accuracy } = position.coords;
+
+                        // Salva la posizione aggiornata per questo sensore
+                        posizioniSensori[sensor.id] = { latitude, longitude, accuracy };
+
+                        locationText.innerHTML = `
+                            <a href="https://maps.google.com/?q=${latitude},${longitude}"
+                               target="_blank"
+                               style="font-size:12px; color: var(--primary, #4CAF50);">
+                                Apri su Maps
+                            </a>
+                        `;
+                    },
+                    (error) => {
+                        const errori = {
+                            1: '❌ Permesso negato dall\'utente.',
+                            2: '❌ Posizione non disponibile.',
+                            3: '❌ Timeout nella richiesta.'
+                        };
+                        locationText.textContent = errori[error.code] || '❌ Errore sconosciuto.';
+                        locationBtn.textContent  = 'Rileva Posizione';
+                        watchId = null;
+                    },
+                    {
+                        enableHighAccuracy: false,
+                        timeout:            10000,
+                        maximumAge:         60000
+                    }
+                );
+            });
 
             sensorsGrid.appendChild(card);
         });
     }
 
-    // Selezione sensori
+    // ---------------------------------------------------------------
+    // SELEZIONE SINGOLA CARD
+    // ---------------------------------------------------------------
     function toggleSensor(id, card) {
         if (selectedSensors.has(id)) {
             selectedSensors.delete(id);
@@ -175,13 +259,17 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI();
     }
 
-    // Aggiorna elementi UI
+    // ---------------------------------------------------------------
+    // AGGIORNA UI
+    // ---------------------------------------------------------------
     function updateUI() {
         selectedCount.textContent = selectedSensors.size;
         startBtn.disabled = selectedSensors.size === 0;
     }
 
-    // Seleziona tutti
+    // ---------------------------------------------------------------
+    // SELEZIONA / DESELEZIONA TUTTI
+    // ---------------------------------------------------------------
     document.getElementById('select-all').addEventListener('click', () => {
         sensorsData.forEach(sensor => {
             if (sensor.status === 'disponibile') {
@@ -193,7 +281,6 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI();
     });
 
-    // Deseleziona tutti
     document.getElementById('deselect-all').addEventListener('click', () => {
         selectedSensors.clear();
         document.querySelectorAll('.sensor-card').forEach(card => {
@@ -202,7 +289,9 @@ document.addEventListener("DOMContentLoaded", function () {
         updateUI();
     });
 
-    // Funzione per verificare lo stato della sessione
+    // ---------------------------------------------------------------
+    // VERIFICA SESSIONE
+    // ---------------------------------------------------------------
     function verificaSessione() {
         return fetch('/api/get_session_data')
             .then(response => response.json())
@@ -216,55 +305,62 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Avvio irrigazione con controllo sessione
+    // ---------------------------------------------------------------
+    // AVVIO IRRIGAZIONE
+    // ---------------------------------------------------------------
     startBtn.addEventListener('click', async () => {
-        if (selectedSensors.size > 0) {
-            // Prima verifica lo stato della sessione
-            const sessionData = await verificaSessione();
-            
-            if (sessionData === "Go") {
-                mostraPopup("Sessione di irrigazione già avviata");
-                return;
-            }
-            
-            //if (sessionData !== "Go") {
-                //mostraPopup("Errore nella verifica dello stato. Riprova più tardi.");
-                //return;
-            //}
+        if (selectedSensors.size === 0) return;
 
-            // Se la verifica è OK, procedi con l'invio
-            const sensorsArray = Array.from(selectedSensors);
-            const campoId = new URLSearchParams(window.location.search).get('campo_id');
-
-            fetch('/ini_irr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campo_id: campoId, selectedSensors: sensorsArray })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Risposta dal server:", data);
-                    
-                    // Controlla lo stato della risposta
-                    if (data.status === "ok") {
-                        // Se lo stato è "ok", procedi con il redirect
-                        window.location.href = `/avvia_irr?campo_id=${campoId}`;
-                    } else if (data.status === "no") {
-                        // Se lo stato è "no", mostra il popup
-                        mostraPopup("Ciao");
-                    } else {
-                        // Gestisci altri possibili stati
-                        mostraPopup("Errore sconosciuto durante l'avvio dell'irrigazione.");
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    mostraPopup("Errore durante l'avvio dell'irrigazione. Riprova.");
-                });
+        // 1. Verifica sessione
+        const sessionData = await verificaSessione();
+        if (sessionData === "Go") {
+            mostraPopup("Sessione di irrigazione già avviata");
+            return;
         }
+
+        // 2. Prepara dati
+        const sensorsArray = Array.from(selectedSensors);
+        const campoId = new URLSearchParams(window.location.search).get('campo_id');
+
+        // 3. Associa posizione a ogni sensore — null se il pulsante 📍 non è stato cliccato
+        const sensoriConPosizione = sensorsArray.map(nodeId => ({
+            node_id:   nodeId,
+            posizione: posizioniSensori[nodeId] || null
+        }));
+
+        console.log("Sensori con posizione:", sensoriConPosizione);
+
+        // 4. Invia al server
+        fetch('/ini_irr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                campo_id:            campoId,
+                selectedSensors:     sensorsArray,
+                sensoriConPosizione: sensoriConPosizione
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Risposta dal server:", data);
+
+                if (data.status === "ok") {
+                    window.location.href = `/avvia_irr?campo_id=${campoId}`;
+                } else if (data.status === "no") {
+                    mostraPopup("Sessione già avviata.");
+                } else {
+                    mostraPopup("Errore sconosciuto durante l'avvio dell'irrigazione.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                mostraPopup("Errore durante l'avvio dell'irrigazione. Riprova.");
+            });
     });
 
-    // Carica i sensori all'avvio
+    // ---------------------------------------------------------------
+    // INIT
+    // ---------------------------------------------------------------
     caricaSensori();
 
 });
