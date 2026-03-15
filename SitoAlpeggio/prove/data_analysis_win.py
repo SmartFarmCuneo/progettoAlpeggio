@@ -217,9 +217,10 @@ def main():
     r = requests.get(f"http://192.168.1.6:5000/api/get_token/{INPUT_TOKEN}")
     TOKEN = r.json()["token"]
     r1 = requests.get(F"http://192.168.1.6:5000/api/get_telegram_chat_id/{INPUT_TOKEN}")
-    CHAT_ID = r1.json()["chat_id"]
-    #print("CHAR_ID: ", CHAT_ID)
-    #print("TOKEN ricevuto:", TOKEN)
+    chat_id_raw = r1.json()["chat_id"]
+    CHAT_ID = chat_id_raw["telegram_chat_id"]
+    print("CHAR_ID: ", CHAT_ID)
+    print("TOKEN ricevuto:", TOKEN)
     data['type'] = 'Authentication'
     data['user'] = INPUT_TOKEN
     send_to_server(data)

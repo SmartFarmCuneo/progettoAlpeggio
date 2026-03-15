@@ -967,6 +967,23 @@ def get_session_coordinate():
 def mappa(current_user):
     return render_template('mappa.html')
 
+@app.route('/insert_sensori', methods=['GET', 'POST'])
+@token_required
+def insert_sensori(current_user):
+    conn = get_db_connection()
+    user = None
+    sensori = []
+    with conn.cursor() as cursor:
+        cursor.execute(
+                    "SELECT * FROM users WHERE username = %s", (current_user,))
+        user = cursor.fetchone()
+        if not user:
+            return redirect(url_for('login'))
+        user_id = user['id_u']
+    sensori = get_sensor2(user_id)
+    print(sensori)
+    return render_template('insert_sensori.html', sensori=sensori)
+
 @app.route("/api/campi-utente")
 @token_required
 def api_campi_utente(current_user):
@@ -1085,10 +1102,8 @@ def gestione_sensori(current_user):
             cursor.execute(
                 "SELECT * FROM users WHERE username = %s", (current_user,))
             user = cursor.fetchone()
-
             if not user:
                 return redirect(url_for('login'))
-
             user_id = user['id_u']
 
             if request.method == 'POST':

@@ -12,13 +12,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="../static/assets/dist/css/bootstrap.min.css"  />
+  <link rel="stylesheet" href="../static/assets/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="../static/css/style.css" />
   <link rel="stylesheet" href="../static/css/navbar.css" />
   <link rel="stylesheet" href="../static/css/footer.css" />
   <link rel="stylesheet" href="../static/css/media.css" />
   <link rel="stylesheet" href="../static/css/animazioni.css" />
-  
+
 </head>
 
 <body>
@@ -57,9 +57,7 @@
     <div class="profile-content">
       <main>
         <div class="py-5 text-center">
-          <img class="d-block mx-auto mb-4"
-            src="../static/image/logo.png" alt="" width="72"
-            height="57" />
+          <img class="d-block mx-auto mb-4" src="../static/image/logo.png" alt="" width="72" height="57" />
           <h2>Gestione campo</h2>
           <p class="lead">Modifica e gestisci i tuoi campi agricoli</p>
         </div>
@@ -106,6 +104,14 @@
                 </svg>
                 Modifica posizione
               </a>
+
+              <a href="/insert_sensori" id="geoButton" class="action-btn btn-location" style="text-decoration: none">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2c3.866 4.5 3.866 13.5 0 18M12 2c-3.866 4.5-3.866 13.5 0 18" />
+                </svg>
+                Inserisci sensori
+              </a>
             </div>
 
             <div class="row g-3">
@@ -140,7 +146,7 @@
                 <label for="zip" class="form-label">Numero di filari</label>
                 <input type="text" class="form-control" id="filari" name="filari" pattern="[0-9]" required />
                 <div class="invalid-feedback">
-                  Inserire il numero di filari del campo 
+                  Inserire il numero di filari del campo
                 </div>
               </div>
             </div>
