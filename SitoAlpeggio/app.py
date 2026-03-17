@@ -588,7 +588,6 @@ def hash_password(psw):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 
-
     error = ""
     if request.method == "POST":
         username = request.form["username"]
@@ -661,6 +660,80 @@ def registrati():
             connection.close()
 
     return render_template('registrati.html', error=error)
+
+
+#Login API per app mobile (ritorna JSON invece di fare redirect)
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({"status": "error", "message": "Dati mancanti"}), 400
+
+    username = data['username']
+    password = data['password']
+    psw = hash_password(password)
+
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        try:
+            cursor.execute(
+                "SELECT password_hash FROM users WHERE username = %s", (username,))
+            p_user = cursor.fetchone()
+        finally:
+            conn.close()
+
+    if p_user and p_user["password_hash"] == psw:
+        return jsonify({
+            "status": "success",
+            "message": "Login effettuato",
+            "user": username
+        }), 200
+    else:
+        return jsonify({"status": "error", "message": "Credenziali errate"}), 401
+    
+# Implementazione API per registrazione android
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    data = request.get_json()
+    
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({"status": "error", "message": "Dati mancanti"}), 400
+
+    username = data['username']
+    password = data['password']
+    email = data['email']
+    telefono = data['telefono']
+    nome = data['nome']
+    cognome = data['cognome']
+    cod_fiscale = data['cod_fiscale']
+    data_nascita = data['data_nascita']
+
+    psw = hash_password(password)
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            if user:
+                return jsonify({"status": "error", "message": "Username già presente"}), 400
+            else:
+                cursor.execute(
+                    "INSERT INTO users (username, password_hash, email, telefono, nome, cognome, cod_fiscale, DataDiNascita) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (username, psw, email, telefono, nome,
+                     cognome, cod_fiscale, data_nascita)
+                )
+                connection.commit()
+
+        return jsonify({"status": "success", "message": "Registrazione effettuata"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": "Errore del database"}), 500
+    finally:
+        connection.close()
+
 ##################################################################################
 
 ################################ Cookie-Token ####################################
