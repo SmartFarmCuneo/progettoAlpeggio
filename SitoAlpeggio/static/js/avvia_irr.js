@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     caricaSensoriSospesi();
     caricaMiniMappa(coordinateCampo);
     setInterval(caricaSensoriConclusi, 5000); 
+    setInterval(caricaSensoriInAttesa, 5000);
 
     // === CLICK CARD STATO ===
     document.querySelectorAll(".status-card").forEach(card => {

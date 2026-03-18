@@ -22,6 +22,7 @@ MAX_TIME_SESSION = 60 # 7200 due ore massime dall'ultima ricezione di un sensore
 BOT_TOKEN = "8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA"
 TOKEN = None
 INPUT_TOKEN = ''
+USER_SENSORS=''
 
 # URL API PER BOT
 # https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getMe
@@ -208,19 +209,32 @@ def check_finish_session():
         time.sleep(CHECK_FINISH_INTERVAL)
 
 def main():
-    global TOKEN, INPUT_TOKEN, CHAT_ID
+    global TOKEN, INPUT_TOKEN, CHAT_ID, USER_SENSORS
     data = {}
 
     print("[CLIENT] Avvio client sensore")
     INPUT_TOKEN = input("Inserire lo Username: ")
     print(f"User: {INPUT_TOKEN}")
+
     r = requests.get(f"http://192.168.1.6:5000/api/get_token/{INPUT_TOKEN}")
     TOKEN = r.json()["token"]
+
     r1 = requests.get(F"http://192.168.1.6:5000/api/get_telegram_chat_id/{INPUT_TOKEN}")
     chat_id_raw = r1.json()["chat_id"]
     CHAT_ID = chat_id_raw["telegram_chat_id"]
+
+    r2 = requests.get(F"http://192.168.1.6:5000/api/get_sensor2/{INPUT_TOKEN}")
+    sensors_list = r2.json()["sensors"]
+    USER_SENSORS = {
+        sensor["Node_id"]: sensor
+        for sensor in sensors_list
+    }
+
     print("CHAR_ID: ", CHAT_ID)
     print("TOKEN ricevuto:", TOKEN)
+    print("Sensori: ", USER_SENSORS)
+    print("Nome sensore: ", USER_SENSORS["ID010000"]["nome_sens"])
+
     data['type'] = 'Authentication'
     data['user'] = INPUT_TOKEN
     send_to_server(data)

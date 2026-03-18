@@ -1043,16 +1043,7 @@ def mappa(current_user):
 @app.route('/insert_sensori', methods=['GET', 'POST'])
 @token_required
 def insert_sensori(current_user):
-    conn = get_db_connection()
-    user = None
-    sensori = []
-    with conn.cursor() as cursor:
-        cursor.execute(
-                    "SELECT * FROM users WHERE username = %s", (current_user,))
-        user = cursor.fetchone()
-        if not user:
-            return redirect(url_for('login'))
-        user_id = user['id_u']
+    user_id = get_user_id(current_user)
     sensori = get_sensor2(user_id)
     print(sensori)
     return render_template('insert_sensori.html', sensori=sensori)
@@ -1171,13 +1162,7 @@ def gestione_sensori(current_user):
     sensori = []
     try:
         with conn.cursor() as cursor:
-            # 1. Recupera i dati dell'utente
-            cursor.execute(
-                "SELECT * FROM users WHERE username = %s", (current_user,))
-            user = cursor.fetchone()
-            if not user:
-                return redirect(url_for('login'))
-            user_id = user['id_u']
+            user_id = get_user_id(current_user)
 
             if request.method == 'POST':
                 action = request.form.get('action')
@@ -2139,7 +2124,7 @@ def get_finish_session():
             return False, "Continue"
 
 # FUNZIONANTE
-def get_user_id(username):
+def get_user_id(username): 
     #ritorna l'id dell'utente dallo username
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -2151,7 +2136,7 @@ def get_user_id(username):
     id = cursor.fetchone()
     cursor.close()
     conn.close()
-    return id
+    return id['id_u']
 
 # DA TESTARE  
 def get_data_info(id_user):
@@ -2195,12 +2180,21 @@ def get_data_info(id_user):
         #return None, None
     return id_ricerca, id_field, sensors
 
-# API PER SENSORI NELL'INIZIALIZZAZIONE
+# API PER SENSORI NELL'INIZIALIZZAZIONE (possibile da rimuovere)
 @app.route("/api/get_sensor")
 @token_required
 def api_get_sensor(current_user):
     info = get_sensor(current_user)
     return jsonify(info)
+
+# API PER INFO SENSORI
+@app.route("/api/get_sensor2/<username>")
+def api_get_sensor2(username):
+    user_id = get_user_id(username)
+    if user_id is None:
+        return jsonify({"error": "User not found"}), 404
+    info = get_sensor2(user_id)
+    return jsonify({"sensors": info})
 
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
 @app.route("/api/get_sensor_selected")
@@ -2254,7 +2248,7 @@ def init_serial_receiver(current_user):
         print("ERRORE:")
         print(f"Dati: {data}")
         print("=" * 50)
-        set_error_state_data(data, current_user)
+        set_error_state_data(data)
 
     elif data.get('type') == 'Authentication':
         print("=" * 50)
@@ -2273,7 +2267,7 @@ def init_serial_receiver(current_user):
         print(f"Dati: {data}")
         print("=" * 50)
         id_user = get_user_id(data.get('user'))
-        id_ricerca, id_terreno, sensors = get_data_info(id_user['id_u'])
+        id_ricerca, id_terreno, sensors = get_data_info(id_user)
         print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
         insert_sensor_data(data, sensors, id_ricerca)   #correggere sensors perchè non passa parametro come dizionario
 
