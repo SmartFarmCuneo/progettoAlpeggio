@@ -10,7 +10,7 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- CSS -->
+  <!-- CSS esistenti -->
   <link rel="stylesheet" href="../static/css/style.css" />
   <link rel="stylesheet" href="../static/css/navbar.css" />
   <link rel="stylesheet" href="../static/css/footer.css" />
@@ -19,100 +19,347 @@
   <link rel="stylesheet" href="../static/css/irrigazione.css" />
 
 <style>
-    /* NECESSARIO PER LEAFLET */
-    #mini-map {
-      width: 100% !important;
-      height: 100% !important;
-      border-radius: 10px;
-    }
+  /* ─── LAYOUT PAGINA (mantiene comportamento originale) ─── */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
 
-    .map-container {
-      height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-    }
+  nav, .navbar { flex-shrink: 0; }
+  footer { flex-shrink: 0; }
 
-    .center-section {
-      display: flex !important;
-      flex-direction: column !important;
-      flex: 1 !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      overflow: hidden !important;
-    }
+  /* ─── MAIN CONTAINER: stesso split 50/50 originale ─── */
+  .main-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 50% 50%;
+    height: auto;
+  }
 
-    .btn-sospendi {
-      margin-top: 10px;
-      padding: 8px 12px;
-      background-color: #d9534f;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-    }
+  /* ─── COLONNA SINISTRA ─── */
+  .left-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    padding: 20px 20px 16px;
+    box-sizing: border-box;
+    background: var(--bg-dark, #1a202c);
+  }
 
-    .btn-sospendi:hover {
-      background-color: #c9302c;
-    }
+  .left-section > h3 {
+    margin: 0 0 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-body, #cbd5e0);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
 
-    /* NUOVE REGOLE PER OCCUPARE TUTTA LA PAGINA */
+  /* ─── LISTA VERTICALE ─── */
+  .status-grid {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-bottom: 8px;
+  }
+
+  /* ─── CARD GENERICA — tema dark coerente con il progetto ─── */
+  .status-card {
+    background: var(--bg-light, #2d3748);
+    border: 1px solid var(--border, #4a5568);
+    border-radius: 14px;
+    padding: 14px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  /* Barra colorata in cima */
+  .status-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .status-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+
+  .status-card h3 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-right: 28px; /* spazio per il badge */
+  }
+
+  /* ── Operazioni: verde (primary del progetto) ── */
+  .status-card[data-status="operazioni"]::before { background: var(--primary, #48bb78); }
+  .status-card[data-status="operazioni"] { border-color: rgba(72,187,120,0.35); }
+  .status-card[data-status="operazioni"] h3 { color: var(--primary, #48bb78); }
+  .status-card[data-status="operazioni"]:hover { border-color: rgba(72,187,120,0.7); }
+
+  /* ── Conclusi: blu ── */
+  .status-card[data-status="conclusi"]::before { background: #4299e1; }
+  .status-card[data-status="conclusi"] { border-color: rgba(66,153,225,0.35); }
+  .status-card[data-status="conclusi"] h3 { color: #63b3ed; }
+  .status-card[data-status="conclusi"]:hover { border-color: rgba(66,153,225,0.7); }
+
+  /* ── In Attesa: arancio ── */
+  .status-card[data-status="attesa"]::before { background: #ed8936; }
+  .status-card[data-status="attesa"] { border-color: rgba(237,137,54,0.35); }
+  .status-card[data-status="attesa"] h3 { color: #f6ad55; }
+  .status-card[data-status="attesa"]:hover { border-color: rgba(237,137,54,0.7); }
+
+  /* ── Sospesi: rosso (danger) ── */
+  .status-card[data-status="sospesi"]::before { background: var(--danger, #e53e3e); }
+  .status-card[data-status="sospesi"] { border-color: rgba(229,62,62,0.35); }
+  .status-card[data-status="sospesi"] h3 { color: #fc8181; }
+  .status-card[data-status="sospesi"]:hover { border-color: rgba(229,62,62,0.7); }
+
+  /* ─── BADGE CONTATORE ─── */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--border, #4a5568);
+    color: var(--text-body, #cbd5e0);
+  }
+
+  .status-card[data-status="operazioni"] .status-badge { background: rgba(72,187,120,0.2); color: var(--primary, #48bb78); }
+  .status-card[data-status="conclusi"]   .status-badge { background: rgba(66,153,225,0.2); color: #63b3ed; }
+  .status-card[data-status="attesa"]     .status-badge { background: rgba(237,137,54,0.2); color: #f6ad55; }
+  .status-card[data-status="sospesi"]    .status-badge { background: rgba(229,62,62,0.2);  color: #fc8181; }
+
+  /* ─── LISTA SENSORI ─── */
+  .sensors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 24px;
+  }
+
+  .sensor-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 9px;
+    border-radius: 7px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border, #4a5568);
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .sensor-item:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: #718096;
+  }
+
+  .sensor-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-card[data-status="operazioni"] .sensor-dot { background: var(--primary, #48bb78); }
+  .status-card[data-status="conclusi"]   .sensor-dot { background: #4299e1; }
+  .status-card[data-status="attesa"]     .sensor-dot { background: #ed8936; }
+  .status-card[data-status="sospesi"]    .sensor-dot { background: var(--danger, #e53e3e); }
+
+  .sensor-name {
+    font-weight: 500;
+    color: white;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sensor-meta {
+    font-size: 11px;
+    color: #718096;
+    flex-shrink: 0;
+  }
+
+  /* ─── EMPTY STATE ─── */
+  .sensors-empty {
+    font-size: 12px;
+    color: #718096;
+    padding: 4px 0;
+    font-style: italic;
+  }
+
+  /* ─── AZIONI CARD ─── */
+  .card-actions {
+    margin-top: 2px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border, #4a5568);
+  }
+
+  .card-actions form { margin: 0; }
+
+  /* ─── BOTTONE CONCLUDI — stesso stile btn-sospendi originale ─── */
+  .btn-sospendi {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--danger, #e53e3e);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: background 0.2s, transform 0.1s;
+    text-align: center;
+  }
+  .btn-sospendi:hover { background: var(--danger-hover, #c53030); }
+  .btn-sospendi:active { transform: scale(0.97); }
+
+  /* ─── MAPPA ─── */
+  #mini-map {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 10px;
+  }
+
+  .map-container {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .center-section {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .right-section { display: none !important; }
+
+  /* ─── SCROLLBAR dark ─── */
+  .status-grid::-webkit-scrollbar { width: 4px; }
+  .status-grid::-webkit-scrollbar-track { background: transparent; }
+  .status-grid::-webkit-scrollbar-thumb { background: var(--border, #4a5568); border-radius: 99px; }
+
+  /* ─── RESPONSIVE ─── */
+
+  /* Tablet: la mappa compare sotto i sensori */
+  @media (max-width: 900px) {
     html, body {
-      height: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      overflow: hidden !important;
-    }
-
-    body {
-      display: flex !important;
-      flex-direction: column !important;
+      overflow-y: auto;
+      height: auto;
     }
 
     .main-container {
-      flex: 1 !important;
-      min-height: 0 !important;
-      overflow: hidden !important;
-      display: grid !important;
-      grid-template-columns: 50% 50% !important;
-      height: auto !important;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      overflow: visible;
+      height: auto;
     }
 
     .left-section {
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      height: 100% !important;
+      height: auto;
+      overflow: visible;
+      padding: 16px;
     }
 
     .status-grid {
-      flex: 1 !important;
-      overflow-y: auto !important;
+      overflow-y: visible;
+      height: auto;
+      flex: none;
+    }
+
+    .center-section {
+      height: 400px !important;
       min-height: 0 !important;
+      padding: 0 16px 16px;
     }
 
-    .right-section {
-      display: none !important;
+    #mini-map {
+      border-radius: 10px;
+    }
+  }
+
+  /* Mobile: padding ridotto, card più compatte */
+  @media (max-width: 600px) {
+    .left-section {
+      padding: 12px;
     }
 
-    footer {
-      flex-shrink: 0 !important;
+    .left-section > h3 {
+      font-size: 11px;
+      margin-bottom: 10px;
     }
 
-    nav, .navbar {
-      flex-shrink: 0 !important;
+    .status-grid {
+      gap: 10px;
     }
+
+    .status-card {
+      padding: 12px 13px;
+      border-radius: 11px;
+      gap: 8px;
+    }
+
+    .status-card h3 {
+      font-size: 10px;
+    }
+
+    .sensor-item {
+      font-size: 12px;
+      padding: 5px 8px;
+    }
+
+    .btn-sospendi {
+      font-size: 12px;
+      padding: 9px 10px;
+    }
+
+    .center-section {
+      height: 300px !important;
+      padding: 0 12px 12px;
+    }
+  }
 </style>
 </head>
 
 <body>
 
-  <!-- NAVBAR (NON TOCCATA) -->
+  <!-- NAVBAR -->
   <nav class="navbar" role="navigation">
     <div class="navbar-top container">
       <a href="/home" class="logo">Agrinnov</a>
-      <a>Campo selezionato: {{campo_id}}</a>
-
       <div class="user-nav">
         <div class="user-info">
           <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
@@ -126,50 +373,77 @@
   </nav>
 
   <!-- CONTENUTO PRINCIPALE -->
-  <!-- CONTENUTO PRINCIPALE -->
-<div class="main-container">
+  <div class="main-container">
 
-  <!-- SINISTRA - SENSORI -->
-  <div class="left-section">
-    <h3>Stato Sensori</h3>
-    <div class="status-grid">
+    <!-- SINISTRA - SENSORI -->
+    <div class="left-section">
+      <h3>Stato Sensori</h3>
 
-      <div class="status-card active" data-status="operazioni">
-        <h3>Operazioni</h3>
-        <div class="sensors-list"></div>
-        <form method="POST" action="/avvia_irr">
-          <input type="hidden" name="azione" value="concludi">
-          <input type="hidden" name="sensor_id" value="0">
-          <button class="btn-sospendi">Concludi forzatamente l'irrigazione</button>
-        </form>
+      <div class="status-grid">
+
+        <!-- ── OPERAZIONI ── -->
+        <div class="status-card" data-status="operazioni">
+          <span class="status-badge" id="badge-operazioni">0</span>
+          <h3>Operazioni</h3>
+
+          <div class="sensors-list" id="list-operazioni">
+            <div class="sensor-item">
+              <span class="sensor-dot"></span>
+              <span class="sensor-name">Campo selezionato: {{campo_id}}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <form method="POST" action="/avvia_irr">
+              <input type="hidden" name="azione" value="concludi">
+              <input type="hidden" name="sensor_id" value="0">
+              <button type="submit" class="btn-sospendi">Concludi forzatamente l'irrigazione</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── IN ATTESA ── -->
+        <div class="status-card" data-status="attesa">
+          <span class="status-badge" id="badge-attesa">0</span>
+          <h3>In Attesa</h3>
+          <div class="sensors-list" id="list-attesa">
+            <div class="sensor-item">
+              <span class="sensor-dot"></span>
+              <span class="sensor-name">Settore C-2</span>
+              <span class="sensor-meta">in coda</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CONCLUSI ── -->
+        <div class="status-card" data-status="conclusi">
+          <span class="status-badge" id="badge-conclusi">0</span>
+          <h3>Conclusi</h3>
+          <div class="sensors-list" id="list-conclusi">
+            <span class="sensors-empty">Nessun settore concluso</span>
+          </div>
+        </div>
+
+        <!-- ── SOSPESI ── -->
+        <div class="status-card" data-status="sospesi">
+          <span class="status-badge" id="badge-sospesi">0</span>
+          <h3>Sospesi</h3>
+          <div class="sensors-list" id="list-sospesi">
+            <span class="sensors-empty">Nessun settore sospeso</span>
+          </div>
+        </div>
+
+      </div><!-- /status-grid -->
+    </div><!-- /left-section -->
+
+    <!-- DESTRA - MAPPA -->
+    <div class="center-section">
+      <div class="map-container">
+        <div id="mini-map" data-coord="{{ coordinate_campo }}"></div>
       </div>
-
-      <div class="status-card" data-status="conclusi">
-        <h3>Conclusi</h3>
-        <div class="sensors-list"></div>
-      </div>
-
-      <div class="status-card" data-status="attesa">
-        <h3>In Attesa</h3>
-        <div class="sensors-list"></div>
-      </div>
-
-      <div class="status-card" data-status="sospesi">
-        <h3>Sospesi</h3>
-        <div class="sensors-list"></div>
-      </div>
-
     </div>
-  </div>
 
-  <!-- DESTRA - MAPPA -->
-  <div class="center-section">
-    <div class="map-container">
-      <div id="mini-map" data-coord="{{ coordinate_campo }}"></div>
-    </div>
-  </div>
-
-</div>
+  </div><!-- /main-container -->
 
   <!-- FOOTER -->
   <footer id="contact">
@@ -188,12 +462,36 @@
   {% include "cookie_banner.html" %}
   {% endif %}
 
-  <!-- Leaflet JS (PRIMA del tuo JS) -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Aggiorna i badge contatore dal JS esistente o qui sotto -->
+  <script>
+    /**
+     * Utility: aggiorna il badge numerico di ogni card
+     * Chiamala dal tuo avvia_irr.js ogni volta che aggiorni le liste.
+     * Esempio: updateBadge('operazioni', 2);
+     */
+    function updateBadge(status, count) {
+      const badge = document.getElementById('badge-' + status);
+      if (badge) badge.textContent = count;
+    }
+
+    // Aggiornamento automatico contando gli .sensor-item presenti
+    function syncBadges() {
+      ['operazioni', 'conclusi', 'attesa', 'sospesi'].forEach(function(s) {
+        const list = document.getElementById('list-' + s);
+        if (!list) return;
+        const count = list.querySelectorAll('.sensor-item').length;
+        updateBadge(s, count);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', syncBadges);
+  </script>
 
   <!-- TUO JS -->
   <script src="../static/js/avvia_irr.js" defer></script>
 
 </body>
-
 </html>

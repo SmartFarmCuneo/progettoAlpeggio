@@ -22,7 +22,8 @@ MAX_TIME_SESSION = 60 # 7200 due ore massime dall'ultima ricezione di un sensore
 BOT_TOKEN = "8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA"
 TOKEN = None
 INPUT_TOKEN = ''
-USER_SENSORS=''
+USER_SENSORS = {}
+USER_INFO = {}
 
 # URL API PER BOT
 # https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getMe
@@ -108,7 +109,7 @@ def send_to_server(data):
     except Exception as e:
         print("[SERVER] Errore invio:", e)"""
 
-def send_desktop_notification(title, message):
+def send_telegram_notification(title, message):
     print("Invio notifica Telegram...")
     r = requests.post(
         f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
@@ -165,7 +166,7 @@ def serial_reader_loop():
             time.sleep(5)
 
 def read_data(ser):
-    global latest_sensor_data, INPUT_TOKEN
+    global latest_sensor_data, INPUT_TOKEN, USER_SENSORS
 
     line = ser.readline().decode("utf-8", errors="ignore").strip()
     if not line:
@@ -183,7 +184,14 @@ def read_data(ser):
 
         #save_data(data) SALVATAGGIO SU FILE CSV
         #if data['ADC'] < 700: versione base invia solamente quando intercetta acqua
-        send_desktop_notification("⚠️ ALLARME SENSORE", "Acqua rilevata!")
+        send_telegram_notification(
+            "⚠️ ALLARME SENSORE",
+            f"""ACQUA RILEVATA DAL SENSORE [{USER_SENSORS[data['Node_id']]['nome_sens']}]-[{data['Node_id']}]
+        • Terreno: [{USER_INFO['id_terreno']}]
+        • Filare: [{USER_SENSORS[data['Node_id']]['filare'] or 'Non presente'}]
+        • ID Ricerca: [{USER_INFO['id_data']}]"""
+        )
+        #send_telegram_notification("⚠️ ALLARME SENSORE", "Acqua rilevata!")
         send_to_server(data)
 
     except json.JSONDecodeError:
@@ -209,7 +217,7 @@ def check_finish_session():
         time.sleep(CHECK_FINISH_INTERVAL)
 
 def main():
-    global TOKEN, INPUT_TOKEN, CHAT_ID, USER_SENSORS
+    global TOKEN, INPUT_TOKEN, CHAT_ID, USER_SENSORS, USER_INFO
     data = {}
 
     print("[CLIENT] Avvio client sensore")
@@ -223,17 +231,23 @@ def main():
     chat_id_raw = r1.json()["chat_id"]
     CHAT_ID = chat_id_raw["telegram_chat_id"]
 
-    r2 = requests.get(F"http://192.168.1.6:5000/api/get_sensor2/{INPUT_TOKEN}")
+    r2 = requests.get(F"http://192.168.1.6:5000/api/get_user_info_data/{INPUT_TOKEN}")
     sensors_list = r2.json()["sensors"]
+    id_data = r2.json()["id_ricerca"]
+    id_terreno = r2.json()["id_terreno"]
+
     USER_SENSORS = {
         sensor["Node_id"]: sensor
         for sensor in sensors_list
     }
+    USER_INFO['id_data'] = id_data
+    USER_INFO['id_terreno'] = id_terreno
 
-    print("CHAR_ID: ", CHAT_ID)
-    print("TOKEN ricevuto:", TOKEN)
-    print("Sensori: ", USER_SENSORS)
-    print("Nome sensore: ", USER_SENSORS["ID010000"]["nome_sens"])
+    #print("CHAR_ID: ", CHAT_ID)
+    #print("TOKEN ricevuto:", TOKEN)
+    #print("Sensori: ", USER_SENSORS)
+    #print("Nome sensore: ", USER_SENSORS["ID010000"]["nome_sens"])
+    #print("User info: ", USER_INFO)
 
     data['type'] = 'Authentication'
     data['user'] = INPUT_TOKEN

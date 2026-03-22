@@ -1043,10 +1043,11 @@ def mappa(current_user):
 @app.route('/insert_sensori', methods=['GET', 'POST'])
 @token_required
 def insert_sensori(current_user):
+    campo_id = session['id_campo_selezionato']
     user_id = get_user_id(current_user)
     sensori = get_sensor2(user_id)
     print(sensori)
-    return render_template('insert_sensori.html', sensori=sensori)
+    return render_template('insert_sensori.html', sensori=sensori, campo_id=campo_id, coordinate_campo=get_coordinate(campo_id))
 
 @app.route("/api/campi-utente")
 @token_required
@@ -2077,7 +2078,7 @@ def get_state_data():
     else:
         return 'Stop' #Go
 
-# DA TESTARE
+# FUNZIONANTE
 def get_finish_session():
     # vado a stabilire la fine della sessione di irrigazione quando tutti i sensori coinvolti hanno la date_conc_sens diverso da NULL
     # se ritorna come conteggio 0, si salva la data di conclusione dell'ultimo sensore come data di fine
@@ -2187,14 +2188,15 @@ def api_get_sensor(current_user):
     info = get_sensor(current_user)
     return jsonify(info)
 
-# API PER INFO SENSORI
-@app.route("/api/get_sensor2/<username>")
-def api_get_sensor2(username):
+# API PER INFO SENSORI E CAMPO (PER NOTIFICA TELEGRAM)
+@app.route("/api/get_user_info_data/<username>")
+def api_get_user_info_data(username):
     user_id = get_user_id(username)
     if user_id is None:
         return jsonify({"error": "User not found"}), 404
     info = get_sensor2(user_id)
-    return jsonify({"sensors": info})
+    id_ricerca, id_terreno, sensors = get_data_info(user_id)
+    return jsonify({"sensors": info, "id_ricerca": id_ricerca, "id_terreno": id_terreno})
 
 # API PER SENSORI SCELTI E PRONTI PER L'IRRIGAZIONE
 @app.route("/api/get_sensor_selected")

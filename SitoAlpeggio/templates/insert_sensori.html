@@ -20,10 +20,8 @@
   <link rel="stylesheet" href="../static/css/animazioni.css" />
 
   <style>
-    /* ── Layout principale ─────────────────────────────────── */
     .main-row { height: 70vh; }
 
-    /* ── Colonna sinistra ──────────────────────────────────── */
     .col-left {
       display: flex;
       flex-direction: column;
@@ -31,7 +29,6 @@
       height: 100%;
     }
 
-    /* ── Selezione sensore (stile immagine) ────────────────── */
     .sensor-select-wrap {
       background: #1e2535;
       border: 1px solid #2d3748;
@@ -43,16 +40,15 @@
     .sensor-select-wrap .label-title {
       font-size: 0.82rem;
       font-weight: 700;
-      color: #48bb78;           /* verde come nell'immagine */
+      color: #48bb78;
       margin-bottom: 0.45rem;
       letter-spacing: 0.01em;
     }
 
-    /* Select nativa stilizzata per assomigliare all'immagine */
     .sensor-native-select {
       width: 100%;
       background: #151c2a;
-      border: 2px solid #48bb78;  /* bordo verde come nel mockup */
+      border: 2px solid #48bb78;
       border-radius: 7px;
       color: #e2e8f0;
       font-size: 0.85rem;
@@ -70,15 +66,9 @@
       border-color: #68d391;
       box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.18);
     }
-    .sensor-native-select option {
-      background: #1e2535;
-      color: #e2e8f0;
-    }
-    .sensor-native-select option:first-child {
-      color: #718096;
-    }
+    .sensor-native-select option { background: #1e2535; color: #e2e8f0; }
+    .sensor-native-select option:first-child { color: #718096; }
 
-    /* Badge sensore selezionato */
     .sensor-selected-badge {
       display: none;
       margin-top: 0.5rem;
@@ -99,17 +89,13 @@
       flex-shrink: 0;
     }
 
-    /* ── Tabella coordinate ────────────────────────────────── */
     .coord-wrap {
       flex: 1;
       min-height: 0;
       display: flex;
       flex-direction: column;
     }
-    .coord-wrap h5 {
-      font-size: 0.85rem;
-      margin-bottom: 0.5rem;
-    }
+    .coord-wrap h5 { font-size: 0.85rem; margin-bottom: 0.5rem; }
     .coord-table-scroll {
       flex: 1;
       overflow-y: auto;
@@ -121,7 +107,9 @@
     .coord-table-scroll::-webkit-scrollbar-thumb { background: #3a4a5e; border-radius: 4px; }
 
     @media (max-width: 767px) {
-      .main-row { height: auto; }
+      .main-row  { height: auto; }
+      .col-left  { height: auto; }
+      .col-md-8  { height: 350px !important; margin-top: 1rem; }
     }
   </style>
 </head>
@@ -149,50 +137,37 @@
 
     <div class="row main-row">
 
-      <!-- ── Colonna sinistra: selezione sensore + coordinate ── -->
+      <!-- Colonna sinistra -->
       <div class="col-md-4 col-left">
 
-        <!-- Selezione sensore -->
         <div class="sensor-select-wrap">
           <div class="label-title">Sensore da posizionare</div>
 
-          <!-- Select popolata da Jinja2, dati passati dal backend -->
           <select class="sensor-native-select" id="sensorSelect" name="sensore_selezionato">
             <option value="">Scegli un sensore...</option>
             {% for s in sensori %}
-            <option
-              value="{{ s.id_s }}"
-              data-tipo="{{ s.tipo or '' }}"
-            >
+            <option value="{{ s.id_s }}" data-tipo="{{ s.tipo or '' }}">
               {{ s.nome_sens or ('Sensore ' ~ s.id_sens) }}{% if s.tipo %} – {{ s.tipo }}{% endif %}
             </option>
             {% endfor %}
           </select>
 
-          <!-- Badge feedback selezione -->
           <div class="sensor-selected-badge" id="sensorBadge">
             <span class="badge-dot"></span>
             <span id="sensorBadgeText"></span>
           </div>
         </div>
 
-        <!-- Coordinate selezionate -->
         <div class="coord-wrap">
           <h5>Coordinate selezionate</h5>
           <div class="coord-table-scroll">
             <div style="border-radius:10px; overflow:hidden;">
               <table class="table table-dark table-striped table-hover mb-0">
                 <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Latitudine</th>
-                    <th>Longitudine</th>
-                  </tr>
+                  <tr><th>#</th><th>Latitudine</th><th>Longitudine</th></tr>
                 </thead>
                 <tbody id="coordinates">
-                  <tr>
-                    <td colspan="3">Nessuna coordinata selezionata</td>
-                  </tr>
+                  <tr><td colspan="3">Nessuna coordinata selezionata</td></tr>
                 </tbody>
               </table>
             </div>
@@ -204,18 +179,17 @@
         </button>
 
       </div>
-      <!-- /col-left -->
 
-      <!-- ── Colonna destra: mappa ── -->
+      <!-- Colonna destra: mappa con perimetro campo -->
       <div class="col-md-8" style="height:100%;">
         <div class="map-wrapper" style="height:100%;">
-          <div id="map" style="height:100%;"></div>
+          <!-- data-coord riceve le coordinate del campo da Jinja2 -->
+          <div id="map" style="height:100%;" data-coord="{{ coordinate_campo }}"></div>
         </div>
       </div>
 
-    </div><!-- /row -->
+    </div>
 
-    <!-- Form nascosto -->
     <form id="coordinateForm" action="/salva-coordinate" method="POST">
       <input type="hidden" name="coordinate"          id="coordinateInput" />
       <input type="hidden" name="sensore_selezionato" id="sensoreInput"    />
@@ -237,7 +211,6 @@
 
   {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
 
-  <!-- Script -->
   <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
@@ -245,32 +218,76 @@
   <script src="../static/js/mappa.js" defer></script>
 
   <script>
+    /* ── Badge selezione sensore ── */
     (function () {
-      const select      = document.getElementById('sensorSelect');
-      const badge       = document.getElementById('sensorBadge');
-      const badgeText   = document.getElementById('sensorBadgeText');
+      const select       = document.getElementById('sensorSelect');
+      const badge        = document.getElementById('sensorBadge');
+      const badgeText    = document.getElementById('sensorBadgeText');
       const sensoreInput = document.getElementById('sensoreInput');
 
-      /* ── Aggiorna badge e input nascosto al cambio selezione ── */
       select.addEventListener('change', function () {
         const opt = this.options[this.selectedIndex];
-
         if (this.value) {
           badgeText.textContent = opt.textContent.trim();
           badge.classList.add('visible');
         } else {
           badge.classList.remove('visible');
         }
-
         sensoreInput.value = this.value;
       });
 
-      /* ── Sincronizza prima del salvataggio coordinate ── */
       document.getElementById('geoButton').addEventListener('click', function () {
         sensoreInput.value = select.value;
       });
-
     })();
+
+    /* ── Disegna perimetro campo ──────────────────────────────
+       Legge data-coord dal div #map (stesso formato usato in
+       avvia_irr: serie di coppie "(lat,lng)") e disegna il
+       poligono verde sopra la mappa inizializzata da mappa.js.
+    ─────────────────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+
+      var coordinateStr = (document.getElementById('map').dataset.coord || '').trim();
+
+      /* mappa.js crea window.map in modo asincrono;
+         aspettiamo con un piccolo polling prima di disegnare. */
+      function disegnaPerimetro() {
+        if (!window.map) {
+          setTimeout(disegnaPerimetro, 100);
+          return;
+        }
+
+        if (!coordinateStr) return;
+
+        var matches = coordinateStr.match(/\(([^)]+)\)/g);
+        if (!matches) return;
+
+        var latlngs = [];
+        matches.forEach(function (coppia) {
+          var parts = coppia.replace(/[()]/g, '').split(',').map(Number);
+          if (!isNaN(parts[0]) && !isNaN(parts[1])) latlngs.push([parts[0], parts[1]]);
+        });
+
+        if (latlngs.length === 1) {
+          L.marker(latlngs[0]).addTo(window.map);
+          window.map.setView(latlngs[0], 16);
+          return;
+        }
+
+        if (latlngs.length > 1) {
+          var polygon = L.polygon(latlngs, {
+            color: 'green',
+            fillColor: '#4CAF50',
+            fillOpacity: 0.4
+          }).addTo(window.map);
+
+          window.map.fitBounds(polygon.getBounds());
+        }
+      }
+
+      disegnaPerimetro();
+    });
   </script>
 
 </body>
