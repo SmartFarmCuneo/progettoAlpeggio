@@ -1043,11 +1043,22 @@ def mappa(current_user):
 @app.route('/insert_sensori', methods=['GET', 'POST'])
 @token_required
 def insert_sensori(current_user):
-    campo_id = session['id_campo_selezionato']
-    user_id = get_user_id(current_user)
-    sensori = get_sensor2(user_id)
-    print(sensori)
-    return render_template('insert_sensori.html', sensori=sensori, campo_id=campo_id, coordinate_campo=get_coordinate(campo_id))
+    if request.method == 'POST':
+        campo_id   = request.form.get('campo_id')
+        sensore_id = request.form.get('sensore_id')
+        lat        = request.form.get('lat')
+        lng        = request.form.get('lng')
+        filare     = request.form.get('filare')
+        print(lat, lng, filare)
+        # salva nel db la posizione del sensore
+        # inserisci_posizione_sensore(sensore_id, campo_id, lat, lng, filare)
+        return redirect(url_for('insert_sensori', campo_id=campo_id))
+
+    campo_id = request.args.get('campo_id')
+    user_id  = get_user_id(current_user)
+    sensori  = get_sensor2(user_id)
+    return render_template('insert_sensori.html', sensori=sensori, campo_id=campo_id,
+                           coordinate_campo=get_coordinate(campo_id))
 
 @app.route("/api/campi-utente")
 @token_required
@@ -1146,6 +1157,9 @@ def gestioneCampo(current_user):
                     conn.commit()
 
                     return redirect(url_for('gestioneCampo'))
+                
+                elif action == 'insert_sensori':
+                    return redirect(url_for('insert_sensori', campo_id=campo_id))
 
         except Exception as e:
             print(f"Errore nella gestione campo: {e}")

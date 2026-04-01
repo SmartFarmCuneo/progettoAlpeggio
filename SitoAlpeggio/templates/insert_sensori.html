@@ -9,7 +9,6 @@
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
 
   <!-- CSS -->
   <link rel="stylesheet" href="../static/assets/dist/css/bootstrap.min.css" />
@@ -106,6 +105,36 @@
     .coord-table-scroll::-webkit-scrollbar-track { background: transparent; }
     .coord-table-scroll::-webkit-scrollbar-thumb { background: #3a4a5e; border-radius: 4px; }
 
+    .filare-input {
+      width: 70px;
+      background: #151c2a;
+      border: 1px solid #48bb78;
+      border-radius: 5px;
+      color: #e2e8f0;
+      padding: 0.2rem 0.4rem;
+      font-size: 0.78rem;
+    }
+    .filare-input:focus {
+      outline: none;
+      border-color: #68d391;
+      box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.18);
+    }
+
+    .btn-remove-marker {
+      background: transparent;
+      border: 1px solid #fc8181;
+      color: #fc8181;
+      border-radius: 5px;
+      padding: 0.1rem 0.4rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-remove-marker:hover {
+      background: #fc8181;
+      color: #1a202c;
+    }
+
     @media (max-width: 767px) {
       .main-row  { height: auto; }
       .col-left  { height: auto; }
@@ -142,11 +171,10 @@
 
         <div class="sensor-select-wrap">
           <div class="label-title">Sensore da posizionare</div>
-
           <select class="sensor-native-select" id="sensorSelect" name="sensore_selezionato">
             <option value="">Scegli un sensore...</option>
             {% for s in sensori %}
-            <option value="{{ s.id_s }}" data-tipo="{{ s.tipo or '' }}">
+            <option value="{{ s.id_sens }}" data-tipo="{{ s.tipo or '' }}">
               {{ s.nome_sens or ('Sensore ' ~ s.id_sens) }}{% if s.tipo %} – {{ s.tipo }}{% endif %}
             </option>
             {% endfor %}
@@ -164,10 +192,17 @@
             <div style="border-radius:10px; overflow:hidden;">
               <table class="table table-dark table-striped table-hover mb-0">
                 <thead>
-                  <tr><th>#</th><th>Latitudine</th><th>Longitudine</th></tr>
+                  <tr>
+                    <th>#</th>
+                    <th>Sensore</th>
+                    <th>Lat</th>
+                    <th>Lng</th>
+                    <th>Filare</th>
+                    <th></th>
+                  </tr>
                 </thead>
                 <tbody id="coordinates">
-                  <tr><td colspan="3">Nessuna coordinata selezionata</td></tr>
+                  <tr><td colspan="6">Nessuna coordinata selezionata</td></tr>
                 </tbody>
               </table>
             </div>
@@ -180,20 +215,14 @@
 
       </div>
 
-      <!-- Colonna destra: mappa con perimetro campo -->
+      <!-- Colonna destra: mappa -->
       <div class="col-md-8" style="height:100%;">
         <div class="map-wrapper" style="height:100%;">
-          <!-- data-coord riceve le coordinate del campo da Jinja2 -->
           <div id="map" style="height:100%;" data-coord="{{ coordinate_campo }}"></div>
         </div>
       </div>
 
     </div>
-
-    <form id="coordinateForm" action="/salva-coordinate" method="POST">
-      <input type="hidden" name="coordinate"          id="coordinateInput" />
-      <input type="hidden" name="sensore_selezionato" id="sensoreInput"    />
-    </form>
   </main>
 
   <!-- FOOTER -->
@@ -213,80 +242,216 @@
 
   <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="https://unpkg.com/leaflet-geometryutil"></script>
-  <script src="../static/js/mappa.js" defer></script>
 
   <script>
-    /* ── Badge selezione sensore ── */
-    (function () {
-      const select       = document.getElementById('sensorSelect');
-      const badge        = document.getElementById('sensorBadge');
-      const badgeText    = document.getElementById('sensorBadgeText');
-      const sensoreInput = document.getElementById('sensoreInput');
+    document.addEventListener('DOMContentLoaded', function () {
+
+      /* ── Badge selezione sensore ── */
+      const select    = document.getElementById('sensorSelect');
+      const badge     = document.getElementById('sensorBadge');
+      const badgeText = document.getElementById('sensorBadgeText');
 
       select.addEventListener('change', function () {
-        const opt = this.options[this.selectedIndex];
         if (this.value) {
-          badgeText.textContent = opt.textContent.trim();
+          badgeText.textContent = this.options[this.selectedIndex].textContent.trim();
           badge.classList.add('visible');
         } else {
           badge.classList.remove('visible');
         }
-        sensoreInput.value = this.value;
       });
 
-      document.getElementById('geoButton').addEventListener('click', function () {
-        sensoreInput.value = select.value;
-      });
-    })();
+      /* ── Inizializzazione mappa ── */
+      var map = L.map('map').setView([41.9028, 12.4964], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
 
-    /* ── Disegna perimetro campo ──────────────────────────────
-       Legge data-coord dal div #map (stesso formato usato in
-       avvia_irr: serie di coppie "(lat,lng)") e disegna il
-       poligono verde sopra la mappa inizializzata da mappa.js.
-    ─────────────────────────────────────────────────────────── */
-    document.addEventListener('DOMContentLoaded', function () {
+      var coordinateStr    = (document.getElementById('map').dataset.coord || '').trim();
+      var latlngs          = [];
+      var perimeterPolygon = null;
+      var sensorMarkers    = [];
 
-      var coordinateStr = (document.getElementById('map').dataset.coord || '').trim();
-
-      /* mappa.js crea window.map in modo asincrono;
-         aspettiamo con un piccolo polling prima di disegnare. */
-      function disegnaPerimetro() {
-        if (!window.map) {
-          setTimeout(disegnaPerimetro, 100);
-          return;
+      /* ── Ray casting: punto dentro poligono ── */
+      function puntoNelPoligono(latlng, poligono) {
+        var x = latlng.lat, y = latlng.lng;
+        var inside = false;
+        for (var i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+          var xi = poligono[i][0], yi = poligono[i][1];
+          var xj = poligono[j][0], yj = poligono[j][1];
+          var intersect = ((yi > y) !== (yj > y)) &&
+                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
         }
+        return inside;
+      }
 
-        if (!coordinateStr) return;
-
-        var matches = coordinateStr.match(/\(([^)]+)\)/g);
-        if (!matches) return;
-
-        var latlngs = [];
-        matches.forEach(function (coppia) {
-          var parts = coppia.replace(/[()]/g, '').split(',').map(Number);
-          if (!isNaN(parts[0]) && !isNaN(parts[1])) latlngs.push([parts[0], parts[1]]);
+      /* ── Aggiorna filare nel marker ── */
+      window.aggiornaFilare = function (sensoreId, valore) {
+        sensorMarkers = sensorMarkers.map(function (m) {
+          if (m.sensoreId === sensoreId) m.filare = valore;
+          return m;
         });
+      };
 
-        if (latlngs.length === 1) {
-          L.marker(latlngs[0]).addTo(window.map);
-          window.map.setView(latlngs[0], 16);
+      /* ── Aggiorna tabella coordinate ── */
+      function aggiornaTabella() {
+        const tbody = document.getElementById('coordinates');
+        if (sensorMarkers.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">Nessuna coordinata selezionata</td></tr>';
           return;
         }
+        tbody.innerHTML = '';
+        sensorMarkers.forEach(function (s, index) {
+          const opt = document.querySelector('#sensorSelect option[value="' + s.sensoreId + '"]');
+          const nomeSensore = opt ? opt.textContent.trim() : s.sensoreId;
+          tbody.innerHTML += `
+            <tr>
+              <td>${index + 1}</td>
+              <td style="font-size:0.78rem">${nomeSensore}</td>
+              <td>${s.latlng.lat.toFixed(5)}</td>
+              <td>${s.latlng.lng.toFixed(5)}</td>
+              <td>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="N°"
+                  class="filare-input"
+                  id="filare_${s.sensoreId}"
+                  value="${s.filare || ''}"
+                  onchange="aggiornaFilare('${s.sensoreId}', this.value)"
+                />
+              </td>
+              <td>
+                <button class="btn-remove-marker" onclick="rimuoviSensore('${s.sensoreId}')">✕</button>
+              </td>
+            </tr>`;
+        });
+      }
 
-        if (latlngs.length > 1) {
-          var polygon = L.polygon(latlngs, {
-            color: 'green',
-            fillColor: '#4CAF50',
-            fillOpacity: 0.4
-          }).addTo(window.map);
+      /* ── Rimozione sensore ── */
+      window.rimuoviSensore = function (sensoreId) {
+        sensorMarkers = sensorMarkers.filter(function (m) {
+          if (m.sensoreId === sensoreId) {
+            map.removeLayer(m.marker);
+            return false;
+          }
+          return true;
+        });
+        aggiornaTabella();
+      };
 
-          window.map.fitBounds(polygon.getBounds());
+      /* ── Disegna perimetro ── */
+      if (coordinateStr) {
+        var matches = coordinateStr.match(/\(([^)]+)\)/g);
+        if (matches) {
+          matches.forEach(function (coppia) {
+            var parts = coppia.replace(/[()]/g, '').split(',').map(Number);
+            if (!isNaN(parts[0]) && !isNaN(parts[1])) latlngs.push([parts[0], parts[1]]);
+          });
+
+          if (latlngs.length === 1) {
+            L.marker(latlngs[0]).addTo(map);
+            map.setView(latlngs[0], 16);
+          }
+
+          if (latlngs.length > 1) {
+            perimeterPolygon = L.polygon(latlngs, {
+              color: 'green',
+              fillColor: '#4CAF50',
+              fillOpacity: 0.4
+            }).addTo(map);
+            map.fitBounds(perimeterPolygon.getBounds());
+          }
         }
       }
 
-      disegnaPerimetro();
+      /* ── Click sulla mappa ── */
+      map.on('click', function (e) {
+
+        if (!select.value) {
+          alert('Seleziona prima un sensore dal menu!');
+          return;
+        }
+
+        if (perimeterPolygon && latlngs.length > 1) {
+          if (!puntoNelPoligono(e.latlng, latlngs)) {
+            alert('Il punto selezionato è fuori dal perimetro del campo!');
+            return;
+          }
+        }
+
+        const nomeSensore = select.options[select.selectedIndex].textContent.trim();
+
+        /* Rimuove marker precedente dello stesso sensore */
+        sensorMarkers = sensorMarkers.filter(function (m) {
+          if (m.sensoreId === select.value) {
+            map.removeLayer(m.marker);
+            return false;
+          }
+          return true;
+        });
+
+        const marker = L.marker(e.latlng, { title: nomeSensore })
+          .addTo(map)
+          .bindPopup(
+            '<b>' + nomeSensore + '</b><br>' +
+            'Lat: ' + e.latlng.lat.toFixed(6) + '<br>' +
+            'Lng: ' + e.latlng.lng.toFixed(6)
+          ).openPopup();
+
+        sensorMarkers.push({
+          sensoreId: select.value,
+          marker:    marker,
+          latlng:    e.latlng,
+          filare:    ''
+        });
+
+        aggiornaTabella();
+      });
+
+      /* ── Salvataggio ── */
+      document.getElementById('geoButton').addEventListener('click', function () {
+        if (sensorMarkers.length === 0) {
+          alert('Posiziona almeno un sensore sulla mappa prima di salvare!');
+          return;
+        }
+
+        const mancanteFilare = sensorMarkers.some(function (s) {
+          return !s.filare || s.filare === '';
+        });
+        if (mancanteFilare) {
+          alert('Inserisci il numero di filare per tutti i sensori posizionati!');
+          return;
+        }
+
+        const campo_id = "{{ campo_id }}";
+        const promises = sensorMarkers.map(function (s) {
+          const formData = new FormData();
+          formData.append('campo_id',   campo_id);
+          formData.append('sensore_id', s.sensoreId);
+          formData.append('lat',        s.latlng.lat.toFixed(6));
+          formData.append('lng',        s.latlng.lng.toFixed(6));
+          formData.append('filare',     s.filare);
+          return fetch('/insert_sensori', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+          });
+        });
+
+        Promise.all(promises).then(function (responses) {
+          if (responses.every(function (r) { return r.ok; })) {
+            alert('Sensori salvati con successo!');
+            sensorMarkers = [];
+            aggiornaTabella();
+          } else {
+            alert('Errore durante il salvataggio di alcuni sensori.');
+          }
+        }).catch(function () {
+          alert('Errore di rete durante il salvataggio.');
+        });
+      });
+
     });
   </script>
 
