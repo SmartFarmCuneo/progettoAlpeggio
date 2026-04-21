@@ -1040,6 +1040,7 @@ def get_session_coordinate():
 def mappa(current_user):
     return render_template('mappa.html')
 
+#CORRETTO
 @app.route('/insert_sensori', methods=['GET', 'POST'])
 @token_required
 def insert_sensori(current_user):
@@ -1049,10 +1050,28 @@ def insert_sensori(current_user):
         lat        = request.form.get('lat')
         lng        = request.form.get('lng')
         filare     = request.form.get('filare')
-        print(lat, lng, filare)
-        # salva nel db la posizione del sensore
-        # inserisci_posizione_sensore(sensore_id, campo_id, lat, lng, filare)
-        return redirect(url_for('insert_sensori', campo_id=campo_id))
+        #print("ciao")
+        #print(lat, lng, filare, sensore_id)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                UPDATE sensor
+                SET filare=%s, latitude=%s, longitude=%s, accuracy=0
+                WHERE id_sens=%s
+                """,
+                (filare, lat, lng, sensore_id)
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print("Errore DB:", e)
+        finally:
+            cursor.close()
+            conn.close()
+        return redirect(url_for('gestioneCampo', campo_id=campo_id))
+        #return redirect(url_for('insert_sensori', campo_id=campo_id))
 
     campo_id = request.args.get('campo_id')
     user_id  = get_user_id(current_user)
