@@ -19,7 +19,9 @@
   <link rel="stylesheet" href="../static/css/animazioni.css" />
 
   <style>
-    .main-row { height: 70vh; }
+    .main-row {
+      height: 70vh;
+    }
 
     .col-left {
       display: flex;
@@ -60,13 +62,21 @@
       background-position: right 0.7rem center;
       transition: border-color 0.18s, box-shadow 0.18s;
     }
+
     .sensor-native-select:focus {
       outline: none;
       border-color: #68d391;
       box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.18);
     }
-    .sensor-native-select option { background: #1e2535; color: #e2e8f0; }
-    .sensor-native-select option:first-child { color: #718096; }
+
+    .sensor-native-select option {
+      background: #1e2535;
+      color: #e2e8f0;
+    }
+
+    .sensor-native-select option:first-child {
+      color: #718096;
+    }
 
     .sensor-selected-badge {
       display: none;
@@ -80,9 +90,14 @@
       align-items: center;
       gap: 0.4rem;
     }
-    .sensor-selected-badge.visible { display: flex; }
+
+    .sensor-selected-badge.visible {
+      display: flex;
+    }
+
     .sensor-selected-badge .badge-dot {
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: #48bb78;
       flex-shrink: 0;
@@ -94,16 +109,31 @@
       display: flex;
       flex-direction: column;
     }
-    .coord-wrap h5 { font-size: 0.85rem; margin-bottom: 0.5rem; }
+
+    .coord-wrap h5 {
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+
     .coord-table-scroll {
       flex: 1;
       overflow-y: auto;
       border-radius: 10px;
       overflow: hidden;
     }
-    .coord-table-scroll::-webkit-scrollbar       { width: 3px; }
-    .coord-table-scroll::-webkit-scrollbar-track { background: transparent; }
-    .coord-table-scroll::-webkit-scrollbar-thumb { background: #3a4a5e; border-radius: 4px; }
+
+    .coord-table-scroll::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .coord-table-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .coord-table-scroll::-webkit-scrollbar-thumb {
+      background: #3a4a5e;
+      border-radius: 4px;
+    }
 
     .filare-input {
       width: 70px;
@@ -114,6 +144,7 @@
       padding: 0.2rem 0.4rem;
       font-size: 0.78rem;
     }
+
     .filare-input:focus {
       outline: none;
       border-color: #68d391;
@@ -130,15 +161,25 @@
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
+
     .btn-remove-marker:hover {
       background: #fc8181;
       color: #1a202c;
     }
 
     @media (max-width: 767px) {
-      .main-row  { height: auto; }
-      .col-left  { height: auto; }
-      .col-md-8  { height: 350px !important; margin-top: 1rem; }
+      .main-row {
+        height: auto;
+      }
+
+      .col-left {
+        height: auto;
+      }
+
+      .col-md-8 {
+        height: 350px !important;
+        margin-top: 1rem;
+      }
     }
   </style>
 </head>
@@ -202,7 +243,9 @@
                   </tr>
                 </thead>
                 <tbody id="coordinates">
-                  <tr><td colspan="6">Nessuna coordinata selezionata</td></tr>
+                  <tr>
+                    <td colspan="6">Nessuna coordinata selezionata</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -247,8 +290,8 @@
     document.addEventListener('DOMContentLoaded', function () {
 
       /* ── Badge selezione sensore ── */
-      const select    = document.getElementById('sensorSelect');
-      const badge     = document.getElementById('sensorBadge');
+      const select = document.getElementById('sensorSelect');
+      const badge = document.getElementById('sensorBadge');
       const badgeText = document.getElementById('sensorBadgeText');
 
       select.addEventListener('change', function () {
@@ -266,10 +309,10 @@
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       }).addTo(map);
 
-      var coordinateStr    = (document.getElementById('map').dataset.coord || '').trim();
-      var latlngs          = [];
+      var coordinateStr = (document.getElementById('map').dataset.coord || '').trim();
+      var latlngs = [];
       var perimeterPolygon = null;
-      var sensorMarkers    = [];
+      var sensorMarkers = [];
 
       /* ── Ray casting: punto dentro poligono ── */
       function puntoNelPoligono(latlng, poligono) {
@@ -279,7 +322,7 @@
           var xi = poligono[i][0], yi = poligono[i][1];
           var xj = poligono[j][0], yj = poligono[j][1];
           var intersect = ((yi > y) !== (yj > y)) &&
-                          (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
           if (intersect) inside = !inside;
         }
         return inside;
@@ -401,9 +444,9 @@
 
         sensorMarkers.push({
           sensoreId: select.value,
-          marker:    marker,
-          latlng:    e.latlng,
-          filare:    ''
+          marker: marker,
+          latlng: e.latlng,
+          filare: ''
         });
 
         aggiornaTabella();
@@ -411,49 +454,47 @@
 
       /* ── Salvataggio ── */
       document.getElementById('geoButton').addEventListener('click', function () {
+
         if (sensorMarkers.length === 0) {
           alert('Posiziona almeno un sensore sulla mappa prima di salvare!');
           return;
         }
 
-        const mancanteFilare = sensorMarkers.some(function (s) {
-          return !s.filare || s.filare === '';
-        });
-        if (mancanteFilare) {
-          alert('Inserisci il numero di filare per tutti i sensori posizionati!');
-          return;
-        }
-
         const campo_id = "{{ campo_id }}";
-        const promises = sensorMarkers.map(function (s) {
-          const formData = new FormData();
-          formData.append('campo_id',   campo_id);
-          formData.append('sensore_id', s.sensoreId);
-          formData.append('lat',        s.latlng.lat.toFixed(6));
-          formData.append('lng',        s.latlng.lng.toFixed(6));
-          formData.append('filare',     s.filare);
-          return fetch('/insert_sensori', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-          });
-        });
 
-        Promise.all(promises).then(function (responses) {
-          if (responses.every(function (r) { return r.ok; })) {
+        const payload = {
+          campo_id: campo_id,
+          sensori: sensorMarkers.map(s => ({
+            sensore_id: s.sensoreId,
+            lat: s.latlng.lat.toFixed(6),
+            lng: s.latlng.lng.toFixed(6),
+            filare: s.filare
+          }))
+        };
+
+        fetch('/insert_sensori', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload),
+          credentials: 'same-origin'
+        })
+          .then(r => r.json())
+          .then(data => {
             alert('Sensori salvati con successo!');
             sensorMarkers = [];
             aggiornaTabella();
-          } else {
-            alert('Errore durante il salvataggio di alcuni sensori.');
-          }
-        }).catch(function () {
-          alert('Errore di rete durante il salvataggio.');
-        });
+          })
+          .catch(() => {
+            alert('Errore di rete durante il salvataggio.');
+          });
+
       });
 
     });
   </script>
 
 </body>
+
 </html>

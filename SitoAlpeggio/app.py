@@ -22,6 +22,7 @@ from utils.hash_password import hash_password
 from utils.stripe_function import *
 from utils.sensor_function import *
 from utils.field_function import *
+from utils.telegram_functions import *
 
 load_dotenv()
 
@@ -140,7 +141,6 @@ def get_user_data(username):
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         return cursor.fetchone()
     conn.close()
-
 
 def plan_feature_required(feature):
     """Decorator per controllare se l'utente ha accesso a una funzionalità"""
@@ -283,7 +283,6 @@ def inject_user():
 ########################################################################
 
 ########################### Login-Create account #########################
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 
@@ -492,6 +491,7 @@ def api_token_required(f):
         
         return f(*args, **kwargs)
     return decorated
+
 ################################################################################
 
 ########################### RESET PASSWORD #####################################
@@ -731,102 +731,81 @@ def salvaCoordinate():
 
     return redirect(url_for('aggiungiCampo'))
 
-@app.route('/api/get_session_coordinate')
-def get_session_coordinate():
-    return jsonify(session.get('coordinate', {}))
-
 @app.route('/mappa', methods=['GET', 'POST'])
 @token_required
 def mappa(current_user):
     return render_template('mappa.html')
 
-#CORRETTO
 @app.route('/insert_sensori', methods=['GET', 'POST'])
 @token_required
 def insert_sensori(current_user):
+    if request.method == 'GET':
+
+        campo_id = request.args.get('campo_id')
+        user_id = get_user_id(current_user)
+        sensori = get_sensor2(user_id)
+
+        return render_template(
+            'insert_sensori.html',
+            sensori=sensori,
+            campo_id=campo_id,
+            coordinate_campo=get_coordinate(campo_id)
+        )
+
     if request.method == 'POST':
-        campo_id   = request.form.get('campo_id')
-        sensore_id = request.form.get('sensore_id')
-        lat        = request.form.get('lat')
-        lng        = request.form.get('lng')
-        filare     = request.form.get('filare')
-        #print("ciao")
-        #print(lat, lng, filare, sensore_id)
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No JSON ricevuto"}), 400
+        campo_id = data.get('campo_id')
+        sensori = data.get('sensori', [])
+        if not campo_id:
+            return jsonify({"status": "error", "message": "campo_id mancante"}), 400
         conn = get_db_connection()
-        cursor = conn.cursor()
         try:
-            cursor.execute(
-                """
-                UPDATE sensor
-                SET filare=%s, latitude=%s, longitude=%s, accuracy=0
-                WHERE id_sens=%s
-                """,
-                (filare, lat, lng, sensore_id)
-            )
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM assoc_fields_sens WHERE id_field = %s",
+                    (campo_id,)
+                )
+                for s in sensori:
+                    sensore_id = s.get('sensore_id')
+                    lat = s.get('lat')
+                    lng = s.get('lng')
+                    filare = s.get('filare')
+                    cursor.execute(
+                        """
+                        INSERT INTO assoc_fields_sens (id_field, id_sensor)
+                        VALUES (%s, %s)
+                        """,
+                        (campo_id, sensore_id)
+                    )
+                    cursor.execute(
+                        """
+                        UPDATE sensor
+                        SET filare = %s,
+                            latitude = %s,
+                            longitude = %s,
+                            accuracy = 0
+                        WHERE id_sens = %s
+                        """,
+                        (filare, lat, lng, sensore_id)
+                    )
             conn.commit()
+            
+            return jsonify({
+                "status": "ok",
+                "message": "Sensori salvati correttamente"
+            }), 200
+
         except Exception as e:
             conn.rollback()
-            print("Errore DB:", e)
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 500
+
         finally:
-            cursor.close()
             conn.close()
-        return redirect(url_for('gestioneCampo', campo_id=campo_id))
-        #return redirect(url_for('insert_sensori', campo_id=campo_id))
-
-    campo_id = request.args.get('campo_id')
-    user_id  = get_user_id(current_user)
-    sensori  = get_sensor2(user_id)
-    return render_template('insert_sensori.html', sensori=sensori, campo_id=campo_id,
-                           coordinate_campo=get_coordinate(campo_id))
-
-@app.route("/api/campi-utente")
-@token_required
-def api_campi_utente(current_user):
-    """Restituisce tutti i campi dell'utente con i loro dettagli"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.coordinate 
-                FROM fields f 
-                INNER JOIN users u ON f.id_user = u.id_u 
-                WHERE u.username = %s 
-                ORDER BY f.id_t
-            """, (current_user,))
-            campi = cursor.fetchall()
-            return jsonify(campi)
-    except Exception as e:
-        print(f"Errore nel recupero campi utente: {e}")
-        return jsonify({"error": "Errore interno del server"}), 500
-    finally:
-        conn.close()
-
-@app.route("/api/campo/<int:campo_id>")
-@token_required
-def api_dettaglio_campo(current_user, campo_id):
-    """Restituisce i dettagli di un campo specifico"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            # Verifica che il campo appartenga all'utente
-            cursor.execute("""
-                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.coordinate,
-                       u.username
-                FROM fields f 
-                INNER JOIN users u ON f.id_user = u.id_u 
-                WHERE f.id_t = %s AND u.username = %s
-            """, (campo_id, current_user))
-
-            campo = cursor.fetchone()
-            if not campo:
-                return jsonify({"error": "Campo non trovato"}), 404
-
-            return jsonify(campo)
-    except Exception as e:
-        print(f"Errore nel recupero dettaglio campo: {e}")
-        return jsonify({"error": "Errore interno del server"}), 500
-    finally:
-        conn.close()
 
 @app.route('/gestioneCampo', methods=['GET', 'POST'])
 @token_required
@@ -1042,7 +1021,6 @@ def gestione_sensori(current_user):
     finally:
         conn.close()
     return render_template('gestione_sensori.html', user=user, sensori=sensori)
-
 
 @app.route('/visualizzaCampi', methods=['GET', 'POST'])
 @token_required
@@ -1625,6 +1603,58 @@ def get_location_by_coords():
     }
     return jsonify(result)
 
+@app.route('/api/get_session_coordinate')
+def get_session_coordinate():
+    return jsonify(session.get('coordinate', {}))
+
+@app.route("/api/campi-utente")
+@token_required
+def api_campi_utente(current_user):
+    """Restituisce tutti i campi dell'utente con i loro dettagli"""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.coordinate 
+                FROM fields f 
+                INNER JOIN users u ON f.id_user = u.id_u 
+                WHERE u.username = %s 
+                ORDER BY f.id_t
+            """, (current_user,))
+            campi = cursor.fetchall()
+            return jsonify(campi)
+    except Exception as e:
+        print(f"Errore nel recupero campi utente: {e}")
+        return jsonify({"error": "Errore interno del server"}), 500
+    finally:
+        conn.close()
+
+@app.route("/api/campo/<int:campo_id>")
+@token_required
+def api_dettaglio_campo(current_user, campo_id):
+    """Restituisce i dettagli di un campo specifico"""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Verifica che il campo appartenga all'utente
+            cursor.execute("""
+                SELECT f.id_t, f.provincia, f.comune, f.CAP, f.coordinate,
+                       u.username
+                FROM fields f 
+                INNER JOIN users u ON f.id_user = u.id_u 
+                WHERE f.id_t = %s AND u.username = %s
+            """, (campo_id, current_user))
+
+            campo = cursor.fetchone()
+            if not campo:
+                return jsonify({"error": "Campo non trovato"}), 404
+
+            return jsonify(campo)
+    except Exception as e:
+        print(f"Errore nel recupero dettaglio campo: {e}")
+        return jsonify({"error": "Errore interno del server"}), 500
+    finally:
+        conn.close()
 
 @app.route("/api/numCampi")
 @token_required
@@ -1749,7 +1779,7 @@ def api_get_sensor(current_user):
     info = get_sensor(current_user)
     return jsonify(info)
 
-# API PER INFO SENSORI E CAMPO (PER NOTIFICA TELEGRAM)
+# API PER INFO SENSORI E CAMPO (PER NOTIFICA TELEGRAM)  - PROBABILE DA TOGLIERE
 @app.route("/api/get_user_info_data/<username>")
 def api_get_user_info_data(username):
     user_id = get_user_id(username)
@@ -1831,7 +1861,17 @@ def init_serial_receiver(current_user):
         print("=" * 50)
         id_user = get_user_id(data.get('user'))
         id_ricerca, id_terreno, sensors = get_data_info(id_user)
-        print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
+        info = get_sensor2(id_user)
+        chat_id = get_telegram_chat_id(data['user'])
+        info_dict = {x['Node_id']: x for x in info}
+        send_telegram_notification(
+                "⚠️ ALLARME SENSORE",
+                f"""ACQUA RILEVATA DAL SENSORE [{info_dict[data['Node_id']]['nome_sens']}]-[{data['Node_id']}]
+            • Terreno: [{id_terreno}]
+            • Filare: [{info_dict[data['Node_id']]['filare'] or 'Non presente'}]
+            • ID Ricerca: [{id_ricerca}]""", chat_id
+            )
+        #print(f"Info: {id_user} - {id_ricerca} - {id_terreno} - {sensors}")
         insert_sensor_data(data, sensors, id_ricerca)   #correggere sensors perchè non passa parametro come dizionario
 
     return jsonify({"status": "ok"})
@@ -1842,7 +1882,7 @@ def get_token_api(username):
     token = generate_token(username)   
     return jsonify({"token": token})
 
-# PREMIUM -- invio id chat con telegram per notifiche
+# API PER invio id chat con telegram per notifiche -- PROBABILE DA TOGLIERE TRASFERITO SUL SERVER
 @app.route("/api/get_telegram_chat_id/<username>")
 def api_get_telegram_chat_id(username):
     conn = get_db_connection()
@@ -1957,8 +1997,6 @@ def inizializzaIrrigazione():
     campo_id = request.args.get('campo_id')
     return render_template('inizializzazione_irr.html', campo_id=campo_id)
 
-
-# FUNZIONANTE
 def set_error_state_data(message):
     # setta ad errore la ricerca / ripristina i sensori / conclude la sessione di irrigazione
     state = 'ERR'
@@ -1975,7 +2013,7 @@ def set_error_state_data(message):
         set_state_sensor('C', k)
     session['id_data'] = 0
 
-
+# PAGINA PER VISUALIZZARE IRRIGAZIONE (SUPPLEMENTARE SOSTITUITA CON TELEGRAM)
 @app.route('/avvia_irr', methods=['GET', 'POST'])
 def avviaIrrigazione():
     print("AVVIA IRRIGAZIONE")
@@ -2043,6 +2081,10 @@ def index():
 @app.route('/home', methods=['GET', 'POST'])
 @token_required
 def home(current_user):
+    # Avvio del bot telegram
+    set_bot_commands()
+    threading.Thread(target=telegram_listener, args=(get_telegram_chat_id(current_user)["telegram_chat_id"],), daemon=True).start()
+    ########################
     associazioneSessionCampi(current_user)
     if request.method == 'POST':
         resp = None
@@ -2064,7 +2106,6 @@ def home(current_user):
         if campo_value and campo_value.startswith("Campo "):
             numero_campo = campo_value.split(" ")[1]
             id_campo = session[f'campo{numero_campo}']
-            """avvioDrone(id_campo)"""
             resp = make_response(redirect(url_for('home')))
         return resp
 

@@ -2,6 +2,7 @@
 # MySQL / Database
 # ==========================
 mysql_data/
+postgres_data/
 *.ibd
 *.dblwr
 *.frm

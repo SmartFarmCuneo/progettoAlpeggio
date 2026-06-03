@@ -119,7 +119,7 @@
 
               <div class="col-md-5">
                 <label for="select_provincia" class="form-label">Provincia</label>
-                <select class="form-select" name="provincia" id="select_provincia" required>
+                <select class="form-select" name="provincia" id="select_provincia">
                   <option value="">Scegli...</option>
                 </select>
                 <div class="invalid-feedback">
@@ -129,7 +129,7 @@
 
               <div class="col-md-4">
                 <label for="select_comune" class="form-label">Comune</label>
-                <select class="form-select" id="select_comune" name="comune" required>
+                <select class="form-select" id="select_comune" name="comune">
                   <option value="">Scegli...</option>
                 </select>
                 <div class="invalid-feedback">Scegliere un comune valido</div>
@@ -137,7 +137,7 @@
 
               <div class="col-md-3">
                 <label for="zip" class="form-label">CAP</label>
-                <input type="text" class="form-control" id="zip" name="zip" pattern="[0-9]{5}" maxlength="5" required />
+                <input type="text" class="form-control" id="zip" name="zip" pattern="[0-9]{5}" maxlength="5" />
                 <div class="invalid-feedback">
                   Inserire un CAP valido (5 cifre)
                 </div>
@@ -145,7 +145,7 @@
 
               <div class="col-md-3">
                 <label for="zip" class="form-label">Numero di filari</label>
-                <input type="text" class="form-control" id="filari" name="filari" pattern="[0-9]" required />
+                <input type="text" class="form-control" id="filari" name="filari" pattern="[0-9]" />
                 <div class="invalid-feedback">
                   Inserire il numero di filari del campo
                 </div>
