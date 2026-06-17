@@ -1027,6 +1027,22 @@ def gestione_sensori(current_user):
 def visualizzaCampi(current_user):
     return render_template('visualizzaCampi.html')
 
+@app.route('/dettagliCampo/<int:campo_id>')
+@token_required
+def dettagliCampo(current_user, campo_id):
+    #print(f"id campo: {session[f"campo{campo_id}"]}") 
+    conn = get_db_connection()
+
+    if campo_id:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM fields f, assoc_fields_sens a LEFT JOIN f.id_t = a.id_fields WHERE f.id_t = %s AND f.id_u = %s",
+                (session[f"campo{campo_id}"], session["id"])
+            )
+            risultato = cursor.fetchall()
+    print(risultato)
+    return render_template('dettagli_campo.html')
+
 ################################################################
 
 ############################# STRIPE ROUTES #############################

@@ -4,8 +4,11 @@ import requests
 import time
 from utils.db_connection import get_db_connection
 
-BOT_TOKEN = ""
+BOT_TOKEN = "8303477409:AAGf8dT7b0P8kS7GaQ5QEDXAxNQZos7R3vQ"
 
+# URL API PER BOT
+# https://api.telegram.org/bot8303477409:AAEzEvqwd5-NZEG2WOlCJvA9J4DWRVBcaTA/getMe
+# https://api.telegram.org/bot8303477409:AAGf8dT7b0P8kS7GaQ5QEDXAxNQZos7R3vQ-NZEG2WOlCJvA9J4DWRVBcaTA/getUpdates
 
 def get_telegram_chat_id(username):
     conn = get_db_connection()

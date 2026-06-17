@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="auto">
+
+<head>
+  <script src="../static/assets/js/color-modes.js"></script>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="../static/image/logo.png" />
+  <title>Agrinnov - Visualizza Campi</title>
+
+  <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/jumbotron/" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="../static/assets/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="../static/css/style.css" />
+  <link rel="stylesheet" href="../static/css/navbar.css" />
+  <link rel="stylesheet" href="../static/css/footer.css" />
+  <link rel="stylesheet" href="../static/css/media.css" />
+  <link rel="stylesheet" href="../static/css/animazioni.css" />
+  <style>
+    /* Linea di divisione con ombra */
+    .campo-card {
+      padding-bottom: 35px;
+      margin-bottom: 35px;
+      position: relative;
+    }
+
+    .campo-card:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: var(--primary, #4CAF50);
+      box-shadow: 0 1px 3px rgba(76, 175, 80, 0.5);
+    }
+  </style>
+
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation">
+    <div class="navbar-top container">
+      <a href="/home" class="logo">Agrinnov</a>
+      <div class="user-nav">
+        <div class="user-info">
+          <img src="../static/image/profilo.png" alt="Profilo" class="user-avatar-img" />
+          <a href="/profilo" class="profile-link">{{user['username']}}</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="container main-content">
+    <div class="profile-content">
+      <main>
+        <div class="py-5 text-center">
+          <img class="d-block mx-auto mb-4" src="../static/image/logo.png" alt="" width="72" height="57" />
+          <h2>Dettagli campo</h2>
+          <p class="lead">Panoramica completa dei tuoi terreni agricoli</p>
+        </div>
+
+        <form method="post" action="/visualizzaCampi">
+          <div class="campi"></div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    <div class="container">
+      <p>&copy; 2024 Agrinnov. Innovazione per l'agricoltura del futuro.</p>
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Termini di Servizio</a></li>
+        <li><a href="/supporto">Supporto</a></li>
+        <li><a href="/contatti">Contatti</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  {% if not cookie_consent %} {% include "cookie_banner.html" %} {% endif %}
+
+  <!-- Script -->
+  <script src="../static/js/verifica_session_data.js"></script>
+  <script src="../static/js/visualizza_campi.js" defer></script>
+  <script src="../static/assets/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

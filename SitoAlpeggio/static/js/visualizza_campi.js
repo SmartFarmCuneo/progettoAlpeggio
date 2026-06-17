@@ -20,12 +20,20 @@ document.addEventListener("DOMContentLoaded", function () {
     function initializeApp() {
         const containerCampi = document.querySelector(".campi");
 
+        // Listener delegato per il tasto Dettagli
+        containerCampi.addEventListener("click", function (e) {
+            const btn = e.target.closest("button[data-index]");
+            if (btn) {
+                const index = btn.getAttribute("data-index");
+                window.location.href = `/dettagliCampo/${index+1}`;
+            }
+        });
+
         // Funzione per caricare i campi tramite l'API
         function caricaCampi() {
             fetch("/api/numCampi")
                 .then((response) => response.json())
                 .then((infoCampi) => {
-                    //console.log(infoCampi);
                     if (infoCampi > 0) {
                         containerCampi.innerHTML = "";
                         caricaInfoCampi();
@@ -46,7 +54,6 @@ document.addEventListener("DOMContentLoaded", function () {
             fetch("/api/infoCampi")
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log("ciao");
                     console.log(data);
 
                     const campi = data.split("|").filter((el) => el.trim() !== ""); // Split delle info campi
@@ -80,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                           <h5>Coordinate:</h5>
                                           ${coordinateList}
                                       </div>
-                                      <button class="btn btn-primary mt-3" type="button">Dettagli</button>
+                                      <button class="btn btn-primary mt-3" type="button" data-index="${index}">Dettagli</button>
                                   </div>
                                   <!-- Colonna destra: Mappa -->
                                   <div class="col-md-6">
